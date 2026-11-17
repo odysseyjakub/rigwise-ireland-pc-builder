@@ -30,6 +30,30 @@ test("delivery is charged once per retailer order and free shipping hits the bou
   ]);
 });
 
+test("cent-level basket arithmetic reaches a decimal free-shipping threshold exactly", () => {
+  const result = optimizeBasket({
+    components: [{ id: "first" }, { id: "second" }],
+    offers: [
+      { id: "one", componentId: "first", retailerId: "shop", price: 0.1, available: true },
+      { id: "two", componentId: "second", retailerId: "shop", price: 0.2, available: true }
+    ],
+    shippingRules: { shop: { rate: 0.05, freeOver: 0.3 } }
+  });
+  assert.equal(result.partsSubtotal, 0.3);
+  assert.equal(result.deliveryTotal, 0);
+  assert.equal(result.total, 0.3);
+  assert.equal(result.orders[0].free, true);
+});
+
+test("optimizer rejects prices and shipping units that cannot be represented exactly", () => {
+  assert.throws(() => calculateShipping([
+    { retailerId: "shop", id: "fractional-cent", price: 0.001 }
+  ], { shop: { rate: 1 } }), /whole cents/);
+  assert.throws(() => calculateShipping([
+    { retailerId: "shop", id: "fractional-unit", price: 1, shippingUnits: 1.5 }
+  ], { shop: { rate: 1, perItem: true } }), /positive integer/);
+});
+
 test("whole-basket optimum can differ from cheapest unit listings", () => {
   const best = optimizeBasket({ components, offers, shippingRules: rules });
   const itemBest = cheapestItemPlan({ components, offers, shippingRules: rules });
