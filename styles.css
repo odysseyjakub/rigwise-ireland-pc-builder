@@ -254,6 +254,33 @@ h1, h2, h3, p { margin-top: 0; }
 .how-footnote { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; min-height: 69px; border-top: 1px solid rgba(218, 231, 210, .16); }
 .how-footnote>span:first-child, .footnote-mark { color: #96a894; font: 7px "DM Mono", monospace; letter-spacing: .08em; }
 .how-footnote p { margin: 0; color: #e4eddb; font: 500 10px "Manrope", sans-serif; }
+.comparison-section { padding-top: 72px; padding-bottom: 78px; }
+.comparison-heading { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.comparison-heading h2 { margin: 11px 0 5px; color: var(--forest); font: 700 34px/1.15 "Manrope", sans-serif; letter-spacing: -.055em; }
+.comparison-badge { flex: 0 0 auto; border: 1px solid #d9e4cd; border-radius: 99px; padding: 8px 10px; color: #72895b; background: #f8faf4; font: 7px "DM Mono", monospace; letter-spacing: .08em; }
+.comparison-controls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 11px; margin-top: 22px; padding: 17px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); box-shadow: var(--shadow); }
+.comparison-controls label { display: grid; gap: 7px; color: #748076; font: 8px "DM Mono", monospace; }
+.comparison-controls label span { color: #9aa39a; }
+.comparison-controls .select-control { font: 9px "DM Sans", sans-serif; }
+.comparison-table-wrap { margin-top: 12px; overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); box-shadow: var(--shadow); }
+.comparison-table { width: 100%; min-width: 640px; border-collapse: collapse; table-layout: fixed; }
+.comparison-table th, .comparison-table td { width: 25%; padding: 12px 14px; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); text-align: left; vertical-align: top; }
+.comparison-table th:first-child { width: 20%; color: #748076; font: 8px "DM Mono", monospace; }
+.comparison-table th:last-child, .comparison-table td:last-child { border-right: 0; }
+.comparison-table thead th { color: var(--ink); background: var(--paper-soft); }
+.comparison-table thead th strong { display: block; color: var(--forest); font: 600 11px/1.4 "Manrope", sans-serif; }
+.comparison-table thead th small { display: block; margin-top: 4px; color: #849087; font: 8px/1.5 "DM Sans", sans-serif; }
+.comparison-table tbody th { background: var(--paper-soft); }
+.comparison-table td { color: var(--ink); font-size: 9px; line-height: 1.5; overflow-wrap: anywhere; }
+.comparison-table tbody tr:first-child td { color: #435c3b; font: 600 10px "DM Mono", monospace; }
+.comparison-table tbody tr:last-child th, .comparison-table tbody tr:last-child td { border-bottom: 0; }
+.compare-compat { display: inline-flex; border-radius: 99px; padding: 5px 7px; font-size: 8px; font-weight: 700; }
+.compare-compat-compatible { color: #477344; background: #eaf2e4; }
+.compare-compat-warning { color: #876436; background: #f5eedf; }
+.compare-compat-incompatible { color: #a4463d; background: #f8e8e4; }
+.compare-compat-unknown { color: #69757d; background: #edf0f1; }
+.comparison-empty { margin: 0; padding: 24px 18px; color: #7f8980; font-size: 10px; }
+.comparison-disclaimer { margin: 9px 2px 0; color: #8b958d; font-size: 8px; line-height: 1.6; }
 .trust-section { padding-top: 78px; padding-bottom: 84px; }
 .trust-heading { align-items: center; }
 .trust-heading h2 { margin-top: 13px; }
@@ -294,7 +321,7 @@ h1, h2, h3, p { margin-top: 0; }
   --forest: #eaf1e4; --forest-2: #25352b; --lime: #c1ed72; --lime-2: #d5f5a0; --lime-ink: #1c2b19; --shadow: 0 12px 36px rgba(0, 0, 0, .12);
 }
 .dark-theme .site-header { background: rgba(25, 34, 29, .95); border-color: #303b34; }
-.dark-theme .brand, .dark-theme .hero h1, .dark-theme .section-heading h2, .dark-theme .trust-heading h2, .dark-theme .parts-card-heading h3, .dark-theme .plan-card h3 { color: #ebf0e6; }
+.dark-theme .brand, .dark-theme .hero h1, .dark-theme .section-heading h2, .dark-theme .trust-heading h2, .dark-theme .comparison-heading h2, .dark-theme .parts-card-heading h3, .dark-theme .plan-card h3 { color: #ebf0e6; }
 .dark-theme .nav-link, .dark-theme .location-pill, .dark-theme .icon-button { color: #bdc9bc; }
 .dark-theme .nav-link.active { color: #eef2e9; }
 .dark-theme .hero-copy>p, .dark-theme .section-subtitle { color: #a8b3a8; }
@@ -329,6 +356,14 @@ h1, h2, h3, p { margin-top: 0; }
 .dark-theme .severity-unknown strong { color: #b6c0c8; }
 .dark-theme .saved-name { color: #e0e8dc; }
 .dark-theme .saved-builds, .dark-theme .parts-footer { background: #1b2420; }
+.dark-theme .comparison-controls, .dark-theme .comparison-table-wrap { border-color: var(--line); background: var(--paper); }
+.dark-theme .comparison-controls label, .dark-theme .comparison-disclaimer { color: #a8b3a8; }
+.dark-theme .comparison-badge { color: #c0d2a9; border-color: #43513d; background: #253126; }
+.dark-theme .comparison-table th, .dark-theme .comparison-table td { border-color: var(--line); }
+.dark-theme .comparison-table thead th, .dark-theme .comparison-table tbody th { background: #202b25; }
+.dark-theme .comparison-table thead th strong, .dark-theme .comparison-table td { color: #e4ece0; }
+.dark-theme .comparison-table thead th small { color: #a6b0a6; }
+.dark-theme .comparison-table tbody tr:first-child td { color: #cce5b8; }
 
 @media (max-width: 980px) {
   .site-header { padding-inline: 22px; }
@@ -339,6 +374,7 @@ h1, h2, h3, p { margin-top: 0; }
   .workspace-grid { grid-template-columns: minmax(0, 1.5fr) minmax(275px, .9fr); gap: 12px; }
   .part-main { grid-template-columns: 33px minmax(110px, 1fr) minmax(110px, 1fr) 59px 64px; gap: 7px; padding-inline: 11px; }
   .part-select { font-size: 7px; padding-left: 5px; }
+  .comparison-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .how-inner { column-gap: 40px; }
 }
 @media (max-width: 740px) {
@@ -405,6 +441,12 @@ h1, h2, h3, p { margin-top: 0; }
   .offer-evidence, .offer-price { font-size: 7px; }
   .chosen-tag { font-size: 5px; }
   .trust-section { padding-top: 58px; padding-bottom: 54px; }
+  .comparison-section { padding-top: 55px; padding-bottom: 58px; }
+  .comparison-heading { align-items: flex-start; }
+  .comparison-heading h2 { font-size: 29px; }
+  .comparison-badge { margin-top: 5px; padding: 7px 8px; font-size: 6px; }
+  .comparison-controls { grid-template-columns: 1fr; gap: 12px; margin-top: 17px; padding: 14px; }
+  .comparison-table th, .comparison-table td { padding: 10px; }
   .trust-grid { grid-template-columns: 1fr; gap: 8px; margin-top: 19px; }
   .trust-card { min-height: 118px; padding: 15px; }
   .trust-card p { max-width: 430px; }

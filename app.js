@@ -1,5 +1,6 @@
 import { BUNDLES, COMPONENTS, COUNTIES, DEFAULT_BUILD, OFFERS, PRODUCTS, RETAILERS, SHIPPING_RULES } from "./data.js";
 import { checkCompatibility } from "./compatibility.js";
+import { compareCatalogProducts, PRODUCT_CATEGORIES } from "./comparison.js";
 import { cheapestItemPlan, optimizeBasket } from "./optimizer.js";
 
 const $ = selector => document.querySelector(selector);
@@ -194,12 +195,111 @@ function renderSavedBuilds() {
     saved.map(item => '<div class="saved-item"><button type="button" data-load-saved="' + item.id + '" class="saved-name">' + escapeHTML(item.name) + '<small>' + new Date(item.createdAt).toLocaleDateString("en-IE") + ' · illustrative total ' + money(Number(item.total) || 0) + '</small></button><button type="button" class="saved-remove" data-remove-saved="' + item.id + '" aria-label="Remove ' + escapeHTML(item.name) + '">×</button></div>').join("") + '</div>' : "";
 }
 
+const comparisonSpecLabels = {
+  socket: "CPU socket",
+  memoryGen: "Memory generation",
+  watts: "Rated power",
+  sockets: "Supported sockets",
+  maxTdp: "Example cooling rating",
+  form: "Board form factor",
+  capacity: "Capacity",
+  length: "Card length",
+  boardSizes: "Supported board sizes",
+  maxGpuLength: "Maximum GPU length"
+};
+
+function syncComparisonSelectors() {
+  const category = $("#compare-category").value;
+  const products = PRODUCTS.filter(product => product.category === category);
+  for (const [index, id] of ["compare-one", "compare-two", "compare-three"].entries()) {
+    const select = $("#" + id);
+    const previous = select.value;
+    const third = index === 2;
+    const optionMarkup = products.map(product =>
+      '<option value="' + escapeHTML(product.id) + '">' + escapeHTML(product.name) + "</option>"
+    ).join("");
+    select.innerHTML = (third ? '<option value="">Choose a third product</option>' : "") + optionMarkup;
+    if (products.some(product => product.id === previous)) {
+      select.value = previous;
+    } else if (third) {
+      select.value = "";
+    } else {
+      select.value = products[Math.min(index, products.length - 1)]?.id ?? "";
+    }
+  }
+}
+
+function comparisonSpecValue(key, value, category) {
+  const raw = Array.isArray(value) ? value.join(", ") : String(value);
+  if (typeof value === "number") {
+    if (key === "watts" || key === "maxTdp") return raw + " W";
+    if (key === "length" || key === "maxGpuLength") return raw + " mm";
+    if (key === "capacity") return raw + (category === "storage" ? " TB" : " GB");
+  }
+  return raw;
+}
+
+function compatibilitySummaryForProduct(product) {
+  const component = COMPONENTS.find(item => item.category === product.category);
+  if (!component) return { status: "unknown", label: "Unverified" };
+  const candidate = { ...build, [component.id]: product.id };
+  const result = checkCompatibility({
+    components: COMPONENTS.map(item => ({ ...item, productId: candidate[item.id] })),
+    products: PRODUCTS
+  });
+  const label = {
+    compatible: "Recorded rules pass",
+    warning: "Review warnings",
+    incompatible: result.incompatibleCount + " conflict" + (result.incompatibleCount === 1 ? "" : "s"),
+    unknown: "Unverified"
+  }[result.status];
+  const reasons = result.issues.map(issue => issue.title + ": " + issue.detail).join(" ");
+  return { status: result.status, label, reasons: reasons || "No recorded compatibility issue for this example configuration." };
+}
+
+function renderComparison() {
+  const host = $("#comparison-table-wrap");
+  if (!host) return;
+  try {
+    const comparison = compareCatalogProducts({
+      category: $("#compare-category").value,
+      productIds: [$("#compare-one").value, $("#compare-two").value, $("#compare-three").value],
+      products: PRODUCTS,
+      offers: OFFERS
+    });
+    const rows = [
+      ["Lowest sample item price", comparison.columns.map(column =>
+        column.lowestExamplePrice === null
+          ? "Not listed"
+          : money(column.lowestExamplePrice) + " · " + column.exampleOfferCount + " sample offers"
+      )],
+      ["Compatibility with this build", comparison.columns.map(column => {
+        const summary = compatibilitySummaryForProduct(column.product);
+        return '<span class="compare-compat compare-compat-' + summary.status + '" title="' + escapeHTML(summary.reasons) + '">' + escapeHTML(summary.label) + '</span>';
+      })],
+      ...comparison.specKeys.map(key => [comparisonSpecLabels[key] || key, comparison.columns.map(column =>
+        Object.prototype.hasOwnProperty.call(column.specs, key)
+          ? comparisonSpecValue(key, column.specs[key], comparison.category)
+          : "Not listed in this demo"
+      )])
+    ];
+    host.innerHTML = '<table class="comparison-table"><thead><tr><th scope="col">' + escapeHTML(comparison.categoryLabel) + '</th>' +
+      comparison.columns.map(column => '<th scope="col"><strong>' + escapeHTML(column.product.name) + '</strong><small>' + escapeHTML(column.product.detail) + '</small></th>').join("") +
+      '</tr></thead><tbody>' + rows.map(([label, values]) => '<tr><th scope="row">' + escapeHTML(label) + '</th>' +
+        values.map(value => '<td>' + (value.startsWith?.("<span class=\"compare-compat") ? value : escapeHTML(value)) + '</td>').join("") +
+        '</tr>').join("") + '</tbody></table>';
+  } catch (error) {
+    host.innerHTML = '<p class="comparison-empty">' + escapeHTML(error.message) + '</p>';
+  }
+}
+
 function render() {
   const plan = currentPlan();
   renderParts(plan);
   renderPlan(plan);
   renderCompatibility();
   renderSavedBuilds();
+  renderComparison();
   $("#budget").value = budget;
   $("#budget-range").value = Math.max(700, Math.min(3000, budget));
   $("#workload").value = workload;
@@ -291,6 +391,13 @@ $("#parts-list").addEventListener("click", event => {
 });
 
 $("#part-search").addEventListener("input", () => renderParts(currentPlan()));
+$("#compare-category").addEventListener("change", () => {
+  syncComparisonSelectors();
+  renderComparison();
+});
+for (const id of ["compare-one", "compare-two", "compare-three"]) {
+  $("#" + id).addEventListener("change", renderComparison);
+}
 $("#strategy").addEventListener("change", render);
 $("#budget").addEventListener("change", () => {
   budget = Math.max(700, Math.min(5000, Number($("#budget").value) || 1000));
@@ -349,6 +456,7 @@ $(".theme-toggle").addEventListener("click", () => {
 $("#year").textContent = new Date().getFullYear();
 if (localStorage.getItem("rigwise-theme") === "dark") document.body.classList.add("dark-theme");
 $("#county").value = county;
+syncComparisonSelectors();
 renderLocationNote();
 if (shared) {
   $("#build-status").textContent = workloadLabel(workload) + " shared build";
