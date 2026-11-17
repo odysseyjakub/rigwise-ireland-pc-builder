@@ -1,5 +1,16 @@
 function validPrice(value, label) {
   if (!Number.isFinite(value) || value < 0) throw new Error("Invalid price for " + label);
+  const minor = Math.round(value * 100);
+  if (!Number.isSafeInteger(minor) || Math.abs(value - minor / 100) > 1e-8) {
+    throw new Error("Price for " + label + " must be a non-negative amount in whole cents");
+  }
+  return minor;
+}
+
+function sumMinor(values, label) {
+  const total = values.reduce((sum, value) => sum + value, 0);
+  if (!Number.isSafeInteger(total)) throw new Error(label + " exceeds the safe integer range");
+  return total;
 }
 
 export function calculateShipping(items, rules) {
@@ -7,18 +18,38 @@ export function calculateShipping(items, rules) {
   for (const item of items) {
     const rule = rules[item.retailerId];
     if (!rule) throw new Error("Missing shipping rule for " + item.retailerId);
-    validPrice(item.price, item.id || item.componentId || "order item");
-    validPrice(rule.rate, "shipping rule for " + item.retailerId);
-    const group = grouped.get(item.retailerId) ?? { retailerId: item.retailerId, subtotal: 0, count: 0, rule };
-    group.subtotal += item.price;
-    group.count += Number.isFinite(item.shippingUnits) && item.shippingUnits > 0 ? item.shippingUnits : 1;
+    const itemMinor = validPrice(item.price, item.id || item.componentId || "order item");
+    const rateMinor = validPrice(rule.rate, "shipping rule for " + item.retailerId);
+    const freeOverMinor = Number.isFinite(rule.freeOver)
+      ? validPrice(rule.freeOver, "free-shipping threshold for " + item.retailerId)
+      : null;
+    if (item.shippingUnits !== undefined && (!Number.isSafeInteger(item.shippingUnits) || item.shippingUnits <= 0)) {
+      throw new Error("Shipping units for " + (item.id || item.componentId || "order item") + " must be a positive integer");
+    }
+    const group = grouped.get(item.retailerId) ?? {
+      retailerId: item.retailerId,
+      subtotalMinor: 0,
+      count: 0,
+      rateMinor,
+      freeOverMinor,
+      perItem: rule.perItem === true
+    };
+    group.subtotalMinor = sumMinor([group.subtotalMinor, itemMinor], "Retailer subtotal");
+    group.count += item.shippingUnits ?? 1;
+    if (!Number.isSafeInteger(group.count)) throw new Error("Shipping item count exceeds the safe integer range");
     grouped.set(item.retailerId, group);
   }
   return [...grouped.values()].map(group => {
-    const rule = group.rule;
-    const free = Number.isFinite(rule.freeOver) && group.subtotal >= rule.freeOver;
-    const cost = free ? 0 : (rule.perItem ? rule.rate * group.count : rule.rate);
-    return { retailerId: group.retailerId, subtotal: group.subtotal, itemCount: group.count, cost, free };
+    const free = group.freeOverMinor !== null && group.subtotalMinor >= group.freeOverMinor;
+    const costMinor = free ? 0 : (group.perItem ? group.rateMinor * group.count : group.rateMinor);
+    if (!Number.isSafeInteger(costMinor)) throw new Error("Shipping cost exceeds the safe integer range");
+    return {
+      retailerId: group.retailerId,
+      subtotal: group.subtotalMinor / 100,
+      itemCount: group.count,
+      cost: costMinor / 100,
+      free
+    };
   });
 }
 
@@ -174,25 +205,28 @@ export function optimizeBasket({
       }));
       const purchaseLines = [...selected, ...bundleLines];
       const orders = calculateShipping(purchaseLines, shippingRules);
-      const partsSubtotal = selected.reduce((sum, item) => sum + item.price, 0)
-        + selectedBundles.reduce((sum, bundle) => sum + bundle.price, 0);
-      const deliveryTotal = orders.reduce((sum, order) => sum + order.cost, 0);
+      const partsSubtotalMinor = sumMinor([
+        ...selected.map(item => validPrice(item.price, item.id || item.componentId || "offer")),
+        ...selectedBundles.map(bundle => validPrice(bundle.price, bundle.id))
+      ], "Parts subtotal");
+      const deliveryTotalMinor = sumMinor(orders.map(order => validPrice(order.cost, "shipping for " + order.retailerId)), "Delivery total");
       const orderCosts = evaluateOrderCosts(orders, purchaseLines, orderCostEvaluator);
       if (!orderCosts.exact) {
         combinationsRejectedByCost += 1;
         if (orderCosts.reason) costRejectionReasons.add(orderCosts.reason);
         return;
       }
+      const totalMinor = sumMinor([partsSubtotalMinor, deliveryTotalMinor, orderCosts.additionalMinor], "Basket total");
       const candidate = {
         selected: [...selected],
         bundles: [...selectedBundles],
         assignments: Object.fromEntries(assignments),
         orders: orderCosts.orders,
-        partsSubtotal,
-        deliveryTotal,
+        partsSubtotal: partsSubtotalMinor / 100,
+        deliveryTotal: deliveryTotalMinor / 100,
         orderCostMinor: orderCosts.additionalMinor,
         orderCostBreakdown: orderCosts.breakdown,
-        total: partsSubtotal + deliveryTotal + orderCosts.additionalMinor / 100,
+        total: totalMinor / 100,
         retailers: [...new Set([...selected.map(item => item.retailerId), ...selectedBundles.map(bundle => bundle.retailerId)])].sort(),
         combinationsChecked,
         exact: true
@@ -240,23 +274,24 @@ export function cheapestItemPlan({ components, offers, shippingRules, orderCostE
   const selected = components.map(component => {
     const candidates = offers
       .filter(offer => offer.componentId === component.id && offer.available === true && Boolean(shippingRules[offer.retailerId]))
-      .sort((a, b) => a.price - b.price || a.retailerId.localeCompare(b.retailerId));
+      .sort((a, b) => validPrice(a.price, a.id || a.componentId || "offer") - validPrice(b.price, b.id || b.componentId || "offer") || a.retailerId.localeCompare(b.retailerId));
     if (candidates.length === 0) throw new Error("No eligible offers for " + component.id);
     return candidates[0];
   });
   const orders = calculateShipping(selected, shippingRules);
-  const partsSubtotal = selected.reduce((sum, item) => sum + item.price, 0);
-  const deliveryTotal = orders.reduce((sum, order) => sum + order.cost, 0);
+  const partsSubtotalMinor = sumMinor(selected.map(item => validPrice(item.price, item.id || item.componentId || "offer")), "Parts subtotal");
+  const deliveryTotalMinor = sumMinor(orders.map(order => validPrice(order.cost, "shipping for " + order.retailerId)), "Delivery total");
   const orderCosts = evaluateOrderCosts(orders, selected, orderCostEvaluator);
   if (!orderCosts.exact) throw new Error("Cheapest-item plan has unverified retailer order costs: " + orderCosts.reason);
+  const totalMinor = sumMinor([partsSubtotalMinor, deliveryTotalMinor, orderCosts.additionalMinor], "Basket total");
   return {
     selected,
     orders: orderCosts.orders,
-    partsSubtotal,
-    deliveryTotal,
+    partsSubtotal: partsSubtotalMinor / 100,
+    deliveryTotal: deliveryTotalMinor / 100,
     orderCostMinor: orderCosts.additionalMinor,
     orderCostBreakdown: orderCosts.breakdown,
-    total: partsSubtotal + deliveryTotal + orderCosts.additionalMinor / 100
+    total: totalMinor / 100
   };
 }
 
