@@ -155,15 +155,20 @@ function renderPlan(plan) {
   const cheapest = cheapestItemPlan({ components: buildItems().map(item => ({ id: item.productId })), offers: selectedOffers(), shippingRules: SHIPPING_RULES });
   const delta = cheapest.total - plan.total;
   const reason = delta > 0.009
-    ? "The whole-basket plan saves " + money(delta) + " versus picking the cheapest item listing for each part, after sample delivery fees."
-    : "The lowest item listings also make the lowest sample basket for this selection.";
+    ? (plan.exact ? "The whole-basket plan saves " : "This best-known whole-basket plan saves ") + money(delta) + " versus picking the cheapest item listing for each part, after sample delivery fees."
+    : plan.exact
+      ? "The lowest item listings also make the lowest sample basket for this selection."
+      : "The search limit was reached before the lowest whole-basket total could be proven.";
   const bundleReason = plan.bundles.length
     ? " Includes " + plan.bundles.map(bundle => bundle.name + " at " + money(bundle.price) + " for " + bundle.covers.length + " parts."
       ).join(" ")
     : "";
   $("#optimiser-reason").textContent = reason + bundleReason;
   $("#plan-status").classList.toggle("plan-over-budget", remainder < 0);
-  $("#plan-status").innerHTML = "<span></span><span>" + (remainder < 0 ? "Illustrative total is over your budget" : "Exact demo search · " + plan.combinationsChecked + " combinations checked") + "</span>";
+  const searchStatus = plan.exact
+    ? "Exact demo search · " + plan.combinationsChecked + " combinations checked"
+    : "Best-known demo plan · " + plan.combinationsChecked + " combinations checked (" + plan.maxCombinations + " limit)";
+  $("#plan-status").innerHTML = "<span></span><span>" + (remainder < 0 ? "Illustrative total is over your budget · " : "") + searchStatus + "</span>";
 }
 
 function renderCompatibility() {
