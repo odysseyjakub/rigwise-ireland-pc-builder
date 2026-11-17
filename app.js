@@ -147,7 +147,7 @@ function renderCompatibility() {
   const issues = checkCompatibility({ components: buildItems(), products: PRODUCTS });
   const panel = $("#compatibility");
   if (issues.length === 0) {
-    panel.innerHTML = '<div class="compat-good"><span class="compat-mark">✓</span><div><strong>Looks compatible in the demo rules</strong><span>Socket, memory, case fit and estimated power checks passed for these example parts.</span></div><span class="compat-label">4 CHECKS PASSED</span></div>';
+    panel.innerHTML = '<div class="compat-good"><span class="compat-mark">✓</span><div><strong>Looks compatible in the demo rules</strong><span>Socket, memory, cooler mounting and capacity, case fit, graphics clearance, and estimated power checks passed for these example parts.</span></div><span class="compat-label">RULES PASSED</span></div>';
     return;
   }
   panel.innerHTML = '<div class="compat-heading"><span class="compat-mark">!</span><div><strong>' + issues.length + ' compatibility ' + (issues.length === 1 ? "check" : "checks") + ' to review</strong><span>These warnings use simplified demo specifications.</span></div></div>' +
@@ -312,3 +312,4 @@ if (shared) {
   showToast("Shared example build loaded.");
 }
 render();
+
