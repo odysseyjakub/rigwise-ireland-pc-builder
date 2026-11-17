@@ -17,6 +17,7 @@ Open index.html in a modern browser, or serve this directory with any static web
 - An exact exhaustive search over demo offers and bundles, including per-order free-shipping thresholds and per-item delivery fees. Unknown availability and retailers without a known shipping rule are excluded. Bundles cover their included build parts as one purchase, so overlapping bundles cannot double-count a required component.
 - Expandable sample offer comparisons and lowest-total/fewest-shop strategies.
 - Local browser saving, share links and a light/dark theme.
+- Awin CSV/TSV feed normalisation and conservative product matching groundwork in awin-feed.js; imported observations cannot enter recommendations until each required source, match, stock, link, Ireland delivery, tax and order-shipping check is verified.
 
 ## Data boundary
 
