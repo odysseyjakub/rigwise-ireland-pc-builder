@@ -20,9 +20,9 @@ export function calculateShipping(items, rules) {
     if (!rule) throw new Error("Missing shipping rule for " + item.retailerId);
     const itemMinor = validPrice(item.price, item.id || item.componentId || "order item");
     const rateMinor = validPrice(rule.rate, "shipping rule for " + item.retailerId);
-    const freeOverMinor = Number.isFinite(rule.freeOver)
-      ? validPrice(rule.freeOver, "free-shipping threshold for " + item.retailerId)
-      : null;
+    const freeOverMinor = rule.freeOver === undefined || rule.freeOver === null
+      ? null
+      : validPrice(rule.freeOver, "free-shipping threshold for " + item.retailerId);
     if (item.shippingUnits !== undefined && (!Number.isSafeInteger(item.shippingUnits) || item.shippingUnits <= 0)) {
       throw new Error("Shipping units for " + (item.id || item.componentId || "order item") + " must be a positive integer");
     }
@@ -155,12 +155,16 @@ export function optimizeBasket({
   locks = {},
   excludedRetailerIds = [],
   strategy = "lowest",
-  orderCostEvaluator
+  orderCostEvaluator,
+  maxCombinations = 10_000
 }) {
   if (!Array.isArray(components) || !Array.isArray(offers) || !Array.isArray(bundles)) {
     throw new Error("Components, offers, and bundles must be arrays");
   }
   if (strategy !== "lowest" && strategy !== "fewest") throw new Error("Unknown optimisation strategy: " + strategy);
+  if (!Number.isSafeInteger(maxCombinations) || maxCombinations < 1) {
+    throw new Error("maxCombinations must be a positive safe integer");
+  }
 
   const componentIds = components.map(component => component.id);
   if (new Set(componentIds).size !== componentIds.length) throw new Error("Component ids must be unique");
@@ -178,7 +182,11 @@ export function optimizeBasket({
   for (const componentId of componentIds) {
     const lock = locks[componentId];
     const choices = availableOffers
-      .filter(offer => offer.componentId === componentId && lockAllows(lock, { ...offer, kind: "offer" }));
+      .filter(offer => offer.componentId === componentId && lockAllows(lock, { ...offer, kind: "offer" }))
+      .sort((left, right) => {
+        const retailerOrder = strategy === "fewest" ? left.retailerId.localeCompare(right.retailerId) : 0;
+        return retailerOrder || validPrice(left.price, left.id || componentId) - validPrice(right.price, right.id || componentId) || left.retailerId.localeCompare(right.retailerId) || String(left.id ?? "").localeCompare(String(right.id ?? ""));
+      });
     individualChoices.set(componentId, choices);
     const hasBundleChoice = validBundles.some(bundle =>
       bundle.covers.includes(componentId) && bundle.covers.every(coveredId => {
@@ -189,12 +197,30 @@ export function optimizeBasket({
     if (choices.length === 0 && !hasBundleChoice) throw new Error("No eligible offers for " + componentId);
   }
 
+  const orderedBundles = [...validBundles].sort((left, right) => {
+    const retailerOrder = strategy === "fewest" ? left.retailerId.localeCompare(right.retailerId) : 0;
+    const leftUnitMinor = validPrice(left.price, left.id) / left.covers.length;
+    const rightUnitMinor = validPrice(right.price, right.id) / right.covers.length;
+    return retailerOrder || leftUnitMinor - rightUnitMinor || left.retailerId.localeCompare(right.retailerId) || left.id.localeCompare(right.id);
+  });
+  const searchOrder = [...componentIds].sort((left, right) => {
+    const leftChoices = individualChoices.get(left).length + orderedBundles.filter(bundle => bundle.covers.includes(left)).length;
+    const rightChoices = individualChoices.get(right).length + orderedBundles.filter(bundle => bundle.covers.includes(right)).length;
+    return leftChoices - rightChoices || left.localeCompare(right);
+  });
+
   let best = null;
   let combinationsChecked = 0;
   let combinationsRejectedByCost = 0;
+  let searchLimitReached = false;
   const costRejectionReasons = new Set();
   function visit(uncovered, selected, selectedBundles, assignments) {
+    if (searchLimitReached) return;
     if (uncovered.size === 0) {
+      if (combinationsChecked >= maxCombinations) {
+        searchLimitReached = true;
+        return;
+      }
       combinationsChecked += 1;
       const bundleLines = selectedBundles.map(bundle => ({
         id: bundle.id,
@@ -235,7 +261,7 @@ export function optimizeBasket({
       return;
     }
 
-    const componentId = componentIds.find(id => uncovered.has(id));
+    const componentId = searchOrder.find(id => uncovered.has(id));
     for (const offer of individualChoices.get(componentId)) {
       selected.push(offer);
       assignments.set(componentId, { type: "offer", offerId: offer.id, retailerId: offer.retailerId });
@@ -244,9 +270,10 @@ export function optimizeBasket({
       visit(next, selected, selectedBundles, assignments);
       selected.pop();
       assignments.delete(componentId);
+      if (searchLimitReached) return;
     }
 
-    for (const bundle of validBundles) {
+    for (const bundle of orderedBundles) {
       if (!bundle.covers.includes(componentId) || !bundle.covers.every(id => uncovered.has(id))) continue;
       if (!bundle.covers.every(id => lockAllows(locks[id], { ...bundle, kind: "bundle" }))) continue;
       selectedBundles.push(bundle);
@@ -256,10 +283,14 @@ export function optimizeBasket({
       visit(next, selected, selectedBundles, assignments);
       selectedBundles.pop();
       bundle.covers.forEach(id => assignments.delete(id));
+      if (searchLimitReached) return;
     }
   }
 
   visit(required, [], [], new Map());
+  if (!best && searchLimitReached) {
+    throw new Error("Search limit reached before a feasible complete basket was found after " + combinationsChecked + " combinations");
+  }
   if (!best && combinationsChecked > 0 && orderCostEvaluator) {
     throw new Error("No complete basket has verified retailer order costs (" + combinationsRejectedByCost +
       " rejected: " + [...costRejectionReasons].slice(0, 3).join(" | ") + ")");
@@ -267,6 +298,9 @@ export function optimizeBasket({
   if (!best) throw new Error("No complete basket satisfies the selected locks and exclusions");
   best.combinationsChecked = combinationsChecked;
   best.combinationsRejectedByCost = combinationsRejectedByCost;
+  best.exact = !searchLimitReached;
+  best.searchStatus = searchLimitReached ? "best-known" : "exact";
+  best.maxCombinations = maxCombinations;
   return best;
 }
 
