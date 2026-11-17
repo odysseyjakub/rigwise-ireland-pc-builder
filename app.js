@@ -2,13 +2,17 @@ import { BUNDLES, COMPONENTS, COUNTIES, DEFAULT_BUILD, OFFERS, PRODUCTS, RETAILE
 import { checkCompatibility } from "./compatibility.js";
 import { generateAutoBuild } from "./auto-build.js";
 import { readStorageValue, removeStorageValue, writeStorageValue } from "./browser-storage.js";
+import { getOrCreateLocalAccount, migrateLegacySavedBuilds } from "./local-account.js";
 import { compareCatalogProducts, PRODUCT_CATEGORIES } from "./comparison.js";
 import { cheapestItemPlan, optimizeBasket } from "./optimizer.js";
 
 const $ = selector => document.querySelector(selector);
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(value);
 const productById = id => PRODUCTS.find(product => product.id === id);
-const STORAGE_KEY = "rigwise-demo-builds-v1";
+const localAccount = getOrCreateLocalAccount();
+const STORAGE_KEY = localAccount.persisted
+  ? migrateLegacySavedBuilds(localAccount.id).key
+  : "rigwise-demo-builds-v1";
 const ICONS = {
   cpu: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 9h6v6H9zM9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>',
   cooler: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2"/><path d="M12 4c2 2 2 4 0 6M20 12c-2 2-4 2-6 0M12 20c-2-2-2-4 0-6M4 12c2-2 4-2 6 0"/></svg>',
@@ -203,6 +207,13 @@ function renderSavedBuilds() {
     saved.map(item => '<div class="saved-item"><button type="button" data-load-saved="' + item.id + '" class="saved-name">' + escapeHTML(item.name) + '<small>' + new Date(item.createdAt).toLocaleDateString("en-IE") + ' · illustrative total ' + money(Number(item.total) || 0) + '</small></button><button type="button" class="saved-remove" data-remove-saved="' + item.id + '" aria-label="Remove ' + escapeHTML(item.name) + '">×</button></div>').join("") + '</div>' : "";
 }
 
+function renderLocalAccount() {
+  $("#local-account-id").textContent = localAccount.id;
+  $("#local-account-state").textContent = localAccount.persisted
+    ? "ID saved in this browser"
+    : "Temporary ID · browser storage is unavailable";
+}
+
 const comparisonSpecLabels = {
   socket: "CPU socket",
   memoryGen: "Memory generation",
@@ -326,6 +337,7 @@ function saveBuild() {
   const saved = readSavedBuilds();
   const item = {
     id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+    accountId: localAccount.id,
     name: workloadLabel(workload) + " · " + new Date().toLocaleDateString("en-IE"),
     build: { ...build },
     budget,
@@ -466,8 +478,19 @@ $(".theme-toggle").addEventListener("click", () => {
   $(".theme-toggle").setAttribute("aria-label", enabled ? "Switch to light theme" : "Switch to dark theme");
 });
 
+$("#copy-account-id").addEventListener("click", async () => {
+  try {
+    if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+    await navigator.clipboard.writeText(localAccount.id);
+    showToast("Local account ID copied.");
+  } catch {
+    showToast("Select the local ID and copy it from the account panel.");
+  }
+});
+
 $("#year").textContent = new Date().getFullYear();
 if (readStorageValue("rigwise-theme") === "dark") document.body.classList.add("dark-theme");
+renderLocalAccount();
 $("#county").value = county;
 syncComparisonSelectors();
 renderLocationNote();
