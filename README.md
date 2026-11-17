@@ -13,7 +13,7 @@ Open index.html in a modern browser, or serve this directory with any static web
 - Editable example components, budget and workload.
 - Approximate county selection for all 26 Republic of Ireland counties, stored locally; demo delivery rules are intentionally county-neutral.
 - Illustrative auto-build profiles.
-- Demo compatibility checks for processor and cooler sockets, cooler capacity, memory generation, motherboard and case fit, graphics clearance, and estimated power headroom.
+- Status-aware compatibility checks cover processor/socket/chipset/BIOS support, memory capacity/speed, cooler fit, graphics clearance/connectors, storage interfaces, PSU fit and headroom. Missing specifications show as unverified instead of silently passing.
 - An exact exhaustive search over demo offers and bundles, including per-order free-shipping thresholds and per-item delivery fees. Unknown availability and retailers without a known shipping rule are excluded. Bundles cover their included build parts as one purchase, so overlapping bundles cannot double-count a required component.
 - Expandable sample offer comparisons and lowest-total/fewest-shop strategies.
 - Local browser saving, share links and a light/dark theme.

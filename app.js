@@ -166,14 +166,24 @@ function renderPlan(plan) {
 }
 
 function renderCompatibility() {
-  const issues = checkCompatibility({ components: buildItems(), products: PRODUCTS });
+  const result = checkCompatibility({ components: buildItems(), products: PRODUCTS });
   const panel = $("#compatibility");
-  if (issues.length === 0) {
-    panel.innerHTML = '<div class="compat-good"><span class="compat-mark">✓</span><div><strong>Looks compatible in the demo rules</strong><span>Socket, memory, cooler mounting and capacity, case fit, graphics clearance, and estimated power checks passed for these example parts.</span></div><span class="compat-label">RULES PASSED</span></div>';
+  const passed = result.checks.filter(check => check.status === "compatible").length;
+  const statusText = {
+    incompatible: "Known incompatibility found",
+    warning: "Compatibility warnings to review",
+    unknown: "Compatibility data is incomplete"
+  };
+  const summary = passed + " checks passed" +
+    (result.warningCount ? " · " + result.warningCount + " warning" + (result.warningCount === 1 ? "" : "s") : "") +
+    (result.incompatibleCount ? " · " + result.incompatibleCount + " conflict" + (result.incompatibleCount === 1 ? "" : "s") : "") +
+    (result.unknownCount ? " · " + result.unknownCount + " unverified" : "");
+  if (result.status === "compatible") {
+    panel.innerHTML = '<div class="compat-good"><span class="compat-mark">✓</span><div><strong>All recorded demo rules pass</strong><span>' + summary + ' for these example parts. This does not verify real hardware revisions or manufacturer QVL data.</span></div><span class="compat-label">COMPATIBLE</span></div>';
     return;
   }
-  panel.innerHTML = '<div class="compat-heading"><span class="compat-mark">!</span><div><strong>' + issues.length + ' compatibility ' + (issues.length === 1 ? "check" : "checks") + ' to review</strong><span>These warnings use simplified demo specifications.</span></div></div>' +
-    issues.map(issue => '<div class="compat-issue severity-' + issue.severity + '"><strong>' + issue.title + '</strong><span>' + issue.detail + '</span></div>').join("");
+  panel.innerHTML = '<div class="compat-heading"><span class="compat-mark">!</span><div><strong>' + statusText[result.status] + '</strong><span>' + summary + ' · simplified demo specifications only</span></div></div>' +
+    result.issues.map(issue => '<div class="compat-issue severity-' + issue.status + '"><strong>' + issue.title + '</strong><span>' + issue.detail + '</span></div>').join("");
 }
 
 function renderSavedBuilds() {

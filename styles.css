@@ -234,7 +234,9 @@ h1, h2, h3, p { margin-top: 0; }
 .compat-label { margin-left: auto; color: #84937d; font: 7px "DM Mono", monospace; }
 .compat-issue { display: flex; gap: 8px; padding: 9px 0 9px 33px; border-top: 1px solid #e9eee4; color: #596358; font-size: 8px; }
 .compat-issue strong { color: #946c3c; }
-.severity-error strong { color: #ad5346; }
+.severity-incompatible strong { color: #ad5346; }
+.severity-warning strong { color: #946c3c; }
+.severity-unknown strong { color: #737f87; }
 .how-section { background: var(--forest); color: #f3f4e9; }
 .how-inner { min-height: 406px; display: grid; grid-template-columns: .85fr 1.15fr; grid-template-rows: 1fr auto; column-gap: 80px; padding-top: 62px; }
 .eyebrow-light { color: #b2c0b1; }
@@ -324,6 +326,7 @@ h1, h2, h3, p { margin-top: 0; }
 .dark-theme .trust-card p { color: #aab5aa; }
 .dark-theme .section-subtitle { color: #aab5aa; }
 .dark-theme .part-price strong, .dark-theme .offer-price { color: #d7e4d1; }
+.dark-theme .severity-unknown strong { color: #b6c0c8; }
 .dark-theme .saved-name { color: #e0e8dc; }
 .dark-theme .saved-builds, .dark-theme .parts-footer { background: #1b2420; }
 
