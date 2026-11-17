@@ -11,15 +11,16 @@ Open index.html in a modern browser, or serve this directory with any static web
 ## What works in this demo
 
 - Editable example components, budget and workload.
+- Approximate county selection for all 26 Republic of Ireland counties, stored locally; demo delivery rules are intentionally county-neutral.
 - Illustrative auto-build profiles.
 - Demo compatibility checks for processor and cooler sockets, cooler capacity, memory generation, motherboard and case fit, graphics clearance, and estimated power headroom.
-- An exact exhaustive search over the demo offers, including per-order free-shipping thresholds and per-item delivery fees.
+- An exact exhaustive search over demo offers and bundles, including per-order free-shipping thresholds and per-item delivery fees. Unknown availability and retailers without a known shipping rule are excluded. Bundles cover their included build parts as one purchase, so overlapping bundles cannot double-count a required component.
 - Expandable sample offer comparisons and lowest-total/fewest-shop strategies.
 - Local browser saving, share links and a light/dark theme.
 
 ## Data boundary
 
-Prices, retailer labels, stock and delivery rules are synthetic fixtures used to demonstrate the application and test the optimiser. They are not live quotes or recommendations. The demo does not connect to retailer APIs, check shipping destinations, identify Irish shops, estimate VAT/import charges, or link to purchasable listings. No physical collection is represented.
+Prices, retailer labels, bundles, stock and delivery rules are synthetic fixtures used to demonstrate the application and test the optimiser. They are not live quotes or recommendations. The demo does not connect to retailer APIs, check shipping destinations, identify Irish shops, estimate VAT/import charges, or link to purchasable listings. No physical collection is represented. Saved builds remain in the current browser; there are no user accounts or cloud-synced builds.
 
-The next production milestone is a source-by-source retailer integration review, followed by permitted product and offer feeds, delivery and tax rules, freshness tracking, and independently verified purchasing links. Until those exist, the buying plan must not be used to place an order.
+The current retailer-source review is in [RETAILER-SOURCES.md](RETAILER-SOURCES.md). The next production milestone is access to an authorised retailer feed, followed by source-aware product matching, verified delivery and tax rules, freshness tracking, and independently checked purchasing links. Until those exist, the buying plan must not be used to place an order.
 

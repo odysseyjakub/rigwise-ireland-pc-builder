@@ -3,6 +3,13 @@ export const RETAILERS = {
   sampleB: { id: "sample-b", name: "Sample shop B", shortName: "Shop B", note: "€7/item · demo rule", shipping: { rate: 7, perItem: true } }
 };
 
+export const COUNTIES = [
+  "Carlow", "Cavan", "Clare", "Cork", "Donegal", "Dublin", "Galway", "Kerry",
+  "Kildare", "Kilkenny", "Laois", "Leitrim", "Limerick", "Longford", "Louth",
+  "Mayo", "Meath", "Monaghan", "Offaly", "Roscommon", "Sligo", "Tipperary",
+  "Waterford", "Westmeath", "Wexford", "Wicklow"
+];
+
 export const SHIPPING_RULES = Object.fromEntries(
   Object.values(RETAILERS).map(retailer => [retailer.id, retailer.shipping])
 );
@@ -44,6 +51,18 @@ export const OFFERS = PRODUCTS.flatMap(product =>
   }))
 );
 
+export const BUNDLES = [
+  {
+    id: "sample-am5-core-kit",
+    name: "Sample AM5 core bundle",
+    covers: ["cpu-6", "board-b650-atx"],
+    retailerId: RETAILERS.sampleA.id,
+    price: 295,
+    available: true,
+    evidence: "synthetic-demo-fixture"
+  }
+];
+
 export const COMPONENTS = [
   { id: "cpu", label: "Processor", category: "cpu", icon: "cpu" },
   { id: "cooler", label: "CPU cooler", category: "cooler", icon: "cooler" },
@@ -65,3 +84,4 @@ export const DEFAULT_BUILD = {
   power: "psu-650",
   case: "case-mid"
 };
+

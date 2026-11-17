@@ -1,4 +1,4 @@
-import { COMPONENTS, DEFAULT_BUILD, OFFERS, PRODUCTS, RETAILERS, SHIPPING_RULES } from "./data.js";
+import { BUNDLES, COMPONENTS, COUNTIES, DEFAULT_BUILD, OFFERS, PRODUCTS, RETAILERS, SHIPPING_RULES } from "./data.js";
 import { checkCompatibility } from "./compatibility.js";
 import { cheapestItemPlan, optimizeBasket } from "./optimizer.js";
 
@@ -32,7 +32,7 @@ function fromShareHash() {
     const encoded = location.hash.slice(7).replace(/-/g, "+").replace(/_/g, "/");
     const decoded = JSON.parse(decodeURIComponent(escape(atob(encoded))));
     if (!decoded || !decoded.build || !COMPONENTS.every(component => PRODUCTS.some(product => product.id === decoded.build[component.id] && product.category === component.category))) return null;
-    return decoded;
+    return { ...decoded, county: COUNTIES.includes(decoded.county) ? decoded.county : undefined };
   } catch {
     return null;
   }
@@ -42,6 +42,11 @@ const shared = fromShareHash();
 let build = shared?.build ? { ...DEFAULT_BUILD, ...shared.build } : { ...DEFAULT_BUILD };
 let budget = Number(shared?.budget) || 1000;
 let workload = shared?.workload || "gaming";
+let county = COUNTIES.includes(shared?.county)
+  ? shared.county
+  : COUNTIES.includes(localStorage.getItem("rigwise-county"))
+    ? localStorage.getItem("rigwise-county")
+    : "Dublin";
 let expanded = new Set();
 let toastTimer;
 
@@ -62,9 +67,14 @@ function currentPlan() {
   return optimizeBasket({
     components: buildItems().map(item => ({ id: item.productId, buildId: item.id })),
     offers: selectedOffers(),
+    bundles: BUNDLES,
     shippingRules: SHIPPING_RULES,
     strategy: $("#strategy").value
   });
+}
+
+function renderLocationNote() {
+  $("#location-note").textContent = county + " selected · demo shipping rules are county-neutral";
 }
 
 function offerFor(productId, retailerId) {
@@ -73,9 +83,12 @@ function offerFor(productId, retailerId) {
 
 function renderOfferComparison(item, plan) {
   const product = productById(item.productId);
-  const chosen = plan.selected.find(offer => offer.componentId === item.productId);
+  const assignment = plan.assignments[item.productId];
+  const chosen = assignment?.type === "offer" ? plan.selected.find(offer => offer.id === assignment.offerId) : null;
+  const bundle = assignment?.type === "bundle" ? BUNDLES.find(candidate => candidate.id === assignment.bundleId) : null;
   const offers = OFFERS.filter(offer => offer.componentId === item.productId).sort((a, b) => a.price - b.price);
   return '<div class="offer-comparison"><div class="offer-heading"><span>ILLUSTRATIVE SHOP COMPARISON</span><span>Item price · delivery is calculated per basket</span></div>' +
+    (bundle ? '<div class="bundle-note" role="status"><strong>Included in ' + escapeHTML(bundle.name) + '.</strong> The combined kit costs ' + money(bundle.price) + ' for ' + bundle.covers.length + ' selected parts; the demo does not allocate a separate price to each part.</div>' : "") +
     offers.map(offer => {
       const shop = Object.values(RETAILERS).find(retailer => retailer.id === offer.retailerId);
       const isChosen = chosen?.id === offer.id;
@@ -95,7 +108,9 @@ function renderParts(plan) {
   });
   $("#parts-list").innerHTML = filtered.map(item => {
     const product = productById(item.productId);
-    const chosen = plan.selected.find(offer => offer.componentId === item.productId);
+    const assignment = plan.assignments[item.productId];
+    const chosen = assignment?.type === "offer" ? plan.selected.find(offer => offer.id === assignment.offerId) : null;
+    const bundle = assignment?.type === "bundle" ? BUNDLES.find(candidate => candidate.id === assignment.bundleId) : null;
     const lowest = OFFERS.filter(offer => offer.componentId === item.productId).sort((a, b) => a.price - b.price)[0];
     const expandedClass = expanded.has(item.id);
     const options = PRODUCTS.filter(option => option.category === item.category).map(option =>
@@ -106,7 +121,7 @@ function renderParts(plan) {
       '<span class="part-icon icon-' + item.icon + '">' + ICONS[item.icon] + '</span>' +
       '<div class="part-info"><span class="part-category">' + item.label.toUpperCase() + '</span><strong>' + product.name + '</strong><span class="part-detail">' + product.detail + '</span></div>' +
       '<label class="visually-hidden" for="select-' + item.id + '">Choose ' + item.label + '</label><select class="part-select" id="select-' + item.id + '" data-component="' + item.id + '">' + options + '</select>' +
-      '<div class="part-price"><strong>' + money(chosen.price) + '</strong><span>in this plan</span></div>' +
+      '<div class="part-price"><strong>' + (bundle ? "Bundled" : money(chosen?.price ?? 0)) + '</strong><span>' + (bundle ? money(bundle.price) + " kit total" : "in this plan") + '</span></div>' +
       '<button class="offer-toggle" type="button" data-expand="' + item.id + '" aria-expanded="' + expandedClass + '" aria-label="' + (expandedClass ? "Hide" : "Compare") + ' sample offers for ' + item.label + '"><span>' + (expandedClass ? "Close" : "Compare") + '</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7 5 5 5-5"/></svg><small>' + money(lowest.price) + ' lowest item</small></button>' +
       '</div>' + (expandedClass ? renderOfferComparison(item, plan) : "") + '</article>';
   }).join("");
@@ -130,15 +145,21 @@ function renderPlan(plan) {
   $("#shop-count").textContent = plan.orders.length + (plan.orders.length === 1 ? " shop" : " shops");
   $("#shop-orders").innerHTML = plan.orders.map(order => {
     const shop = Object.values(RETAILERS).find(retailer => retailer.id === order.retailerId);
-    const itemCount = COMPONENTS.filter(component => plan.selected.some(offer => offer.componentId === build[component.id] && offer.retailerId === order.retailerId)).length;
-    return '<div class="shop-order"><span class="shop-avatar">' + shop.shortName.slice(-1) + '</span><span class="order-shop">' + shop.name + '<small>' + itemCount + ' parts · ' + shop.note + '</small></span><strong>' + (order.cost === 0 ? "FREE*" : money(order.cost)) + '</strong></div>';
+    const partCount = Object.values(plan.assignments).filter(assignment => assignment.retailerId === order.retailerId).length;
+    const bundleNames = plan.bundles.filter(bundle => bundle.retailerId === order.retailerId).map(bundle => bundle.name);
+    const orderDetail = partCount + (partCount === 1 ? " part" : " parts") + (bundleNames.length ? " · includes " + bundleNames.map(escapeHTML).join(", ") : " · " + shop.note);
+    return '<div class="shop-order"><span class="shop-avatar">' + shop.shortName.slice(-1) + '</span><span class="order-shop">' + shop.name + '<small>' + orderDetail + '</small></span><strong>' + (order.cost === 0 ? "FREE*" : money(order.cost)) + '</strong></div>';
   }).join("");
   const cheapest = cheapestItemPlan({ components: buildItems().map(item => ({ id: item.productId })), offers: selectedOffers(), shippingRules: SHIPPING_RULES });
   const delta = cheapest.total - plan.total;
   const reason = delta > 0.009
     ? "The whole-basket plan saves " + money(delta) + " versus picking the cheapest item listing for each part, after sample delivery fees."
     : "The lowest item listings also make the lowest sample basket for this selection.";
-  $("#optimiser-reason").textContent = reason;
+  const bundleReason = plan.bundles.length
+    ? " Includes " + plan.bundles.map(bundle => bundle.name + " at " + money(bundle.price) + " for " + bundle.covers.length + " parts."
+      ).join(" ")
+    : "";
+  $("#optimiser-reason").textContent = reason + bundleReason;
   $("#plan-status").classList.toggle("plan-over-budget", remainder < 0);
   $("#plan-status").innerHTML = "<span></span><span>" + (remainder < 0 ? "Illustrative total is over your budget" : "Exact demo search · " + plan.combinationsChecked + " combinations checked") + "</span>";
 }
@@ -190,6 +211,7 @@ function saveBuild() {
     build: { ...build },
     budget,
     workload,
+    county,
     total: plan.total,
     createdAt: new Date().toISOString()
   };
@@ -207,7 +229,7 @@ function workloadLabel(value) {
 }
 
 function shareBuild() {
-  const payload = { build, budget, workload };
+  const payload = { build, budget, workload, county };
   const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
   const url = location.origin + location.pathname + "#build=" + encoded;
   if (navigator.clipboard?.writeText) {
@@ -272,6 +294,11 @@ $("#workload").addEventListener("change", event => {
   workload = event.target.value;
   $("#build-status").textContent = workloadLabel(workload) + " build · selection preserved";
 });
+$("#county").addEventListener("change", event => {
+  county = COUNTIES.includes(event.target.value) ? event.target.value : "Dublin";
+  try { localStorage.setItem("rigwise-county", county); } catch {}
+  renderLocationNote();
+});
 $("#generate-build").addEventListener("click", generateBuild);
 $("#save-build").addEventListener("click", saveBuild);
 $("#share-build").addEventListener("click", shareBuild);
@@ -286,6 +313,9 @@ $("#saved-builds").addEventListener("click", event => {
       build = { ...item.build };
       budget = Number(item.budget) || 1000;
       workload = item.workload || "gaming";
+      county = COUNTIES.includes(item.county) ? item.county : "Dublin";
+      $("#county").value = county;
+      try { localStorage.setItem("rigwise-county", county); } catch {}
       $("#build-status").textContent = escapeHTML(item.name) + " · restored";
       render();
       showToast("Saved build loaded.");
@@ -307,6 +337,8 @@ $(".theme-toggle").addEventListener("click", () => {
 
 $("#year").textContent = new Date().getFullYear();
 if (localStorage.getItem("rigwise-theme") === "dark") document.body.classList.add("dark-theme");
+$("#county").value = county;
+renderLocationNote();
 if (shared) {
   $("#build-status").textContent = workloadLabel(workload) + " shared build";
   showToast("Shared example build loaded.");

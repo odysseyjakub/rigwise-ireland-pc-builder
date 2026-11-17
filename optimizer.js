@@ -1,11 +1,17 @@
+function validPrice(value, label) {
+  if (!Number.isFinite(value) || value < 0) throw new Error("Invalid price for " + label);
+}
+
 export function calculateShipping(items, rules) {
   const grouped = new Map();
   for (const item of items) {
     const rule = rules[item.retailerId];
     if (!rule) throw new Error("Missing shipping rule for " + item.retailerId);
+    validPrice(item.price, item.id || item.componentId || "order item");
+    validPrice(rule.rate, "shipping rule for " + item.retailerId);
     const group = grouped.get(item.retailerId) ?? { retailerId: item.retailerId, subtotal: 0, count: 0, rule };
     group.subtotal += item.price;
-    group.count += 1;
+    group.count += Number.isFinite(item.shippingUnits) && item.shippingUnits > 0 ? item.shippingUnits : 1;
     grouped.set(item.retailerId, group);
   }
   return [...grouped.values()].map(group => {
@@ -17,8 +23,12 @@ export function calculateShipping(items, rules) {
 }
 
 function score(plan, strategy) {
-  if (strategy === "fewest") return [plan.orders.length, plan.total, plan.retailers.join("|")];
-  return [plan.total, plan.orders.length, plan.retailers.join("|")];
+  const selection = [
+    ...plan.selected.map(offer => offer.id),
+    ...plan.bundles.map(bundle => bundle.id)
+  ].sort().join("|");
+  if (strategy === "fewest") return [plan.orders.length, plan.total, plan.retailers.join("|"), selection];
+  return [plan.total, plan.orders.length, plan.retailers.join("|"), selection];
 }
 
 function isBetter(candidate, current, strategy) {
@@ -32,41 +42,131 @@ function isBetter(candidate, current, strategy) {
   return false;
 }
 
-export function optimizeBasket({ components, offers, shippingRules, strategy = "lowest" }) {
-  const choices = components.map(component => {
-    const available = offers.filter(offer => offer.componentId === component.id && offer.available !== false);
-    if (available.length === 0) throw new Error("No eligible offers for " + component.id);
-    return available;
-  });
+function normalizeBundle(bundle, componentIds) {
+  if (!bundle || typeof bundle.id !== "string" || typeof bundle.retailerId !== "string") {
+    throw new Error("Each bundle needs an id and retailerId");
+  }
+  validPrice(bundle.price, bundle.id);
+  if (!Array.isArray(bundle.covers) || bundle.covers.length === 0) {
+    throw new Error("Bundle " + bundle.id + " must cover at least one component");
+  }
+  if (new Set(bundle.covers).size !== bundle.covers.length) {
+    throw new Error("Bundle " + bundle.id + " lists a component more than once");
+  }
+  for (const componentId of bundle.covers) {
+    if (!componentIds.has(componentId)) {
+      throw new Error("Bundle " + bundle.id + " covers an unselected component: " + componentId);
+    }
+  }
+  return bundle;
+}
+
+function lockAllows(lock, candidate) {
+  if (!lock) return true;
+  if (typeof lock === "string") return lock === candidate.retailerId;
+  if (lock.offerId) return candidate.kind === "offer" && lock.offerId === candidate.id;
+  if (lock.bundleId) return candidate.kind === "bundle" && lock.bundleId === candidate.id;
+  if (lock.retailerId) return lock.retailerId === candidate.retailerId;
+  return false;
+}
+
+export function optimizeBasket({
+  components,
+  offers,
+  shippingRules,
+  bundles = [],
+  locks = {},
+  excludedRetailerIds = [],
+  strategy = "lowest"
+}) {
+  if (!Array.isArray(components) || !Array.isArray(offers) || !Array.isArray(bundles)) {
+    throw new Error("Components, offers, and bundles must be arrays");
+  }
+  if (strategy !== "lowest" && strategy !== "fewest") throw new Error("Unknown optimisation strategy: " + strategy);
+
+  const componentIds = components.map(component => component.id);
+  if (new Set(componentIds).size !== componentIds.length) throw new Error("Component ids must be unique");
+  const required = new Set(componentIds);
+  const excluded = new Set(excludedRetailerIds);
+  const validBundles = bundles
+    .filter(bundle => bundle.available === true && !excluded.has(bundle.retailerId) && Boolean(shippingRules[bundle.retailerId]))
+    .map(bundle => normalizeBundle(bundle, required));
+  const availableOffers = offers.filter(offer => offer.available === true && !excluded.has(offer.retailerId) && Boolean(shippingRules[offer.retailerId]));
+  availableOffers.forEach(offer => validPrice(offer.price, offer.id || offer.componentId || "offer"));
+
+  const individualChoices = new Map();
+  for (const componentId of componentIds) {
+    const lock = locks[componentId];
+    const choices = availableOffers
+      .filter(offer => offer.componentId === componentId && lockAllows(lock, { ...offer, kind: "offer" }));
+    individualChoices.set(componentId, choices);
+    const hasBundleChoice = validBundles.some(bundle =>
+      bundle.covers.includes(componentId) && bundle.covers.every(coveredId => {
+        const coveredLock = locks[coveredId];
+        return lockAllows(coveredLock, { ...bundle, kind: "bundle" });
+      })
+    );
+    if (choices.length === 0 && !hasBundleChoice) throw new Error("No eligible offers for " + componentId);
+  }
 
   let best = null;
   let combinationsChecked = 0;
-  function visit(index, selected) {
-    if (index === choices.length) {
+  function visit(uncovered, selected, selectedBundles, assignments) {
+    if (uncovered.size === 0) {
       combinationsChecked += 1;
-      const orders = calculateShipping(selected, shippingRules);
-      const partsSubtotal = selected.reduce((sum, item) => sum + item.price, 0);
+      const bundleLines = selectedBundles.map(bundle => ({
+        id: bundle.id,
+        retailerId: bundle.retailerId,
+        price: bundle.price,
+        shippingUnits: Number.isFinite(bundle.shippingUnits) ? bundle.shippingUnits : 1,
+        kind: "bundle"
+      }));
+      const orders = calculateShipping([...selected, ...bundleLines], shippingRules);
+      const partsSubtotal = selected.reduce((sum, item) => sum + item.price, 0)
+        + selectedBundles.reduce((sum, bundle) => sum + bundle.price, 0);
       const deliveryTotal = orders.reduce((sum, order) => sum + order.cost, 0);
       const candidate = {
         selected: [...selected],
+        bundles: [...selectedBundles],
+        assignments: Object.fromEntries(assignments),
         orders,
         partsSubtotal,
         deliveryTotal,
         total: partsSubtotal + deliveryTotal,
-        retailers: [...new Set(selected.map(item => item.retailerId))].sort(),
+        retailers: [...new Set([...selected.map(item => item.retailerId), ...selectedBundles.map(bundle => bundle.retailerId)])].sort(),
         combinationsChecked,
         exact: true
       };
       if (isBetter(candidate, best, strategy)) best = candidate;
       return;
     }
-    for (const offer of choices[index]) {
+
+    const componentId = componentIds.find(id => uncovered.has(id));
+    for (const offer of individualChoices.get(componentId)) {
       selected.push(offer);
-      visit(index + 1, selected);
+      assignments.set(componentId, { type: "offer", offerId: offer.id, retailerId: offer.retailerId });
+      const next = new Set(uncovered);
+      next.delete(componentId);
+      visit(next, selected, selectedBundles, assignments);
       selected.pop();
+      assignments.delete(componentId);
+    }
+
+    for (const bundle of validBundles) {
+      if (!bundle.covers.includes(componentId) || !bundle.covers.every(id => uncovered.has(id))) continue;
+      if (!bundle.covers.every(id => lockAllows(locks[id], { ...bundle, kind: "bundle" }))) continue;
+      selectedBundles.push(bundle);
+      for (const coveredId of bundle.covers) assignments.set(coveredId, { type: "bundle", bundleId: bundle.id, retailerId: bundle.retailerId });
+      const next = new Set(uncovered);
+      bundle.covers.forEach(id => next.delete(id));
+      visit(next, selected, selectedBundles, assignments);
+      selectedBundles.pop();
+      bundle.covers.forEach(id => assignments.delete(id));
     }
   }
-  visit(0, []);
+
+  visit(required, [], [], new Map());
+  if (!best) throw new Error("No complete basket satisfies the selected locks and exclusions");
   best.combinationsChecked = combinationsChecked;
   return best;
 }
@@ -74,7 +174,7 @@ export function optimizeBasket({ components, offers, shippingRules, strategy = "
 export function cheapestItemPlan({ components, offers, shippingRules }) {
   const selected = components.map(component => {
     const candidates = offers
-      .filter(offer => offer.componentId === component.id && offer.available !== false)
+      .filter(offer => offer.componentId === component.id && offer.available === true && Boolean(shippingRules[offer.retailerId]))
       .sort((a, b) => a.price - b.price || a.retailerId.localeCompare(b.retailerId));
     if (candidates.length === 0) throw new Error("No eligible offers for " + component.id);
     return candidates[0];
@@ -84,3 +184,4 @@ export function cheapestItemPlan({ components, offers, shippingRules }) {
   const deliveryTotal = orders.reduce((sum, order) => sum + order.cost, 0);
   return { selected, orders, partsSubtotal, deliveryTotal, total: partsSubtotal + deliveryTotal };
 }
+
