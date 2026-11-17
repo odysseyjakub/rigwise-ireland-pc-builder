@@ -1,5 +1,6 @@
 import { BUNDLES, COMPONENTS, COUNTIES, DEFAULT_BUILD, OFFERS, PRODUCTS, RETAILERS, SHIPPING_RULES } from "./data.js";
 import { checkCompatibility } from "./compatibility.js";
+import { generateAutoBuild } from "./auto-build.js";
 import { compareCatalogProducts, PRODUCT_CATEGORIES } from "./comparison.js";
 import { cheapestItemPlan, optimizeBasket } from "./optimizer.js";
 
@@ -358,23 +359,27 @@ function shareBuild() {
 function generateBuild() {
   budget = Math.max(700, Math.min(5000, Number($("#budget").value) || 1000));
   $("#budget").value = budget;
-  const tier = budget < 922 ? 1 : budget < 1215 ? 2 : 3;
-  const am4 = tier === 1;
-  const creative = workload === "creative";
-  build = {
-    cpu: am4 ? "cpu-am4" : (creative && tier === 3 ? "cpu-8" : tier === 3 ? "cpu-8" : "cpu-6"),
-    cooler: am4 ? "cooler-am4" : tier === 3 ? "cooler-high" : "cooler-am5",
-    motherboard: am4 ? "board-b550" : "board-b650-atx",
-    memory: am4 ? (creative ? "ram-32-ddr4" : "ram-16-ddr4") : "ram-32-ddr5",
-    graphics: tier === 1 ? "gpu-starter" : tier === 2 ? "gpu-mid" : "gpu-performance",
-    storage: tier === 3 && budget >= 1249 ? "storage-2tb" : "storage-1tb",
-    power: tier === 1 ? "psu-550" : tier === 2 ? "psu-650" : "psu-850",
-    case: am4 ? "case-air" : "case-mid"
-  };
+  const result = generateAutoBuild({
+    budget,
+    workload,
+    components: COMPONENTS,
+    products: PRODUCTS,
+    offers: OFFERS,
+    bundles: BUNDLES,
+    shippingRules: SHIPPING_RULES
+  });
+  if (result.status !== "ready") {
+    const message = result.minimumCompatibleTotal === null
+      ? "No complete compatible example build could be made from this demo catalogue."
+      : "The lowest compatible example build is " + money(result.minimumCompatibleTotal) + ", above this budget.";
+    showToast(message);
+    return;
+  }
+  build = result.build;
   expanded.clear();
-  $("#build-status").textContent = workloadLabel(workload) + " build · " + (tier === 1 ? "entry" : tier === 2 ? "balanced" : "performance") + " profile";
+  $("#build-status").textContent = workloadLabel(workload) + " build · best sample fit for budget";
   render();
-  showToast("Example parts updated for your budget and goal.");
+  showToast("A compatible sample build fits your budget. No benchmark data is connected.");
 }
 
 $("#parts-list").addEventListener("change", event => {
