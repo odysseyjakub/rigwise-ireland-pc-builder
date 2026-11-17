@@ -68,6 +68,7 @@ function currentPlan() {
     components: buildItems().map(item => ({ id: item.productId, buildId: item.id })),
     offers: selectedOffers(),
     bundles: BUNDLES,
+    catalogComponentIds: PRODUCTS.map(product => product.id),
     shippingRules: SHIPPING_RULES,
     strategy: $("#strategy").value
   });

@@ -164,13 +164,25 @@ test("bundle references must only cover selected unique components", () => {
     offers,
     bundles: [{ id: "invalid", retailerId: "a", covers: ["cpu", "unknown"], price: 1, available: true }],
     shippingRules: rules
-  }), /covers an unselected component/);
+  }), /covers an unknown component/);
   assert.throws(() => optimizeBasket({
     components,
     offers,
     bundles: [{ id: "duplicate", retailerId: "a", covers: ["cpu", "cpu"], price: 1, available: true }],
     shippingRules: rules
   }), /lists a component more than once/);
+});
+
+test("a valid catalogue bundle that does not match the current build is skipped", () => {
+  const result = optimizeBasket({
+    components: [{ id: "cpu" }, { id: "board" }],
+    offers: offers.filter(offer => offer.componentId !== "memory"),
+    bundles: [{ id: "cpu-gpu-kit", retailerId: "a", covers: ["cpu", "gpu"], price: 200, available: true }],
+    catalogComponentIds: ["cpu", "board", "gpu"],
+    shippingRules: rules
+  });
+  assert.equal(result.bundles.length, 0);
+  assert.equal(Object.keys(result.assignments).length, 2);
 });
 
 test("bundle optimisation matches an independent small exhaustive reference", () => {

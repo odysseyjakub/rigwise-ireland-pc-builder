@@ -42,7 +42,7 @@ function isBetter(candidate, current, strategy) {
   return false;
 }
 
-function normalizeBundle(bundle, componentIds) {
+function normalizeBundle(bundle, requiredComponentIds, catalogComponentIds) {
   if (!bundle || typeof bundle.id !== "string" || typeof bundle.retailerId !== "string") {
     throw new Error("Each bundle needs an id and retailerId");
   }
@@ -54,11 +54,11 @@ function normalizeBundle(bundle, componentIds) {
     throw new Error("Bundle " + bundle.id + " lists a component more than once");
   }
   for (const componentId of bundle.covers) {
-    if (!componentIds.has(componentId)) {
-      throw new Error("Bundle " + bundle.id + " covers an unselected component: " + componentId);
+    if (!catalogComponentIds.has(componentId)) {
+      throw new Error("Bundle " + bundle.id + " covers an unknown component: " + componentId);
     }
   }
-  return bundle;
+  return bundle.covers.every(componentId => requiredComponentIds.has(componentId)) ? bundle : null;
 }
 
 function lockAllows(lock, candidate) {
@@ -75,6 +75,7 @@ export function optimizeBasket({
   offers,
   shippingRules,
   bundles = [],
+  catalogComponentIds: knownComponentIds = [],
   locks = {},
   excludedRetailerIds = [],
   strategy = "lowest"
@@ -87,10 +88,12 @@ export function optimizeBasket({
   const componentIds = components.map(component => component.id);
   if (new Set(componentIds).size !== componentIds.length) throw new Error("Component ids must be unique");
   const required = new Set(componentIds);
+  const catalog = new Set([...componentIds, ...knownComponentIds]);
   const excluded = new Set(excludedRetailerIds);
   const validBundles = bundles
     .filter(bundle => bundle.available === true && !excluded.has(bundle.retailerId) && Boolean(shippingRules[bundle.retailerId]))
-    .map(bundle => normalizeBundle(bundle, required));
+    .map(bundle => normalizeBundle(bundle, required, catalog))
+    .filter(Boolean);
   const availableOffers = offers.filter(offer => offer.available === true && !excluded.has(offer.retailerId) && Boolean(shippingRules[offer.retailerId]));
   availableOffers.forEach(offer => validPrice(offer.price, offer.id || offer.componentId || "offer"));
 
