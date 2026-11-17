@@ -100,6 +100,46 @@ test("unknown stock and offers without a known delivery rule are excluded", () =
 test("exact enumeration checks every offer combination", () => {
   const best = optimizeBasket({ components, offers, shippingRules: rules });
   assert.equal(best.combinationsChecked, 8);
+  assert.equal(best.searchStatus, "exact");
+  assert.equal(best.exact, true);
+});
+
+test("bounded search returns a feasible best-known plan without claiming optimality", () => {
+  const twoParts = [{ id: "cpu" }, { id: "board" }];
+  const manyOffers = [
+    { id: "cpu-high", componentId: "cpu", retailerId: "a", price: 90, available: true },
+    { id: "cpu-low", componentId: "cpu", retailerId: "b", price: 10, available: true },
+    { id: "board-high", componentId: "board", retailerId: "a", price: 90, available: true },
+    { id: "board-low", componentId: "board", retailerId: "b", price: 10, available: true }
+  ];
+  const limited = optimizeBasket({ components: twoParts, offers: manyOffers, shippingRules: { a: { rate: 0 }, b: { rate: 0 } }, maxCombinations: 1 });
+  assert.equal(limited.exact, false);
+  assert.equal(limited.searchStatus, "best-known");
+  assert.equal(limited.combinationsChecked, 1);
+  assert.equal(limited.maxCombinations, 1);
+  assert.equal(limited.total, 20);
+  assert.equal(limited.assignments.cpu.offerId, "cpu-low");
+  assert.equal(limited.assignments.board.offerId, "board-low");
+});
+
+test("bounded search reports when it stops before finding any verified complete basket", () => {
+  assert.throws(() => optimizeBasket({
+    components: [{ id: "gpu" }],
+    offers: [
+      { id: "unknown", componentId: "gpu", retailerId: "a", price: 10, available: true },
+      { id: "verified", componentId: "gpu", retailerId: "b", price: 20, available: true }
+    ],
+    shippingRules: { a: { rate: 0 }, b: { rate: 0 } },
+    orderCostEvaluator: ({ retailerId }) => retailerId === "a"
+      ? { status: "incomplete", gaps: ["Irish fees are unknown"] }
+      : { status: "exact", currency: "EUR", consumerAdditionalMinor: 0 },
+    maxCombinations: 1
+  }), /Search limit reached before a feasible complete basket was found/);
+});
+
+test("optimizer requires a positive safe-integer search limit", () => {
+  assert.throws(() => optimizeBasket({ components, offers, shippingRules: rules, maxCombinations: 0 }), /positive safe integer/);
+  assert.throws(() => optimizeBasket({ components, offers, shippingRules: rules, maxCombinations: 1.5 }), /positive safe integer/);
 });
 
 test("exact result matches an independent exhaustive reference", () => {
