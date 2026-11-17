@@ -1,6 +1,7 @@
 import { BUNDLES, COMPONENTS, COUNTIES, DEFAULT_BUILD, OFFERS, PRODUCTS, RETAILERS, SHIPPING_RULES } from "./data.js";
 import { checkCompatibility } from "./compatibility.js";
 import { generateAutoBuild } from "./auto-build.js";
+import { readStorageValue, removeStorageValue, writeStorageValue } from "./browser-storage.js";
 import { compareCatalogProducts, PRODUCT_CATEGORIES } from "./comparison.js";
 import { cheapestItemPlan, optimizeBasket } from "./optimizer.js";
 
@@ -21,7 +22,7 @@ const ICONS = {
 
 function readSavedBuilds() {
   try {
-    const value = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    const value = JSON.parse(readStorageValue(STORAGE_KEY) || "[]");
     return Array.isArray(value) ? value.filter(item => item && item.build && typeof item.name === "string") : [];
   } catch {
     return [];
@@ -44,10 +45,11 @@ const shared = fromShareHash();
 let build = shared?.build ? { ...DEFAULT_BUILD, ...shared.build } : { ...DEFAULT_BUILD };
 let budget = Number(shared?.budget) || 1000;
 let workload = shared?.workload || "gaming";
+const storedCounty = readStorageValue("rigwise-county");
 let county = COUNTIES.includes(shared?.county)
   ? shared.county
-  : COUNTIES.includes(localStorage.getItem("rigwise-county"))
-    ? localStorage.getItem("rigwise-county")
+  : COUNTIES.includes(storedCounty)
+    ? storedCounty
     : "Dublin";
 let expanded = new Set();
 let toastTimer;
@@ -332,13 +334,12 @@ function saveBuild() {
     total: plan.total,
     createdAt: new Date().toISOString()
   };
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([item, ...saved].slice(0, 8)));
-    renderSavedBuilds();
-    showToast("Build saved in this browser.");
-  } catch {
-    showToast("Your browser could not save this build.");
+  if (!writeStorageValue(STORAGE_KEY, JSON.stringify([item, ...saved].slice(0, 8)))) {
+    showToast("Your browser blocked local saving. Copy a share link to keep this build.");
+    return;
   }
+  renderSavedBuilds();
+  showToast("Build saved in this browser.");
 }
 
 function workloadLabel(value) {
@@ -424,7 +425,7 @@ $("#workload").addEventListener("change", event => {
 });
 $("#county").addEventListener("change", event => {
   county = COUNTIES.includes(event.target.value) ? event.target.value : "Dublin";
-  try { localStorage.setItem("rigwise-county", county); } catch {}
+  writeStorageValue("rigwise-county", county);
   renderLocationNote();
 });
 $("#generate-build").addEventListener("click", generateBuild);
@@ -443,28 +444,30 @@ $("#saved-builds").addEventListener("click", event => {
       workload = item.workload || "gaming";
       county = COUNTIES.includes(item.county) ? item.county : "Dublin";
       $("#county").value = county;
-      try { localStorage.setItem("rigwise-county", county); } catch {}
+      writeStorageValue("rigwise-county", county);
       $("#build-status").textContent = escapeHTML(item.name) + " · restored";
       render();
       showToast("Saved build loaded.");
     }
   } else if (target.hasAttribute("data-remove-saved")) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(saved.filter(item => item.id !== target.dataset.removeSaved)));
+    if (!writeStorageValue(STORAGE_KEY, JSON.stringify(saved.filter(item => item.id !== target.dataset.removeSaved)))) {
+      showToast("Your browser could not update saved builds.");
+    }
     renderSavedBuilds();
   } else {
-    localStorage.removeItem(STORAGE_KEY);
+    if (!removeStorageValue(STORAGE_KEY)) showToast("Your browser could not clear saved builds.");
     renderSavedBuilds();
   }
 });
 
 $(".theme-toggle").addEventListener("click", () => {
   const enabled = document.body.classList.toggle("dark-theme");
-  localStorage.setItem("rigwise-theme", enabled ? "dark" : "light");
+  writeStorageValue("rigwise-theme", enabled ? "dark" : "light");
   $(".theme-toggle").setAttribute("aria-label", enabled ? "Switch to light theme" : "Switch to dark theme");
 });
 
 $("#year").textContent = new Date().getFullYear();
-if (localStorage.getItem("rigwise-theme") === "dark") document.body.classList.add("dark-theme");
+if (readStorageValue("rigwise-theme") === "dark") document.body.classList.add("dark-theme");
 $("#county").value = county;
 syncComparisonSelectors();
 renderLocationNote();
@@ -473,4 +476,3 @@ if (shared) {
   showToast("Shared example build loaded.");
 }
 render();
-
