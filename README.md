@@ -13,6 +13,7 @@ Open index.html in a modern browser, or serve this directory with any static web
 - Editable example components, budget and workload.
 - Approximate county selection for all 26 Republic of Ireland counties, stored locally; demo delivery rules are intentionally county-neutral.
 - Illustrative auto-build profiles.
+- Auto Build searches the sample catalogue for compatible configurations that fit the budget, then ranks them with workload-specific demo weights. These weights are not benchmark predictions; candidate prices and delivery are still synthetic.
 - Status-aware compatibility checks cover processor/socket/chipset/BIOS support, memory capacity/speed, cooler fit, graphics clearance/connectors, storage interfaces, PSU fit and headroom. Missing specifications show as unverified instead of silently passing.
 - Basket prices and delivery are accumulated in integer cents. The solver exactly enumerates up to 10,000 complete plans, ordered to find promising candidates early; if the limit is reached, it returns a feasible best-known plan and labels it without claiming optimality. Unknown availability and retailers without a known shipping rule are excluded. Bundles cover their included build parts as one purchase, so overlapping bundles cannot double-count a required component.
 - Expandable sample offer comparisons and lowest-total/fewest-shop strategies.
