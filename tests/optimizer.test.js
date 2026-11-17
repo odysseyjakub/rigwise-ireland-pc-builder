@@ -226,3 +226,50 @@ test("bundle optimisation matches an independent small exhaustive reference", ()
   assert.equal(result.total, referenceTotal);
 });
 
+test("verified order charges can change the lowest whole-basket retailer", () => {
+  const result = optimizeBasket({
+    components: [{ id: "gpu" }],
+    offers: [
+      { id: "outside-eu", componentId: "gpu", retailerId: "a", price: 100, available: true },
+      { id: "eu-stock", componentId: "gpu", retailerId: "b", price: 115, available: true }
+    ],
+    shippingRules: { a: { rate: 0 }, b: { rate: 0 } },
+    orderCostEvaluator: ({ retailerId }) => ({
+      status: "exact",
+      currency: "EUR",
+      consumerAdditionalMinor: retailerId === "a" ? 2000 : 0,
+      breakdown: { importAndHandling: retailerId === "a" ? 2000 : 0 }
+    })
+  });
+  assert.equal(result.total, 115);
+  assert.equal(result.selected[0].id, "eu-stock");
+  assert.equal(result.orderCostMinor, 0);
+  assert.equal(result.exact, true);
+});
+
+test("incomplete order-cost evidence excludes that candidate", () => {
+  const result = optimizeBasket({
+    components: [{ id: "gpu" }],
+    offers: [
+      { id: "unknown-cost", componentId: "gpu", retailerId: "a", price: 80, available: true },
+      { id: "known-cost", componentId: "gpu", retailerId: "b", price: 120, available: true }
+    ],
+    shippingRules: { a: { rate: 0 }, b: { rate: 0 } },
+    orderCostEvaluator: ({ retailerId }) => retailerId === "a"
+      ? { status: "incomplete", gaps: ["Irish delivery charge is unverified"] }
+      : { status: "exact", currency: "EUR", consumerAdditionalMinor: 0 }
+  });
+  assert.equal(result.selected[0].id, "known-cost");
+  assert.equal(result.combinationsChecked, 2);
+  assert.equal(result.combinationsRejectedByCost, 1);
+});
+
+test("optimizer refuses to publish a total when every retailer cost is unknown", () => {
+  assert.throws(() => optimizeBasket({
+    components: [{ id: "gpu" }],
+    offers: [{ id: "unknown-cost", componentId: "gpu", retailerId: "a", price: 80, available: true }],
+    shippingRules: { a: { rate: 0 } },
+    orderCostEvaluator: () => ({ status: "incomplete", gaps: ["pass-through fees are unknown"] })
+  }), /No complete basket has verified retailer order costs/);
+});
+

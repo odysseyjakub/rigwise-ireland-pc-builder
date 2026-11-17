@@ -42,6 +42,51 @@ function isBetter(candidate, current, strategy) {
   return false;
 }
 
+function evaluateOrderCosts(orders, items, evaluator) {
+  if (typeof evaluator !== "function") return { exact: true, orders, additionalMinor: 0, breakdown: [] };
+  const evaluatedOrders = [];
+  const breakdown = [];
+  let additionalMinor = 0;
+  for (const order of orders) {
+    const orderItems = items.filter(item => item.retailerId === order.retailerId);
+    let result;
+    try {
+      result = evaluator({
+        retailerId: order.retailerId,
+        items: orderItems,
+        subtotalMinor: Math.round(order.subtotal * 100),
+        shippingMinor: Math.round(order.cost * 100),
+        shipping: order
+      });
+    } catch (error) {
+      return { exact: false, reason: error instanceof Error ? error.message : String(error) };
+    }
+    if (!result || result.status !== "exact" || result.currency !== "EUR" ||
+        !Number.isSafeInteger(result.consumerAdditionalMinor) || result.consumerAdditionalMinor < 0) {
+      const gaps = Array.isArray(result?.gaps) ? result.gaps : [];
+      return {
+        exact: false,
+        reason: gaps.length ? gaps.join("; ") : "retailer order costs are not verified for " + order.retailerId
+      };
+    }
+    additionalMinor += result.consumerAdditionalMinor;
+    if (!Number.isSafeInteger(additionalMinor)) return { exact: false, reason: "retailer order costs exceed the safe integer range" };
+    const detail = {
+      retailerId: order.retailerId,
+      consumerAdditionalMinor: result.consumerAdditionalMinor,
+      breakdown: result.breakdown ?? null
+    };
+    breakdown.push(detail);
+    evaluatedOrders.push({
+      ...order,
+      consumerAdditionalMinor: result.consumerAdditionalMinor,
+      consumerAdditional: result.consumerAdditionalMinor / 100,
+      orderCostBreakdown: detail.breakdown
+    });
+  }
+  return { exact: true, orders: evaluatedOrders, additionalMinor, breakdown };
+}
+
 function normalizeBundle(bundle, requiredComponentIds, catalogComponentIds) {
   if (!bundle || typeof bundle.id !== "string" || typeof bundle.retailerId !== "string") {
     throw new Error("Each bundle needs an id and retailerId");
@@ -78,7 +123,8 @@ export function optimizeBasket({
   catalogComponentIds: knownComponentIds = [],
   locks = {},
   excludedRetailerIds = [],
-  strategy = "lowest"
+  strategy = "lowest",
+  orderCostEvaluator
 }) {
   if (!Array.isArray(components) || !Array.isArray(offers) || !Array.isArray(bundles)) {
     throw new Error("Components, offers, and bundles must be arrays");
@@ -114,6 +160,8 @@ export function optimizeBasket({
 
   let best = null;
   let combinationsChecked = 0;
+  let combinationsRejectedByCost = 0;
+  const costRejectionReasons = new Set();
   function visit(uncovered, selected, selectedBundles, assignments) {
     if (uncovered.size === 0) {
       combinationsChecked += 1;
@@ -124,18 +172,27 @@ export function optimizeBasket({
         shippingUnits: Number.isFinite(bundle.shippingUnits) ? bundle.shippingUnits : 1,
         kind: "bundle"
       }));
-      const orders = calculateShipping([...selected, ...bundleLines], shippingRules);
+      const purchaseLines = [...selected, ...bundleLines];
+      const orders = calculateShipping(purchaseLines, shippingRules);
       const partsSubtotal = selected.reduce((sum, item) => sum + item.price, 0)
         + selectedBundles.reduce((sum, bundle) => sum + bundle.price, 0);
       const deliveryTotal = orders.reduce((sum, order) => sum + order.cost, 0);
+      const orderCosts = evaluateOrderCosts(orders, purchaseLines, orderCostEvaluator);
+      if (!orderCosts.exact) {
+        combinationsRejectedByCost += 1;
+        if (orderCosts.reason) costRejectionReasons.add(orderCosts.reason);
+        return;
+      }
       const candidate = {
         selected: [...selected],
         bundles: [...selectedBundles],
         assignments: Object.fromEntries(assignments),
-        orders,
+        orders: orderCosts.orders,
         partsSubtotal,
         deliveryTotal,
-        total: partsSubtotal + deliveryTotal,
+        orderCostMinor: orderCosts.additionalMinor,
+        orderCostBreakdown: orderCosts.breakdown,
+        total: partsSubtotal + deliveryTotal + orderCosts.additionalMinor / 100,
         retailers: [...new Set([...selected.map(item => item.retailerId), ...selectedBundles.map(bundle => bundle.retailerId)])].sort(),
         combinationsChecked,
         exact: true
@@ -169,12 +226,17 @@ export function optimizeBasket({
   }
 
   visit(required, [], [], new Map());
+  if (!best && combinationsChecked > 0 && orderCostEvaluator) {
+    throw new Error("No complete basket has verified retailer order costs (" + combinationsRejectedByCost +
+      " rejected: " + [...costRejectionReasons].slice(0, 3).join(" | ") + ")");
+  }
   if (!best) throw new Error("No complete basket satisfies the selected locks and exclusions");
   best.combinationsChecked = combinationsChecked;
+  best.combinationsRejectedByCost = combinationsRejectedByCost;
   return best;
 }
 
-export function cheapestItemPlan({ components, offers, shippingRules }) {
+export function cheapestItemPlan({ components, offers, shippingRules, orderCostEvaluator }) {
   const selected = components.map(component => {
     const candidates = offers
       .filter(offer => offer.componentId === component.id && offer.available === true && Boolean(shippingRules[offer.retailerId]))
@@ -185,6 +247,16 @@ export function cheapestItemPlan({ components, offers, shippingRules }) {
   const orders = calculateShipping(selected, shippingRules);
   const partsSubtotal = selected.reduce((sum, item) => sum + item.price, 0);
   const deliveryTotal = orders.reduce((sum, order) => sum + order.cost, 0);
-  return { selected, orders, partsSubtotal, deliveryTotal, total: partsSubtotal + deliveryTotal };
+  const orderCosts = evaluateOrderCosts(orders, selected, orderCostEvaluator);
+  if (!orderCosts.exact) throw new Error("Cheapest-item plan has unverified retailer order costs: " + orderCosts.reason);
+  return {
+    selected,
+    orders: orderCosts.orders,
+    partsSubtotal,
+    deliveryTotal,
+    orderCostMinor: orderCosts.additionalMinor,
+    orderCostBreakdown: orderCosts.breakdown,
+    total: partsSubtotal + deliveryTotal + orderCosts.additionalMinor / 100
+  };
 }
 

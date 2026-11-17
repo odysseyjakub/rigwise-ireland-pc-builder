@@ -18,10 +18,13 @@ Open index.html in a modern browser, or serve this directory with any static web
 - Expandable sample offer comparisons and lowest-total/fewest-shop strategies.
 - Local browser saving, share links and a light/dark theme.
 - Awin CSV/TSV feed normalisation and conservative product matching groundwork in awin-feed.js; imported observations cannot enter recommendations until each required source, match, stock, link, Ireland delivery, tax and order-shipping check is verified.
+- An evidence-gated Irish checkout/import cost calculator in irish-costs.js, with versioned rule dates, consumer charge pass-through checks, fresh dated currency conversion, and an optional verified-order-cost hook in the basket optimiser.
 
 ## Data boundary
 
-Prices, retailer labels, bundles, stock and delivery rules are synthetic fixtures used to demonstrate the application and test the optimiser. They are not live quotes or recommendations. The demo does not connect to retailer APIs, check shipping destinations, identify Irish shops, estimate VAT/import charges, or link to purchasable listings. No physical collection is represented. Saved builds remain in the current browser; there are no user accounts or cloud-synced builds.
+Prices, retailer labels, bundles, stock and delivery rules are synthetic fixtures used to demonstrate the application and test the optimiser. They are not live quotes or recommendations. The page does not connect to retailer APIs, check shipping destinations, identify Irish shops, use the standalone tax calculator, or link to purchasable listings. No physical collection is represented. Saved builds remain in the current browser; there are no user accounts or cloud-synced builds.
 
-The current retailer-source review is in [RETAILER-SOURCES.md](RETAILER-SOURCES.md). The next production milestone is access to an authorised retailer feed, followed by source-aware product matching, verified delivery and tax rules, freshness tracking, and independently checked purchasing links. Until those exist, the buying plan must not be used to place an order.
+The standalone tax calculator requires verified inputs and is not connected to live offers or the visible demo. No displayed basket is a tax-complete purchasing quote. Its rule snapshot and official sources are documented in [IRISH-TAX-RULES.md](IRISH-TAX-RULES.md).
+
+The current retailer-source review is in [RETAILER-SOURCES.md](RETAILER-SOURCES.md). The next production milestone is authorised retailer feed access, followed by source-aware product matching, verified delivery and tax evidence, live freshness tracking, and independently checked purchasing links. Until those inputs are connected, the buying plan must not be used to place an order.
 
