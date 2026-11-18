@@ -8,7 +8,10 @@ test("only allowlisted Irish counties can be placed in the Overpass query", () =
   const cork = buildShopQuery("Cork");
   assert.match(cork, /name"="County Cork/);
   assert.match(cork, /shop"~"\^\(computer\|electronics\)\$"/);
-  assert.match(buildShopQuery("Dublin"), /name"~"\^Dublin Region/);
+  const dublin = buildShopQuery("Dublin");
+  assert.match(dublin, /name"~"\^Dublin Region/);
+  assert.match(dublin, /County Fingal.*admin_level.*7/);
+  assert.match(dublin, /Dún Laoghaire-Rathdown/);
   assert.throws(() => buildShopQuery('Cork"]["shop'), TypeError);
 });
 
@@ -63,6 +66,8 @@ test("lookup returns a plain service error when the upstream is unavailable or i
   assert.equal(unavailable.headers.get("cache-control"), "no-store");
   const malformed = await handleShopRequest(request("Dublin"), { fetcher: async () => new Response("not json") });
   assert.equal(malformed.status, 502);
+  const providerRemark = await handleShopRequest(request("Dublin"), { fetcher: async () => new Response(JSON.stringify({ remark: "Query timed out", elements: [] })) });
+  assert.equal(providerRemark.status, 502);
 });
 
 test("endpoint rejects other HTTP methods", async () => {

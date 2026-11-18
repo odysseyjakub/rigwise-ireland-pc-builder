@@ -20,7 +20,11 @@ function jsonResponse(payload, status, cache = false) {
 export function buildShopQuery(county) {
   if (!COUNTIES.includes(county)) throw new TypeError("Choose a county in the Republic of Ireland.");
   const countyArea = county === "Dublin"
-    ? 'area["name"~"^Dublin Region"]["boundary"="administrative"]["admin_level"="6"]->.county;'
+    ? '(area["name"~"^Dublin Region"]["boundary"="administrative"]["admin_level"="6"];' +
+      'area["name"="Dublin City"]["boundary"="administrative"]["admin_level"="7"];' +
+      'area["name"="County Fingal"]["boundary"="administrative"]["admin_level"="7"];' +
+      'area["name"="County South Dublin"]["boundary"="administrative"]["admin_level"="7"];' +
+      'area["name"="County Dún Laoghaire-Rathdown"]["boundary"="administrative"]["admin_level"="7"];) ->.county;'
     : 'area["name"="' + COUNTY_AREA_NAMES.get(county) + '"]["boundary"="administrative"]["admin_level"="6"]->.county;';
   return "[out:json][timeout:15];\n" + countyArea + "\n(" +
     'node(area.county)["shop"~"^(computer|electronics)$"]["name"];' +
@@ -87,6 +91,7 @@ export async function handleShopRequest(request, { fetcher = fetch } = {}) {
     const body = await response.text();
     if (body.length > MAX_PROVIDER_BYTES) return jsonResponse({ error: "The public map service returned too much data. Try again later." }, 502);
     const data = JSON.parse(body);
+    if (typeof data.remark === "string") throw new Error("The public map service could not complete this lookup");
     if (!Array.isArray(data.elements)) throw new Error("Invalid public map response");
     const unique = new Map();
     for (const element of data.elements) {
