@@ -59,6 +59,8 @@ let county = COUNTIES.includes(shared?.county)
     : "Dublin";
 let expanded = new Set();
 let toastTimer;
+let localShopLookupSequence = 0;
+let localShopLookupController = null;
 
 function buildItems() {
   return COMPONENTS.map(component => ({ ...component, productId: build[component.id] }));
@@ -86,6 +88,97 @@ function currentPlan() {
 
 function renderLocationNote() {
   $("#location-note").textContent = county + " selected · demo shipping rules are county-neutral";
+}
+
+function appendExternalLink(container, label, href) {
+  const link = document.createElement("a");
+  link.textContent = label;
+  link.href = href;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  container.append(link);
+}
+
+function renderLocalShopResults(payload) {
+  const host = $("#local-shop-results");
+  const status = $("#local-shops-status");
+  host.replaceChildren();
+  const results = Array.isArray(payload.results) ? payload.results : [];
+  const dataDate = payload.dataTimestamp && Number.isFinite(Date.parse(payload.dataTimestamp))
+    ? new Date(payload.dataTimestamp).toLocaleString("en-IE", { dateStyle: "medium", timeStyle: "short" })
+    : null;
+  if (results.length === 0) {
+    status.textContent = "No named computer or electronics shop records came back for " + county + ". This does not confirm that no such shops exist.";
+    const item = document.createElement("li");
+    item.className = "local-shop-fallback";
+    appendExternalLink(item, "Search OpenStreetMap for shops in " + county, "https://www.openstreetmap.org/search?query=" + encodeURIComponent("computer shop " + county + " Ireland"));
+    host.append(item);
+    return;
+  }
+
+  status.textContent = results.length + " mapped candidate" + (results.length === 1 ? "" : "s") + " in " + county +
+    (dataDate ? " · map extract dated " + dataDate : "") + (payload.capped ? " · list limited to the first 80 records" : "") +
+    ". Verify every detail with the business.";
+  for (const shop of results) {
+    if (!shop || typeof shop.name !== "string" || typeof shop.mapUrl !== "string") continue;
+    const item = document.createElement("li");
+    item.className = "local-shop-item";
+    const detail = document.createElement("div");
+    detail.className = "local-shop-detail";
+    const name = document.createElement("strong");
+    name.textContent = shop.name;
+    const kind = document.createElement("span");
+    kind.textContent = [shop.kind, shop.address || "Address not recorded"].filter(Boolean).join(" · ");
+    detail.append(name, kind);
+    const actions = document.createElement("div");
+    actions.className = "local-shop-actions";
+    try {
+      const mapUrl = new URL(shop.mapUrl);
+      if (mapUrl.protocol === "https:" && mapUrl.hostname === "www.openstreetmap.org") appendExternalLink(actions, "Map record", mapUrl.href);
+    } catch { /* ignore malformed external links */ }
+    try {
+      const website = shop.website ? new URL(shop.website) : null;
+      if (website && ["https:", "http:"].includes(website.protocol)) appendExternalLink(actions, "Website", website.href);
+    } catch { /* ignore malformed external links */ }
+    item.append(detail, actions);
+    host.append(item);
+  }
+}
+
+async function findLocalShops() {
+  const button = $("#find-local-shops");
+  const status = $("#local-shops-status");
+  const countyAtRequest = county;
+  const requestId = ++localShopLookupSequence;
+  const controller = new AbortController();
+  localShopLookupController = controller;
+  button.disabled = true;
+  status.textContent = "Looking for mapped computer and electronics shops in " + countyAtRequest + "…";
+  $("#local-shop-results").replaceChildren();
+  try {
+    const response = await fetch("/api/shops?county=" + encodeURIComponent(countyAtRequest), {
+      headers: { Accept: "application/json" },
+      signal: controller.signal
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || "The public map lookup is unavailable right now.");
+    if (requestId !== localShopLookupSequence || county !== countyAtRequest) return;
+    if (payload.county !== countyAtRequest || !Array.isArray(payload.results)) throw new Error("The map service returned an unexpected response.");
+    renderLocalShopResults(payload);
+  } catch (error) {
+    if (requestId === localShopLookupSequence && county === countyAtRequest) {
+      status.textContent = (error instanceof Error ? error.message : "The public map lookup failed.") + " You can retry later or search OpenStreetMap directly.";
+      const item = document.createElement("li");
+      item.className = "local-shop-fallback";
+      appendExternalLink(item, "Search OpenStreetMap for shops in " + countyAtRequest, "https://www.openstreetmap.org/search?query=" + encodeURIComponent("computer shop " + countyAtRequest + " Ireland"));
+      $("#local-shop-results").append(item);
+    }
+  } finally {
+    if (requestId === localShopLookupSequence) {
+      localShopLookupController = null;
+      button.disabled = false;
+    }
+  }
 }
 
 function offerFor(productId, retailerId) {
@@ -467,7 +560,14 @@ $("#county").addEventListener("change", event => {
   county = COUNTIES.includes(event.target.value) ? event.target.value : "Dublin";
   writeStorageValue("rigwise-county", county);
   renderLocationNote();
+  localShopLookupSequence++;
+  localShopLookupController?.abort();
+  localShopLookupController = null;
+  $("#find-local-shops").disabled = false;
+  $("#local-shops-status").textContent = "No lookup yet. Results load only when you choose this button.";
+  $("#local-shop-results").replaceChildren();
 });
+$("#find-local-shops").addEventListener("click", findLocalShops);
 $("#generate-build").addEventListener("click", generateBuild);
 $("#save-build").addEventListener("click", saveBuild);
 $("#share-build").addEventListener("click", shareBuild);

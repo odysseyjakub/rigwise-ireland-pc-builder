@@ -29,4 +29,14 @@ test("privacy and storage pages state the browser-local data model and launch ga
   assert.match(privacy, /operator has not supplied the controller identity or contact details/i);
   assert.match(cookies, /has not been reviewed for cookie or device-storage consent/i);
   assert.match(contact, /No customer-support or privacy-contact address has been configured/i);
+  assert.match(privacy, /Overpass service/i);
+  assert.match(privacy, /selected county is sent/i);
+  assert.match(privacy, /does not send your local account ID, exact address or device location/i);
+});
+
+test("mapped-shop lookup explains its source and limitations in the site UI", async () => {
+  const html = await read("index.html");
+  assert.match(html, /id="find-local-shops"/);
+  assert.match(html, /OpenStreetMap contributors/);
+  assert.match(html, /stock and collection directly/);
 });

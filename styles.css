@@ -123,6 +123,24 @@ h1, h2, h3, p { margin-top: 0; }
 .local-account-backup { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 7px; }
 .local-account-backup .button { min-height: 30px; padding: 7px 10px; font-size: 8px; }
 .local-account-backup span { flex-basis: 100%; color: var(--muted); font-size: 8px; line-height: 1.5; text-align: right; }
+.local-shops { margin-top: 16px; padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); box-shadow: var(--shadow); }
+.local-shops-intro { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.local-shops-intro .table-overline { color: #71886a; }
+.local-shops-intro h3 { margin: 6px 0 4px; color: var(--ink); font: 600 16px/1.3 "Manrope", sans-serif; }
+.local-shops-intro p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.local-shops-intro .button { flex: 0 0 auto; }
+.local-shops-status { margin: 13px 0 0; color: var(--muted); font-size: 9px; line-height: 1.6; }
+.local-shop-results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; }
+.local-shop-item { min-width: 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper-soft); }
+.local-shop-detail { display: grid; min-width: 0; gap: 4px; }
+.local-shop-detail strong { color: var(--ink); font-size: 10px; overflow-wrap: anywhere; }
+.local-shop-detail>span { color: var(--muted); font-size: 8px; line-height: 1.4; }
+.local-shop-actions { display: flex; flex: 0 0 auto; flex-direction: column; align-items: flex-end; gap: 5px; font-size: 8px; }
+.local-shop-actions a, .local-shop-fallback a { color: #52703e; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.local-shop-fallback { padding: 9px 1px 0; font-size: 9px; }
+.local-shops-source { display: grid; gap: 5px; margin-top: 12px; color: var(--muted); font-size: 8px; line-height: 1.6; }
+.local-shops-source a { color: #587344; text-decoration: underline; text-underline-offset: 2px; }
+.local-shops button:disabled { cursor: wait; opacity: .65; }
 .feed-review-section { margin-top: 22px; margin-bottom: 70px; }
 .feed-review-details { border: 1px solid var(--line); border-radius: 10px; background: var(--paper); overflow: hidden; }
 .feed-review-details>summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 15px 18px; color: var(--ink); cursor: pointer; font-size: 11px; font-weight: 700; list-style: none; }
@@ -365,6 +383,8 @@ h1, h2, h3, p { margin-top: 0; }
 .dark-theme .hero-bottom>p, .dark-theme .hero-math strong { color: #cad6c8; }
 .dark-theme .eyebrow, .dark-theme .hero-note { color: #a5b3a4; }
 .dark-theme .builder-controls, .dark-theme .parts-card, .dark-theme .plan-card, .dark-theme .trust-card, .dark-theme .saved-builds { border-color: var(--line); }
+.dark-theme .local-shops, .dark-theme .local-shop-item { border-color: var(--line); background: var(--paper); }
+.dark-theme .local-shop-actions a, .dark-theme .local-shop-fallback a, .dark-theme .local-shops-source a { color: #c3e89c; }
 .dark-theme .local-account { border-color: var(--line); }
 .dark-theme .local-account-copy p { color: var(--muted); }
 .dark-theme .control-block>label, .dark-theme .build-label, .dark-theme .part-info strong, .dark-theme .plan-grand-total, .dark-theme .plan-total-row strong, .dark-theme .offer-shop, .dark-theme .order-shop, .dark-theme .shop-order>strong, .dark-theme .trust-card h3 { color: #dce5d8; }
@@ -414,6 +434,10 @@ h1, h2, h3, p { margin-top: 0; }
   .how-inner { column-gap: 40px; }
 }
 @media (max-width: 740px) {
+  .local-shops { padding: 15px; }
+  .local-shops-intro { align-items: flex-start; flex-direction: column; gap: 11px; }
+  .local-shops-intro .button { align-self: flex-start; }
+  .local-shop-results { grid-template-columns: 1fr; }
   .shell { width: min(100% - 34px, 560px); }
   .demo-ribbon { min-height: 29px; font-size: 8px; padding-inline: 8px; }
   .site-header { height: 62px; padding-inline: 17px; }

@@ -12,6 +12,7 @@ Open index.html in a modern browser, or serve this directory with any static web
 
 - Editable example components, budget and workload.
 - Approximate county selection for all 26 Republic of Ireland counties, stored locally; demo delivery rules are intentionally county-neutral.
+- Optional county-level mapped computer/electronics shop lookup on Vercel using OpenStreetMap and a public Overpass service. It is cached for six hours, makes no stock or opening-status claim, and is not available when opening the page directly from a `file://` URL; use a Vercel deployment or `vercel dev`.
 - Illustrative auto-build profiles.
 - Auto Build searches the sample catalogue for compatible configurations that fit the budget, then ranks them with workload, gaming resolution and frame-rate demo weights. Compact mode limits the sample board and case to micro-ATX fixtures. These weights are not benchmark or FPS predictions; candidate prices and delivery are still synthetic. The selected preferences are carried into local saves and share links.
 - Status-aware compatibility checks cover processor/socket/chipset/BIOS support, memory capacity/speed, cooler fit, graphics clearance/connectors, storage interfaces, PSU fit and headroom. Missing specifications show as unverified instead of silently passing.
