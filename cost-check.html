@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en-IE">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Check an Irish or EU PC checkout total using observed amounts and explicit VAT evidence. Outside-EU costs stay clearly qualified.">
+  <meta name="theme-color" content="#f5f5f0">
+  <title>Irish checkout cost check — Rigwise</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="resources.css">
+</head>
+<body class="resource-page cost-check-page">
+  <header class="site-header resource-header">
+    <a class="brand" href="index.html" aria-label="Rigwise home"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M4 5h8v8H4zM16 5h8v8h-8zM4 17h8v7H4zM16 17h8v7h-8z"/></svg></span><span>rigwise<span class="brand-period">.</span></span></a>
+    <nav class="main-nav" aria-label="Main navigation"><a class="nav-link" href="index.html#builder">PC builder</a><a class="nav-link" href="components.html">Components</a><a class="nav-link" href="deals.html">Deals</a><a class="nav-link" href="guides.html">Guides</a><a class="nav-link" href="index.html#compare">Compare</a></nav>
+    <div class="resource-header-actions"><button class="icon-button theme-toggle" type="button" aria-label="Switch to dark theme" title="Switch theme"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.5"/><path d="M10 1.5v2M10 16.5v2M18.5 10h-2M3.5 10h-2M16 4l-1.4 1.4M5.4 14.6 4 16M16 16l-1.4-1.4M5.4 5.4 4 4"/></svg></button><a class="button button-dark resource-builder-link" href="index.html#builder">Open builder</a></div>
+  </header>
+  <main class="resource-main cost-check-main">
+    <section class="resource-hero" aria-labelledby="cost-title">
+      <div class="eyebrow"><span class="eyebrow-line"></span> IRISH CHECKOUT COST CHECK</div>
+      <h1 id="cost-title">Count the checkout.<br><span>Keep the evidence.</span></h1>
+      <p>Enter the amounts shown by a seller for an Ireland or EU checkout. VAT is added only when you select a verified net price and provide the applicable rate. Net calculations assume the same rate applies to parts, delivery and other charges. Nothing is fetched or saved.</p>
+    </section>
+    <section class="cost-check-grid" aria-label="Checkout calculator">
+      <form id="cost-check-form" class="cost-form" novalidate>
+        <div class="cost-form-heading"><span class="resource-kicker">LOCAL CALCULATION</span><h2>Enter the observed amounts.</h2><p>Use the seller’s checkout values for the exact basket and destination.</p></div>
+        <label class="cost-field" for="cost-items">Parts subtotal <span>Before delivery</span><div class="cost-input-wrap"><span id="currency-prefix">€</span><input id="cost-items" name="items" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. 899.00" required></div></label>
+        <label class="cost-field" for="cost-shipping">Delivery charge <span>Enter 0 only if confirmed free or included above</span><div class="cost-input-wrap"><span id="shipping-currency-prefix">€</span><input id="cost-shipping" name="shipping" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. 9.95" value="0" required></div></label>
+        <label class="cost-field" for="cost-other">Other seller charges <span>Enter 0 only if none apply</span><div class="cost-input-wrap"><span id="other-currency-prefix">€</span><input id="cost-other" name="other" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. 2.50" value="0" required></div></label>
+        <label class="cost-field" for="cost-currency">Currency<select id="cost-currency" name="currency"><option value="EUR">EUR · Euro</option><option value="GBP">GBP · Pound sterling</option><option value="USD">USD · US dollar</option></select></label>
+        <label class="cost-field" for="cost-price-basis">Seller’s price basis<select id="cost-price-basis" name="priceBasis"><option value="gross">VAT included in the displayed price</option><option value="net">VAT excluded from the displayed price</option><option value="no_vat">No VAT applies (verified)</option></select></label>
+        <div id="vat-rate-field" class="cost-field" hidden><label for="cost-vat-rate">Applicable VAT rate <span>Enter the rate shown or confirmed for this sale</span><div class="cost-input-wrap"><input id="cost-vat-rate" name="vatRate" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. 23.0"><span>%</span></div></label><label class="evidence-check"><input id="vat-rate-verified" type="checkbox"> I verified this rate applies to the parts and delivery entered.</label></div>
+        <label class="evidence-check cost-evidence"><input id="checkout-evidence" type="checkbox"> I checked the parts, delivery, discounts, other seller charges and VAT treatment for this Ireland checkout.</label>
+        <div id="no-vat-evidence" class="cost-field" hidden><label class="evidence-check"><input id="no-vat-verified" type="checkbox"> I verified that VAT is not due for this transaction.</label></div>
+        <div class="cost-form-actions"><button class="button button-dark" type="submit">Calculate checkout total</button><button class="button button-outline" type="reset">Clear</button></div>
+      </form>
+      <section id="cost-result" class="cost-result" data-state="empty" aria-labelledby="cost-result-title" aria-live="polite">
+        <span class="resource-kicker">RESULT</span><h2 id="cost-result-title">Waiting for checkout evidence</h2><p id="cost-result-summary">Enter the observed amounts and calculate. A total is shown only when the price basis and required tax evidence are confirmed.</p><div id="cost-result-details" class="cost-result-details"></div>
+      </section>
+    </section>
+    <section class="outside-eu-note" aria-labelledby="outside-eu-title">
+      <div class="eyebrow"><span class="eyebrow-line"></span> OUTSIDE-EU DISPATCH</div>
+      <h2 id="outside-eu-title">Check the dispatch country before assuming the final price.</h2>
+      <p>Revenue says a €3 customs-duty charge per distinct item applies to qualifying e-commerce packages valued at €150 or less from outside the EU from 1 July 2026. A €2 Union Handling Fee per distinct item also applies from 1 November 2026. VAT and any carrier administration charge may be collected at checkout or on delivery. A shop’s domain or currency does not prove where an item ships from.</p>
+      <p class="outside-eu-boundary">This form does not calculate outside-EU landed charges or tariff rates. Use the Revenue guidance for the exact dispatch route, customs classification and seller charge treatment before relying on a total.</p>
+      <div class="source-links"><a href="https://www.revenue.ie/en/customs/individuals/relief-low-value-consignments/index.aspx" target="_blank" rel="noopener noreferrer">Revenue: low-value e-commerce duty</a><a href="https://www.revenue.ie/en/customs/individuals/union-handling-fee/how-the-fee-applies.aspx" target="_blank" rel="noopener noreferrer">Revenue: Union Handling Fee</a><a href="https://www.revenue.ie/en/customs/individuals/buying-online-personal/outside-eu.aspx" target="_blank" rel="noopener noreferrer">Revenue: buying from outside the EU</a><a href="https://www.revenue.ie/en/vat/vat-rates/search-vat-rates/current-vat-rates.aspx" target="_blank" rel="noopener noreferrer">Revenue: current VAT rates</a></div>
+      <p class="cost-rule-version">Rules reference: <span id="cost-rule-version"></span>. The applicable VAT basis and any exemptions must still be verified for the individual sale.</p>
+    </section>
+  </main>
+  <footer class="resource-footer"><a class="brand" href="index.html">rigwise<span class="brand-period">.</span></a><span>Amounts are calculated in this browser and are not stored.</span><nav aria-label="Footer"><a href="guides.html">Guides</a><a href="deals.html">Deals</a><a href="components.html">Components</a><a href="privacy.html">Privacy</a></nav></footer>
+  <script type="module" src="resource-page.js"></script>
+  <script type="module" src="cost-check.js"></script>
+</body>
+</html>
+
