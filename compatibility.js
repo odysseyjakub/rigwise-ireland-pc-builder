@@ -46,7 +46,7 @@ export function checkCompatibility({ components, products, requirements = {} }) 
   }
 
   function unknown(id, title, detail) {
-    add(id, UNKNOWN, title, detail || "The selected example parts do not include enough verified specification data to check this.");
+    add(id, UNKNOWN, title, detail || "The selected parts do not include enough verified specification data to check this.");
   }
 
   function compare(id, title, left, right, describe, matches = (a, b) => a === b) {
@@ -70,9 +70,9 @@ export function checkCompatibility({ components, products, requirements = {} }) 
     cpu?.specs?.socket,
     board?.specs?.socket,
     (cpuSocket, boardSocket) => cpuSocket === "unknown" || boardSocket === "unknown"
-      ? "The CPU or board socket is missing from the example specs."
+      ? "The CPU or motherboard socket is missing from the recorded specifications."
       : cpuSocket === boardSocket
-        ? "Both example parts use " + cpuSocket + "."
+        ? "Both selected parts use " + cpuSocket + "."
         : cpuSocket + " and " + boardSocket + " do not match."
   );
 
@@ -84,7 +84,7 @@ export function checkCompatibility({ components, products, requirements = {} }) 
       "cpu-board-chipset",
       supported ? PASS : FAIL,
       "Processor chipset support",
-      supported ? "The example CPU lists the " + chipset + " chipset." : "The CPU's listed chipset support does not include " + chipset + "."
+      supported ? "The selected CPU lists the " + chipset + " chipset." : "The CPU's listed chipset support does not include " + chipset + "."
     );
   } else {
     unknown("cpu-board-chipset", "Processor chipset support", "The CPU or motherboard chipset support data is missing.");
@@ -95,7 +95,7 @@ export function checkCompatibility({ components, products, requirements = {} }) 
   const biosVersion = board?.specs?.biosVersion;
   const minimumBios = board?.specs?.minimumBiosByCpu?.[cpuId];
   if (Array.isArray(supportedCpuIds) && hasValue(cpuId) && !supportedCpuIds.includes(cpuId)) {
-    add("cpu-board-bios", FAIL, "Processor BIOS support", "The motherboard example does not list support for this processor.");
+    add("cpu-board-bios", FAIL, "Processor BIOS support", "The selected motherboard does not list support for this processor.");
   } else if (!hasValue(biosVersion) || !hasValue(minimumBios)) {
     unknown("cpu-board-bios", "Processor BIOS support", "The board's installed BIOS version or the CPU's minimum BIOS version is unknown.");
   } else {
@@ -105,7 +105,7 @@ export function checkCompatibility({ components, products, requirements = {} }) 
     } else if (comparison < 0) {
       add("cpu-board-bios", WARNING, "Processor BIOS support", "A BIOS update to version " + minimumBios + " or later is indicated for this CPU.");
     } else {
-      add("cpu-board-bios", PASS, "Processor BIOS support", "The example BIOS version meets the listed minimum for this CPU.");
+      add("cpu-board-bios", PASS, "Processor BIOS support", "The recorded BIOS version meets the listed minimum for this CPU.");
     }
   }
 
@@ -115,9 +115,9 @@ export function checkCompatibility({ components, products, requirements = {} }) 
     board?.specs?.memoryGen,
     memory?.specs?.memoryGen,
     (boardGeneration, memoryGeneration) => boardGeneration === "unknown" || memoryGeneration === "unknown"
-      ? "The board or memory generation is missing from the example specs."
+      ? "The board or memory generation is missing from the recorded specifications."
       : boardGeneration === memoryGeneration
-        ? "Both example parts use " + boardGeneration + "."
+        ? "Both selected parts use " + boardGeneration + "."
         : "The motherboard supports " + boardGeneration + "; the selected kit is " + memoryGeneration + "."
   );
 
@@ -130,17 +130,17 @@ export function checkCompatibility({ components, products, requirements = {} }) 
   } else if (memoryCapacity > maximumMemory || moduleCount > memorySlots) {
     add("memory-capacity-slots", FAIL, "Memory capacity and slots", "The selected kit exceeds the motherboard's listed capacity or slot count.");
   } else {
-    add("memory-capacity-slots", PASS, "Memory capacity and slots", "The selected kit fits the example board's capacity and slot count.");
+    add("memory-capacity-slots", PASS, "Memory capacity and slots", "The selected kit fits the motherboard's listed capacity and slot count.");
   }
 
   const memorySpeed = memory?.specs?.speedMts;
   const boardMemorySpeed = board?.specs?.maxMemorySpeedMts;
   if (!hasValue(memorySpeed) || !hasValue(boardMemorySpeed)) {
-    unknown("memory-speed", "Memory speed", "The memory kit or motherboard speed limit is missing from the example specs.");
+    unknown("memory-speed", "Memory speed", "The memory kit or motherboard speed limit is missing from the recorded specifications.");
   } else if (memorySpeed > boardMemorySpeed) {
     add("memory-speed", WARNING, "Memory speed", "The kit is rated above the board's listed speed; it may run at a lower default speed or need a memory profile.");
   } else {
-    add("memory-speed", PASS, "Memory speed", "The kit's rated speed is within the example board limit.");
+    add("memory-speed", PASS, "Memory speed", "The kit's recorded speed is within the motherboard's listed limit.");
   }
 
   compare(
@@ -164,7 +164,7 @@ export function checkCompatibility({ components, products, requirements = {} }) 
     } else if (gpuLength > caseGpuLength) {
       add("gpu-length", FAIL, "Graphics card length", "The card is " + gpuLength + " mm long; the case lists " + caseGpuLength + " mm clearance.");
     } else {
-      add("gpu-length", PASS, "Graphics card length", "The card fits within the example case's listed length clearance.");
+      add("gpu-length", PASS, "Graphics card length", "The card fits within the case's listed length clearance.");
     }
 
     const gpuThickness = gpu.specs?.thicknessSlots;
@@ -174,7 +174,7 @@ export function checkCompatibility({ components, products, requirements = {} }) 
     } else if (gpuThickness > caseGpuSlots) {
       add("gpu-thickness", FAIL, "Graphics card thickness", "The card occupies " + gpuThickness + " slots; the case lists " + caseGpuSlots + " slots of clearance.");
     } else {
-      add("gpu-thickness", PASS, "Graphics card thickness", "The card fits within the example case's listed slot clearance.");
+      add("gpu-thickness", PASS, "Graphics card thickness", "The card fits within the case's listed slot clearance.");
     }
 
     const gpuInterface = gpu.specs?.interface;
@@ -189,9 +189,9 @@ export function checkCompatibility({ components, products, requirements = {} }) 
   } else if (requirements.requiresDedicatedGpu) {
     add("required-dedicated-gpu", FAIL, "Dedicated graphics requirement", "This workload requires a dedicated graphics card, but none is selected.");
   } else if (cpu?.specs?.integratedGraphics === true) {
-    add("integrated-graphics", PASS, "Display output", "The example CPU lists integrated graphics for a build without a dedicated card.");
+    add("integrated-graphics", PASS, "Display output", "The selected CPU lists integrated graphics for a build without a dedicated card.");
   } else if (cpu?.specs?.integratedGraphics === false) {
-    add("integrated-graphics", FAIL, "Display output", "The CPU example does not list integrated graphics and no dedicated card is selected.");
+    add("integrated-graphics", FAIL, "Display output", "The CPU does not list integrated graphics and no dedicated card is selected.");
   } else {
     unknown("integrated-graphics", "Display output", "No graphics card is selected and integrated graphics support is not recorded.");
   }
@@ -220,9 +220,9 @@ export function checkCompatibility({ components, products, requirements = {} }) 
         unknown("cooler-capacity", "Cooler capacity", "The cooler rating or CPU power data is missing.");
       }
     } else if (coolerCapacity < cpuWatts) {
-      add("cooler-capacity", WARNING, "Cooler capacity", "The example cooler is rated for " + coolerCapacity + " W; the CPU is rated at " + cpuWatts + " W.");
+      add("cooler-capacity", WARNING, "Cooler capacity", "The selected cooler is rated for " + coolerCapacity + " W; the CPU is rated at " + cpuWatts + " W.");
     } else {
-      add("cooler-capacity", PASS, "Cooler capacity", "The cooler's illustrative rating meets the CPU's listed power.");
+      add("cooler-capacity", PASS, "Cooler capacity", "The cooler's recorded rating meets the CPU's listed power.");
     }
 
     const radiatorSize = cooler.specs?.radiatorSizeMm;
@@ -238,7 +238,7 @@ export function checkCompatibility({ components, products, requirements = {} }) 
       const maximumHeight = pcCase?.specs?.maxCoolerHeightMm;
       if (!hasValue(coolerHeight) || !hasValue(maximumHeight)) unknown("cooler-case-fit", "Cooler and case fit", "Cooler height or case height clearance is missing.");
       else if (coolerHeight > maximumHeight) add("cooler-case-fit", FAIL, "Cooler and case fit", "The cooler is " + coolerHeight + " mm high; the case lists " + maximumHeight + " mm clearance.");
-      else add("cooler-case-fit", PASS, "Cooler and case fit", "The cooler fits within the example case's listed height clearance.");
+      else add("cooler-case-fit", PASS, "Cooler and case fit", "The cooler fits within the case's listed height clearance.");
     }
 
     const ramClearance = cooler.specs?.ramClearanceMm;
@@ -291,11 +291,11 @@ export function checkCompatibility({ components, products, requirements = {} }) 
         ? Math.ceil((cpuWatts + gpuWatts + 150) * 1.3 / 50) * 50
         : 0;
       const target = Math.max(calculatedTarget, recommendedSystemPowerWatts || 0);
-      if (powerWatts < target) add("psu-capacity", WARNING, "Power supply headroom", "The example parts suggest a " + target + " W supply for illustrative headroom; the selected unit is " + powerWatts + " W.");
+      if (powerWatts < target) add("psu-capacity", WARNING, "Power supply headroom", "The component estimate suggests a " + target + " W supply for system headroom; the selected unit is " + powerWatts + " W.");
       else if (!calculatedTargetKnown && hasValue(recommendedSystemPowerWatts)) {
         add("psu-capacity", PASS, "Power supply headroom", "The selected supply meets the graphics-card manufacturer's stated " + recommendedSystemPowerWatts + " W system-PSU recommendation; exact total system draw is not estimated.");
       } else {
-        add("psu-capacity", PASS, "Power supply headroom", "The selected supply meets the example headroom estimate of " + target + " W.");
+        add("psu-capacity", PASS, "Power supply headroom", "The selected supply meets the calculated headroom estimate of " + target + " W.");
       }
     }
   } else {

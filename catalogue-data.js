@@ -100,6 +100,7 @@ export const VERIFIED_CATALOGUE_PRODUCTS = [
     brand: "Western Digital",
     manufacturerPartNumber: "WDS100T3X0E",
     gtin: "718037887302",
+    gtinFormat: "UPC-A",
     sourceUrl: "https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/product/internal-drives/wd-black-ssd/product-brief-wd-black-sn770-nvme-ssd.pdf",
     sourceTitle: "WD_BLACK SN770 product brief",
     sourceCheckedAt: CATALOGUE_SPECS_CHECKED_AT,
@@ -109,7 +110,7 @@ export const VERIFIED_CATALOGUE_PRODUCTS = [
       pcieGeneration: 4,
       capacity: 1
     },
-    keySpecs: ["1 TB", "M.2 2280", "PCIe Gen4 NVMe x4", "GTIN-13 718037887302"]
+    keySpecs: ["1 TB", "M.2 2280", "PCIe Gen4 NVMe x4", "UPC-A 718037887302"]
   },
   {
     id: "corsair-rm650e-2025-eu",
@@ -135,6 +136,7 @@ export const VERIFIED_CATALOGUE_PRODUCTS = [
     brand: "Fractal Design",
     manufacturerPartNumber: "FD-C-POR1M-06",
     gtin: "7340172703600",
+    gtinFormat: "GTIN-13",
     sourceUrl: "https://www.fractal-design.com/products/cases/pop-series/pop-mini-air/pop-mini-air-rgb-black-tg-clear-tint/",
     sourceTitle: "Fractal Design Pop Mini Air specifications",
     sourceCheckedAt: CATALOGUE_SPECS_CHECKED_AT,

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { matchAwinProduct } from "../awin-feed.js";
+import { isValidGtin, matchAwinProduct } from "../awin-feed.js";
 import { VERIFIED_CATALOGUE_PRODUCTS, REFERENCE_BUILD_COMPONENTS, REFERENCE_BUILD } from "../catalogue-data.js";
 import { checkCompatibility } from "../compatibility.js";
 import { COMPONENTS } from "../data.js";
@@ -50,4 +50,14 @@ test("an exact Awin brand and part number can match a manufacturer-sourced produ
     product: { brand: "Western Digital", manufacturerPartNumber: "WDS100T3X0E" }
   }, VERIFIED_CATALOGUE_PRODUCTS);
   assert.deepEqual(match, { status: "matched", method: "brand_mpn", productId: "wd-black-sn770-1tb" });
+});
+
+test("source identifiers retain the manufacturer’s UPC or GTIN format", () => {
+  const storage = VERIFIED_CATALOGUE_PRODUCTS.find(product => product.id === "wd-black-sn770-1tb");
+  const caseProduct = VERIFIED_CATALOGUE_PRODUCTS.find(product => product.id === "fractal-pop-mini-air-rgb-black");
+  assert.equal(storage.gtinFormat, "UPC-A");
+  assert.ok(storage.keySpecs.includes("UPC-A 718037887302"));
+  assert.equal(isValidGtin(storage.gtin), true);
+  assert.equal(caseProduct.gtinFormat, "GTIN-13");
+  assert.ok(caseProduct.keySpecs.includes("GTIN-13 7340172703600"));
 });
