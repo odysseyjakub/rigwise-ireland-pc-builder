@@ -4,6 +4,7 @@ import { generateAutoBuild } from "./auto-build.js";
 import { readStorageValue, removeStorageValue, writeStorageValue } from "./browser-storage.js";
 import { createLocalAccountBackup, parseLocalAccountBackup } from "./account-backup.js";
 import { getOrCreateLocalAccount, migrateLegacySavedBuilds, LOCAL_ACCOUNT_STORAGE_KEY, MAX_LOCAL_BACKUP_BYTES, savedBuildKeyForAccount } from "./local-account.js";
+import { MAX_AWIN_REVIEW_BYTES, reviewAwinFeedLocally } from "./feed-review.js";
 import { compareCatalogProducts, PRODUCT_CATEGORIES } from "./comparison.js";
 import { cheapestItemPlan, optimizeBasket } from "./optimizer.js";
 
@@ -539,6 +540,51 @@ $("#account-backup-file").addEventListener("change", async event => {
     showToast("That backup is invalid or not supported.");
   } finally {
     input.value = "";
+  }
+});
+
+$("#awin-feed-review-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const report = $("#awin-feed-review-report");
+  const file = $("#awin-feed-file").files?.[0];
+  report.textContent = "";
+  if (!file) {
+    report.textContent = "Choose an Awin CSV or TSV export to review.";
+    return;
+  }
+  if (file.size > MAX_AWIN_REVIEW_BYTES) {
+    report.textContent = "This file is larger than the 10 MB local-review limit.";
+    return;
+  }
+  const button = form.querySelector("button[type=submit]");
+  button.disabled = true;
+  button.textContent = "Checking feed…";
+  try {
+    const result = reviewAwinFeedLocally(await file.text(), {
+      advertiserId: $("#awin-advertiser-id").value,
+      retailerName: $("#awin-retailer-name").value,
+      catalogProducts: PRODUCTS
+    });
+    const heading = document.createElement("strong");
+    heading.textContent = result.retailerName + " · Awin advertiser " + result.advertiserId;
+    const summary = document.createElement("p");
+    summary.textContent = result.summary.rowsRead + " rows read · " + result.summary.imported + " parsed · " + result.summary.rejected + " rejected · " + result.summary.matched + " exact matches · " + result.summary.ambiguous + " ambiguous · " + result.summary.unmatched + " unmatched · 0 eligible for recommendations";
+    const note = document.createElement("p");
+    note.textContent = result.summary.matched === 0
+      ? "No exact matches were found in the current demo catalogue. Its products do not yet contain verified GTIN or manufacturer-part-number identities."
+      : "Exact identifiers matched catalogue records; this local report still does not verify publisher rights or offer eligibility.";
+    report.append(heading, summary, note);
+    if (result.rejected.length) {
+      const rejected = document.createElement("p");
+      rejected.textContent = "Rejected rows: " + result.rejected.slice(0, 8).map(item => item.line + " (" + item.reason.replaceAll("_", " ") + ")").join("; ") + (result.rejected.length > 8 ? "; and " + (result.rejected.length - 8) + " more" : "");
+      report.append(rejected);
+    }
+  } catch (error) {
+    report.textContent = error instanceof Error ? error.message : "This feed could not be reviewed.";
+  } finally {
+    button.disabled = false;
+    button.innerHTML = 'Review file locally <span aria-hidden="true">↗</span>';
   }
 });
 
