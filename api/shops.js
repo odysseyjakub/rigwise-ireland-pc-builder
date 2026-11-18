@@ -20,11 +20,7 @@ function jsonResponse(payload, status, cache = false) {
 export function buildShopQuery(county) {
   if (!COUNTIES.includes(county)) throw new TypeError("Choose a county in the Republic of Ireland.");
   const countyArea = county === "Dublin"
-    ? '(area["name"~"^Dublin Region"]["boundary"="administrative"]["admin_level"="6"];' +
-      'area["name"="Dublin City"]["boundary"="administrative"]["admin_level"="7"];' +
-      'area["name"="County Fingal"]["boundary"="administrative"]["admin_level"="7"];' +
-      'area["name"="County South Dublin"]["boundary"="administrative"]["admin_level"="7"];' +
-      'area["name"="County Dún Laoghaire-Rathdown"]["boundary"="administrative"]["admin_level"="7"];) ->.county;'
+    ? 'area["boundary"="administrative"]["admin_level"~"^(6|7)$"]["name"~"Dublin|Fingal|South Dublin|D.n Laoghaire.?Rathdown"]->.county;'
     : 'area["name"="' + COUNTY_AREA_NAMES.get(county) + '"]["boundary"="administrative"]["admin_level"="6"]->.county;';
   return "[out:json][timeout:15];\n" + countyArea + "\n(" +
     'node(area.county)["shop"~"^(computer|electronics)$"]["name"];' +
