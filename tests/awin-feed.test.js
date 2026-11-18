@@ -43,7 +43,7 @@ function feedRow(overrides = {}) {
 function csv(headers, rows, delimiter = ",") {
   const quote = value => {
     const text = String(value ?? "");
-    return /["\r\n,;\t]/.test(text)
+    return /["\r\n,;\t|]/.test(text)
       ? '"' + text.replace(/"/g, '""') + '"'
       : text;
   };
@@ -88,6 +88,21 @@ test("detects a tab-delimited Awin export", () => {
   const result = importAwinCsv(csv(columns, [feedRow()], "\t"), options);
   assert.equal(result.delimiter, "tab");
   assert.equal(result.offers.length, 1);
+});
+
+test("detects pipe-delimited feeds and preserves Awin product_GTIN for exact matching", () => {
+  const headers = columns.map(name => name === "ean" ? "product_GTIN" : name);
+  const row = { ...feedRow(), product_GTIN: "04006381333931", product_name: "Example GPU | 12 GB" };
+  delete row.ean;
+  const result = importAwinCsv(csv(headers, [row], "|"), options);
+  const offer = result.offers[0];
+
+  assert.equal(result.delimiter, "|");
+  assert.equal(offer.product.name, "Example GPU | 12 GB");
+  assert.equal(offer.product.gtin, "04006381333931");
+  assert.deepEqual(matchAwinProduct(offer, [
+    { id: "gpu-exact", identity: { productGTIN: "04006381333931" } }
+  ]), { status: "matched", method: "gtin", productId: "gpu-exact" });
 });
 
 test("requires source and retailer identities and the core feed columns", () => {
@@ -257,4 +272,3 @@ test("offers in another currency cannot enter the Irish EUR result set without c
   const readiness = assessAwinOfferReadiness(offer, {}, { now });
   assert.ok(readiness.blockers.includes("euroPrice"));
 });
-
