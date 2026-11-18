@@ -9,9 +9,7 @@ test("only allowlisted Irish counties can be placed in the Overpass query", () =
   assert.match(cork, /name"="County Cork/);
   assert.match(cork, /shop"~"\^\(computer\|electronics\)\$"/);
   const dublin = buildShopQuery("Dublin");
-  assert.match(dublin, /admin_level.*\(6\|7\)/);
-  assert.match(dublin, /Dublin\|Fingal\|South Dublin/);
-  assert.match(dublin, /D\.n Laoghaire/);
+  assert.match(dublin, /area\(id:3600282800,3601109531,3601114164,3601115720,3601117469\)/);
   assert.throws(() => buildShopQuery('Cork"]["shop'), TypeError);
 });
 

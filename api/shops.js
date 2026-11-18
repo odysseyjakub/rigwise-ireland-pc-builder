@@ -4,6 +4,7 @@ const OVERPASS_URL = "https://ovp.dresel.systems/api/interpreter";
 const CACHE_CONTROL = "public, s-maxage=21600, stale-while-revalidate=86400";
 const MAX_PROVIDER_BYTES = 1_500_000;
 const MAX_RESULTS = 80;
+const DUBLIN_BOUNDARY_RELATIONS = [282800, 1109531, 1114164, 1115720, 1117469];
 const COUNTY_AREA_NAMES = new Map(COUNTIES.map(county => [county, "County " + county]));
 COUNTY_AREA_NAMES.set("Dublin", null);
 
@@ -20,7 +21,7 @@ function jsonResponse(payload, status, cache = false) {
 export function buildShopQuery(county) {
   if (!COUNTIES.includes(county)) throw new TypeError("Choose a county in the Republic of Ireland.");
   const countyArea = county === "Dublin"
-    ? 'area["boundary"="administrative"]["admin_level"~"^(6|7)$"]["name"~"Dublin|Fingal|South Dublin|D.n Laoghaire.?Rathdown"]->.county;'
+    ? "area(id:" + DUBLIN_BOUNDARY_RELATIONS.map(id => 3_600_000_000 + id).join(",") + ")->.county;"
     : 'area["name"="' + COUNTY_AREA_NAMES.get(county) + '"]["boundary"="administrative"]["admin_level"="6"]->.county;';
   return "[out:json][timeout:15];\n" + countyArea + "\n(" +
     'node(area.county)["shop"~"^(computer|electronics)$"]["name"];' +
