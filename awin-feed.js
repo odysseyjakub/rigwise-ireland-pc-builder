@@ -31,7 +31,7 @@ function countRecordDelimiters(input, delimiter) {
 }
 
 function detectDelimiter(input) {
-  const candidates = [",", "\t", ";"];
+  const candidates = [",", "\t", ";", "|"];
   return candidates
     .map((delimiter, order) => ({ delimiter, order, count: countRecordDelimiters(input, delimiter) }))
     .sort((left, right) => right.count - left.count || left.order - right.order)[0].delimiter;
@@ -266,6 +266,11 @@ export function importAwinCsv(input, options = {}) {
         brand: String(rowValue(row, indexes, "brand_name")).trim() || null,
         manufacturerPartNumber: String(rowValue(row, indexes, "mpn")).trim() || null,
         modelNumber: String(rowValue(row, indexes, "model_number")).trim() || null,
+        gtin: String(
+          rowValue(row, indexes, "product_gtin") ||
+          rowValue(row, indexes, "ean") ||
+          rowValue(row, indexes, "upc")
+        ).trim() || null,
         ean: String(rowValue(row, indexes, "ean")).trim() || null,
         upc: String(rowValue(row, indexes, "upc")).trim() || null,
         category: String(rowValue(row, indexes, "merchant_category")).trim() || null,
@@ -349,7 +354,7 @@ export function isValidGtin(value) {
 function identityOf(product) {
   const identity = product.identity ?? product;
   return {
-    gtin: identity.gtin ?? identity.ean ?? identity.upc ?? null,
+    gtin: identity.gtin ?? identity.productGTIN ?? identity.product_gtin ?? identity.ean ?? identity.upc ?? null,
     brand: identity.brand ?? identity.brandName ?? product.brand ?? null,
     mpn: identity.mpn ?? identity.manufacturerPartNumber ?? product.mpn ?? null
   };
@@ -368,7 +373,7 @@ export function matchAwinProduct(offer, catalogProducts) {
     throw new Error("An imported offer and a catalogue product array are required");
   }
 
-  const importedGtin = offer.product.ean ?? offer.product.upc;
+  const importedGtin = offer.product.gtin ?? offer.product.ean ?? offer.product.upc;
   if (isValidGtin(importedGtin)) {
     const gtinMatches = catalogProducts.filter(product => {
       const identity = identityOf(product);
@@ -463,4 +468,3 @@ export function toOptimizerOffer(offer, evidence = {}, options = {}) {
     }
   };
 }
-
