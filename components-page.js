@@ -57,14 +57,16 @@ function renderProducts() {
   }
   $("#catalogue-products").innerHTML = products.map(product => {
     const categoryLabel = categoryNames.get(product.category) || product.category;
-    const partNumber = product.manufacturerPartNumber
-      ? '<code>' + escapeHTML(product.manufacturerPartNumber) + '</code>'
-      : '<span>Bundled item</span>';
+    const manufacturerIdentifier = product.manufacturerPartNumber
+      ? 'Part number: <code>' + escapeHTML(product.manufacturerPartNumber) + '</code>'
+      : product.manufacturerModel
+        ? 'Model: <code>' + escapeHTML(product.manufacturerModel) + '</code>'
+        : 'Bundled item';
     const identifierLabel = escapeHTML(product.gtinFormat || "GTIN");
     const gtin = product.gtin ? '<span> · ' + identifierLabel + ' ' + escapeHTML(product.gtin) + '</span>' : "";
     const specs = product.keySpecs.map(spec => "<li>" + escapeHTML(spec) + "</li>").join("");
     const offerLabel = product.includedWithProductId ? "Included with boxed CPU · no separate offer" : "No retailer offer connected";
-    return '<article class="catalogue-card"><div class="catalogue-card-top"><span>' + escapeHTML(categoryLabel) + '</span><span>Source checked ' + escapeHTML(product.sourceCheckedAt) + '</span></div><h3>' + escapeHTML(product.name) + '</h3><span class="catalogue-card-brand">' + escapeHTML(product.brand) + '</span><div class="catalogue-part-number">Manufacturer part: ' + partNumber + gtin + '</div><ul class="catalogue-specs">' + specs + '</ul><div class="catalogue-card-bottom"><span class="catalogue-no-offer">' + escapeHTML(offerLabel) + '</span><a class="catalogue-source" href="' + escapeHTML(product.sourceUrl) + '" target="_blank" rel="noopener noreferrer">Manufacturer source ↗</a></div></article>';
+    return '<article class="catalogue-card"><div class="catalogue-card-top"><span>' + escapeHTML(categoryLabel) + '</span><span>Source checked ' + escapeHTML(product.sourceCheckedAt) + '</span></div><h3>' + escapeHTML(product.name) + '</h3><span class="catalogue-card-brand">' + escapeHTML(product.brand) + '</span><div class="catalogue-part-number">Manufacturer identifier: ' + manufacturerIdentifier + gtin + '</div><ul class="catalogue-specs">' + specs + '</ul><div class="catalogue-card-bottom"><span class="catalogue-no-offer">' + escapeHTML(offerLabel) + '</span><a class="catalogue-source" href="' + escapeHTML(product.sourceUrl) + '" target="_blank" rel="noopener noreferrer">Manufacturer source ↗</a></div></article>';
   }).join("");
 }
 

@@ -27,6 +27,26 @@ export const VERIFIED_CATALOGUE_PRODUCTS = [
     keySpecs: ["6 cores / 12 threads", "AM5", "65 W default TDP", "Boxed SKU lists the Wraith Stealth thermal solution"]
   },
   {
+    id: "amd-ryzen-7-7800x3d-box",
+    category: "cpu",
+    name: "Ryzen 7 7800X3D (boxed)",
+    brand: "AMD",
+    manufacturerPartNumber: "100-100000910WOF",
+    sourceUrl: "https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html",
+    sourceTitle: "AMD Ryzen 7 7800X3D specifications",
+    sourceCheckedAt: CATALOGUE_SPECS_CHECKED_AT,
+    specs: {
+      socket: "AM5",
+      compatibleChipsets: ["A620", "B650", "B650E", "B840", "B850", "X670", "X670E", "X870", "X870E"],
+      memoryGen: "DDR5",
+      watts: 120,
+      integratedGraphics: true,
+      coreCount: 8,
+      threadCount: 16
+    },
+    keySpecs: ["8 cores / 16 threads", "AM5", "120 W default TDP", "No thermal solution included"]
+  },
+  {
     id: "msi-pro-b650m-p",
     category: "motherboard",
     name: "PRO B650M-P",
@@ -53,6 +73,33 @@ export const VERIFIED_CATALOGUE_PRODUCTS = [
       requiredPsuConnectors: ["24-pin", "CPU-8pin"]
     },
     keySpecs: ["AM5 / AMD B650", "Micro-ATX", "4 DDR5 slots, up to 256 GB", "2 PCIe 4.0 x4 M.2 slots"]
+  },
+  {
+    id: "msi-mag-b650-tomahawk-wifi",
+    category: "motherboard",
+    name: "MAG B650 TOMAHAWK WIFI",
+    brand: "MSI",
+    manufacturerPartNumber: "MAG B650 TOMAHAWK WIFI",
+    sourceUrl: "https://www.msi.com/Motherboard/MAG-B650-TOMAHAWK-WIFI/Specification",
+    sourceTitle: "MSI MAG B650 TOMAHAWK WIFI specifications",
+    sourceCheckedAt: CATALOGUE_SPECS_CHECKED_AT,
+    specs: {
+      socket: "AM5",
+      chipset: "B650",
+      form: "ATX",
+      boardSizes: ["ATX"],
+      memoryGen: "DDR5",
+      maxMemoryGb: 256,
+      memorySlots: 4,
+      maxMemorySpeedMts: 7600,
+      pcieSlots: ["PCIe 4.0"],
+      m2Slots: [
+        { interfaces: ["NVMe"], formFactors: ["M.2 22110", "M.2 2280"], pcieGenerations: [4] },
+        { interfaces: ["NVMe"], formFactors: ["M.2 2280", "M.2 2260"], pcieGenerations: [4] },
+        { interfaces: ["NVMe"], formFactors: ["M.2 2280", "M.2 2260"], pcieGenerations: [4] }
+      ]
+    },
+    keySpecs: ["AM5 / AMD B650", "ATX", "4 DDR5 slots, up to 256 GB", "3 PCIe 4.0 M.2 slots", "DDR5-7600+ overclocked memory support"]
   },
   {
     id: "kingston-fury-beast-32gb-ddr5-6000",
@@ -166,6 +213,23 @@ export const VERIFIED_CATALOGUE_PRODUCTS = [
       bundledWithCpuId: "amd-ryzen-5-7600-box"
     },
     keySpecs: ["Thermal solution listed by AMD for this boxed CPU", "Not listed as a separate purchasable product"]
+  },
+  {
+    id: "noctua-nh-u12s-redux",
+    category: "cooler",
+    name: "NH-U12S redux",
+    brand: "Noctua",
+    manufacturerModel: "NH-U12S redux",
+    gtin: "9010018000207",
+    gtinFormat: "GTIN-13",
+    sourceUrl: "https://www.noctua.at/en/products/nh-u12s-redux/specifications",
+    sourceTitle: "Noctua NH-U12S redux specifications",
+    sourceCheckedAt: CATALOGUE_SPECS_CHECKED_AT,
+    specs: {
+      sockets: ["AM5", "AM4"],
+      heightMm: 158
+    },
+    keySpecs: ["AM5 and AM4 mounting support", "158 mm total height", "120 mm PWM fan", "GTIN-13 9010018000207"]
   }
 ];
 
