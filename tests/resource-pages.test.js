@@ -21,6 +21,18 @@ test("deals page clearly states that no current verified offers are connected", 
   assert.doesNotMatch(deals, /€\s*\d+(?:\.\d{2})?\s*(?:off|deal)/i);
 });
 
+test("deals page explains public-source access and licensing boundaries", async () => {
+  const deals = await read("deals.html");
+  assert.match(deals, /PUBLIC DATA OPTIONS REVIEWED/);
+  assert.match(deals, /comparison-use permission/);
+  assert.match(deals, /has not imported or accepted that licence/);
+  assert.match(deals, /prior written consent/);
+  assert.match(deals, /not exhaustive/);
+  for (const source of ["help.awin.com", "icecat.com", "affiliate-program.amazon.com", "developer.ebay.com"]) {
+    assert.ok(deals.includes(source), `Missing official source link for ${source}`);
+  }
+});
+
 test("guide links to the same manufacturer sources as the reference catalogue", async () => {
   const [guide, catalogue] = await Promise.all([read("guides.html"), read("catalogue-data.js")]);
   const sourceUrls = [...catalogue.matchAll(/sourceUrl: "([^"]+)"/g)].map(match => match[1]);

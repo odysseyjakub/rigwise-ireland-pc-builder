@@ -24,6 +24,17 @@
 .resource-callout { margin-top: 34px; padding: 22px 24px; border-left: 3px solid #af8b48; background: #eeede5; color: #536055; }
 .resource-callout strong { color: #26362a; font-size: 16px; }
 .resource-callout p { margin: 8px 0 0; font-size: 16px; line-height: 1.6; }
+.source-routes { margin-top: 64px; }
+.source-routes-intro { max-width: 700px; margin: -8px 0 20px; color: #647166; font-size: 15px; line-height: 1.6; }
+.source-route-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.source-route { display: flex; min-height: 255px; flex-direction: column; padding: 21px; border: 1px solid #e0e5dd; border-radius: 9px; background: #fff; }
+.route-status { align-self: start; padding: 5px 8px; border-radius: 4px; background: #eaf1e5; color: #456247; font: 700 11px "DM Mono", monospace; letter-spacing: .04em; }
+.route-status-neutral { background: #eef0ed; color: #5e6a61; }
+.route-status-stop { background: #f4eee5; color: #825f34; }
+.source-route h3 { margin: 16px 0 7px; font: 700 20px/1.2 "Manrope", Arial, sans-serif; letter-spacing: -.025em; }
+.source-route p { margin: 0 0 12px; color: #58665c; font-size: 15px; line-height: 1.58; }
+.source-route > a { align-self: start; margin-top: 7px; color: #315c3a; font-size: 14px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.source-route-footnote { max-width: 800px; margin: 18px 0 0; color: #667368; font-size: 14px; line-height: 1.65; }
 .guide-main { padding-top: 66px; }
 .guide-meta { display: flex; flex-wrap: wrap; gap: 10px 24px; margin-top: 22px; color: #69776c; font-size: 14px; }
 .guide-steps { display: grid; gap: 0; margin-top: 48px; border-top: 1px solid #dce2d9; }
@@ -52,6 +63,13 @@
 .dark-theme.resource-page .guide-ireland h2,.dark-theme.resource-page .ireland-checks strong,.dark-theme.resource-page .deal-empty h2,.dark-theme.resource-page .evidence-card h3 { color: #e7efe3; }
 .dark-theme.resource-page .resource-callout { border-color: #907644; background: #262820; color: #c1c0b3; }
 .dark-theme.resource-page .resource-callout strong { color: #e2e0cf; }
+.dark-theme.resource-page .source-routes-intro,.dark-theme.resource-page .source-route p,.dark-theme.resource-page .source-route-footnote { color: #b1bdb1; }
+.dark-theme.resource-page .source-route { border-color: #344038; background: #18211c; }
+.dark-theme.resource-page .source-route h3 { color: #e7efe3; }
+.dark-theme.resource-page .source-route > a { color: #c2d9bd; }
+.dark-theme.resource-page .route-status { background: #26382a; color: #c7dfbf; }
+.dark-theme.resource-page .route-status-neutral { background: #27312a; color: #becabe; }
+.dark-theme.resource-page .route-status-stop { background: #393126; color: #e0c99f; }
 .dark-theme.resource-page .guide-step,.dark-theme.resource-page .guide-steps,.dark-theme.resource-page .resource-footer { border-color: #344038; }
 .dark-theme.resource-page .source-links a,.dark-theme.resource-page .resource-footer nav a { color: #c2d9bd; }
 .dark-theme.resource-page .resource-kicker,.dark-theme.resource-page .guide-meta,.dark-theme.resource-page .resource-footer { color: #aab8aa; }
@@ -75,6 +93,9 @@
   .deal-empty h2 { font-size: 22px; }
   .deal-empty .button { grid-column: 1 / -1; }
   .resource-grid-section { margin-top: 52px; }
+  .source-routes { margin-top: 48px; }
+  .source-route-grid { grid-template-columns: 1fr; }
+  .source-route { min-height: 0; }
   .guide-step { grid-template-columns: 1fr; gap: 12px; padding: 22px 0; }
   .guide-step h2 { max-width: none; }
   .ireland-checks { grid-template-columns: 1fr; }
