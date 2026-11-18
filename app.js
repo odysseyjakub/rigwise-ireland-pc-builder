@@ -13,6 +13,9 @@ import { decodeShareHash, encodeShareHash } from "./share-state.js";
 const $ = selector => document.querySelector(selector);
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(value);
 const productById = id => PRODUCTS.find(product => product.id === id);
+const VALID_RESOLUTIONS = new Set(["1080p", "1440p", "4k"]);
+const VALID_FRAME_RATES = new Set([60, 120, 165]);
+const VALID_SIZE_PREFERENCES = new Set(["any", "compact"]);
 let localAccount = getOrCreateLocalAccount();
 let STORAGE_KEY = localAccount.persisted
   ? migrateLegacySavedBuilds(localAccount.id).key
@@ -45,6 +48,9 @@ const shared = fromShareHash();
 let build = shared?.build ? { ...DEFAULT_BUILD, ...shared.build } : { ...DEFAULT_BUILD };
 let budget = Number(shared?.budget) || 1000;
 let workload = shared?.workload || "gaming";
+let targetResolution = VALID_RESOLUTIONS.has(shared?.targetResolution) ? shared.targetResolution : "1080p";
+let targetFrameRate = VALID_FRAME_RATES.has(shared?.targetFrameRate) ? shared.targetFrameRate : 60;
+let sizePreference = VALID_SIZE_PREFERENCES.has(shared?.sizePreference) ? shared.sizePreference : "any";
 const storedCounty = readStorageValue("rigwise-county");
 let county = COUNTIES.includes(shared?.county)
   ? shared.county
@@ -318,6 +324,9 @@ function render() {
   $("#budget").value = budget;
   $("#budget-range").value = Math.max(700, Math.min(3000, budget));
   $("#workload").value = workload;
+  $("#target-resolution").value = targetResolution;
+  $("#target-frame-rate").value = String(targetFrameRate);
+  $("#size-preference").value = sizePreference;
 }
 
 function showToast(message) {
@@ -338,6 +347,9 @@ function saveBuild() {
     build: { ...build },
     budget,
     workload,
+    targetResolution,
+    targetFrameRate,
+    sizePreference,
     county,
     total: plan.total,
     createdAt: new Date().toISOString()
@@ -355,7 +367,7 @@ function workloadLabel(value) {
 }
 
 function shareBuild() {
-  const payload = { build, budget, workload, county };
+  const payload = { build, budget, workload, targetResolution, targetFrameRate, sizePreference, county };
   const hash = encodeShareHash(payload);
   if (!hash) {
     showToast("This build could not be encoded for sharing.");
@@ -375,6 +387,9 @@ function generateBuild() {
   const result = generateAutoBuild({
     budget,
     workload,
+    targetResolution,
+    targetFrameRate,
+    sizePreference,
     components: COMPONENTS,
     products: PRODUCTS,
     offers: OFFERS,
@@ -390,7 +405,7 @@ function generateBuild() {
   }
   build = result.build;
   expanded.clear();
-  $("#build-status").textContent = workloadLabel(workload) + " build · best sample fit for budget";
+  $("#build-status").textContent = workloadLabel(workload) + " build · sample fit for preferences";
   render();
   showToast("A compatible sample build fits your budget. No benchmark data is connected.");
 }
@@ -435,6 +450,19 @@ $("#workload").addEventListener("change", event => {
   workload = event.target.value;
   $("#build-status").textContent = workloadLabel(workload) + " build · selection preserved";
 });
+$("#target-resolution").addEventListener("change", event => {
+  targetResolution = VALID_RESOLUTIONS.has(event.target.value) ? event.target.value : "1080p";
+  $("#build-status").textContent = workloadLabel(workload) + " build · preferences changed";
+});
+$("#target-frame-rate").addEventListener("change", event => {
+  const value = Number(event.target.value);
+  targetFrameRate = VALID_FRAME_RATES.has(value) ? value : 60;
+  $("#build-status").textContent = workloadLabel(workload) + " build · preferences changed";
+});
+$("#size-preference").addEventListener("change", event => {
+  sizePreference = VALID_SIZE_PREFERENCES.has(event.target.value) ? event.target.value : "any";
+  $("#build-status").textContent = workloadLabel(workload) + " build · preferences changed";
+});
 $("#county").addEventListener("change", event => {
   county = COUNTIES.includes(event.target.value) ? event.target.value : "Dublin";
   writeStorageValue("rigwise-county", county);
@@ -454,6 +482,9 @@ $("#saved-builds").addEventListener("click", event => {
       build = { ...item.build };
       budget = Number(item.budget) || 1000;
       workload = item.workload || "gaming";
+      targetResolution = VALID_RESOLUTIONS.has(item.targetResolution) ? item.targetResolution : "1080p";
+      targetFrameRate = VALID_FRAME_RATES.has(item.targetFrameRate) ? item.targetFrameRate : 60;
+      sizePreference = VALID_SIZE_PREFERENCES.has(item.sizePreference) ? item.sizePreference : "any";
       county = COUNTIES.includes(item.county) ? item.county : "Dublin";
       $("#county").value = county;
       writeStorageValue("rigwise-county", county);
@@ -607,4 +638,3 @@ if (shared) {
   showToast("Shared example build loaded.");
 }
 render();
-

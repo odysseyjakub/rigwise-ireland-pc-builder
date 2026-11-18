@@ -1,4 +1,7 @@
 const VALID_WORKLOADS = new Set(["gaming", "creative", "everyday"]);
+const VALID_RESOLUTIONS = new Set(["1080p", "1440p", "4k"]);
+const VALID_FRAME_RATES = new Set([60, 120, 165]);
+const VALID_SIZE_PREFERENCES = new Set(["any", "compact"]);
 
 function toBase64Url(value) {
   const bytes = new TextEncoder().encode(value);
@@ -45,15 +48,22 @@ export function decodeShareHash(hash, { components, products, counties = [] } = 
     const budget = Number(decoded.budget);
     if (!Number.isFinite(budget) || budget < 700 || budget > 5000) return null;
     if (!VALID_WORKLOADS.has(decoded.workload)) return null;
+    const targetResolution = decoded.targetResolution ?? "1080p";
+    const targetFrameRate = decoded.targetFrameRate ?? 60;
+    const sizePreference = decoded.sizePreference ?? "any";
+    if (!VALID_RESOLUTIONS.has(targetResolution) || !VALID_FRAME_RATES.has(targetFrameRate) ||
+        !VALID_SIZE_PREFERENCES.has(sizePreference)) return null;
 
     return {
       build,
       budget,
       workload: decoded.workload,
+      targetResolution,
+      targetFrameRate,
+      sizePreference,
       county: counties.includes(decoded.county) ? decoded.county : undefined
     };
   } catch {
     return null;
   }
 }
-

@@ -6,13 +6,30 @@ const WORKLOAD_WEIGHTS = Object.freeze({
   creative: { cpu: 42, graphics: 23, memory: 0.65, storage: 4 },
   everyday: { cpu: 28, graphics: 6, memory: 0.8, storage: 4 }
 });
+const GAMING_WEIGHTS = Object.freeze({
+  "1080p:60": { cpu: 20, graphics: 65 },
+  "1080p:120": { cpu: 44, graphics: 58 },
+  "1080p:165": { cpu: 70, graphics: 47 },
+  "1440p:60": { cpu: 16, graphics: 73 },
+  "1440p:120": { cpu: 24, graphics: 70 },
+  "1440p:165": { cpu: 29, graphics: 67 },
+  "4k:60": { cpu: 12, graphics: 84 },
+  "4k:120": { cpu: 18, graphics: 81 },
+  "4k:165": { cpu: 22, graphics: 78 }
+});
+const VALID_RESOLUTIONS = new Set(["1080p", "1440p", "4k"]);
+const VALID_FRAME_RATES = new Set([60, 120, 165]);
+const VALID_SIZE_PREFERENCES = new Set(["any", "compact"]);
 
 function capacity(product, key) {
   return Number(product?.specs?.[key]) || 0;
 }
 
-function exampleScore(build, productById, workload) {
-  const weights = WORKLOAD_WEIGHTS[workload];
+function exampleScore(build, productById, workload, targetResolution, targetFrameRate) {
+  const weights = { ...WORKLOAD_WEIGHTS[workload] };
+  if (workload === "gaming") {
+    Object.assign(weights, GAMING_WEIGHTS[targetResolution + ":" + targetFrameRate]);
+  }
   return Object.entries(weights).reduce((total, [category, weight]) => {
     const component = category === "graphics" ? "graphics" : category;
     const product = productById.get(build[component]);
@@ -53,17 +70,29 @@ export function generateAutoBuild({
   offers,
   bundles = [],
   shippingRules,
+  targetResolution = "1080p",
+  targetFrameRate = 60,
+  sizePreference = "any",
   maxCombinations = 10_000
 }) {
   if (!Number.isFinite(budget) || budget < 0) throw new Error("Budget must be a non-negative EUR amount");
   if (!WORKLOAD_WEIGHTS[workload]) throw new Error("Choose a supported workload");
+  if (!VALID_RESOLUTIONS.has(targetResolution)) throw new Error("Choose a supported gaming resolution");
+  if (!VALID_FRAME_RATES.has(targetFrameRate)) throw new Error("Choose a supported target frame rate");
+  if (!VALID_SIZE_PREFERENCES.has(sizePreference)) throw new Error("Choose a supported size preference");
   if (!Array.isArray(components) || !Array.isArray(products) || !Array.isArray(offers) || !Array.isArray(bundles)) {
     throw new Error("Components, products, offers, and bundles must be arrays");
   }
 
   const productsByCategory = new Map();
   for (const component of components) {
-    const matches = products.filter(product => product.category === component.category);
+    const matches = products.filter(product => {
+      if (product.category !== component.category) return false;
+      if (sizePreference === "compact" && ["motherboard", "case"].includes(component.category)) {
+        return product.specs?.sizeClass === "compact";
+      }
+      return true;
+    });
     if (matches.length === 0) throw new Error("No example products are available for " + component.category);
     productsByCategory.set(component.category, matches);
   }
@@ -106,7 +135,7 @@ export function generateAutoBuild({
       build: { ...currentBuild },
       plan,
       compatibility,
-      score: exampleScore(currentBuild, productById, workload)
+      score: exampleScore(currentBuild, productById, workload, targetResolution, targetFrameRate)
     };
     if (!cheapestCompatible || plan.total < cheapestCompatible.plan.total) cheapestCompatible = candidate;
     if (plan.total > budget) return;
@@ -137,4 +166,3 @@ export function generateAutoBuild({
     ...counts
   };
 }
-

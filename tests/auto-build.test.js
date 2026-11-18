@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { generateAutoBuild } from "../auto-build.js";
 import { BUNDLES, COMPONENTS, OFFERS, PRODUCTS, SHIPPING_RULES } from "../data.js";
 
-function generate(budget, workload = "gaming") {
+function generate(budget, workload = "gaming", preferences = {}) {
   return generateAutoBuild({
     budget,
     workload,
@@ -11,7 +11,8 @@ function generate(budget, workload = "gaming") {
     products: PRODUCTS,
     offers: OFFERS,
     bundles: BUNDLES,
-    shippingRules: SHIPPING_RULES
+    shippingRules: SHIPPING_RULES,
+    ...preferences
   });
 }
 
@@ -35,6 +36,21 @@ test("auto build workload ranking responds to the selected use case", () => {
   assert.ok(creative.plan.total <= 1000);
 });
 
+test("auto build applies compact case and motherboard constraints", () => {
+  const result = generate(1000, "gaming", { sizePreference: "compact" });
+  assert.equal(result.status, "ready");
+  assert.equal(result.build.motherboard, "board-b650-matx");
+  assert.equal(result.build.case, "case-air");
+});
+
+test("gaming resolution and frame-rate preferences alter demo rankings", () => {
+  const highRefresh = generate(1000, "gaming", { targetResolution: "1080p", targetFrameRate: 165 });
+  const highResolution = generate(1000, "gaming", { targetResolution: "4k", targetFrameRate: 60 });
+  assert.equal(highRefresh.status, "ready");
+  assert.equal(highResolution.status, "ready");
+  assert.notDeepEqual(highRefresh.build, highResolution.build);
+});
+
 test("auto build reports when the compatible sample catalogue exceeds the budget", () => {
   const result = generate(1, "everyday");
   assert.equal(result.status, "no-budget-fit");
@@ -46,6 +62,8 @@ test("auto build reports when the compatible sample catalogue exceeds the budget
 test("auto build validates its budget, workload, and source collections", () => {
   assert.throws(() => generate(-1), /non-negative EUR amount/);
   assert.throws(() => generate(1000, "streaming"), /supported workload/);
+  assert.throws(() => generate(1000, "gaming", { targetResolution: "8k" }), /gaming resolution/);
+  assert.throws(() => generate(1000, "gaming", { targetFrameRate: 90 }), /target frame rate/);
+  assert.throws(() => generate(1000, "gaming", { sizePreference: "tiny" }), /size preference/);
   assert.throws(() => generateAutoBuild({ budget: 1000, workload: "gaming" }), /must be arrays/);
 });
-

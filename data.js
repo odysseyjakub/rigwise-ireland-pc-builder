@@ -21,8 +21,8 @@ export const PRODUCTS = [
   { id: "cooler-am5", category: "cooler", name: "Example AM5 air cooler", detail: "AM5 · 120 W example rating", specs: { sockets: ["AM5"], maxTdp: 120 }, icon: "cooler", offers: [35, 32] },
   { id: "cooler-am4", category: "cooler", name: "Example AM4 air cooler", detail: "AM4 · 95 W example rating", specs: { sockets: ["AM4"], maxTdp: 95 }, icon: "cooler", offers: [25, 23] },
   { id: "cooler-high", category: "cooler", name: "Example tower cooler", detail: "AM5 · 160 W example rating", specs: { sockets: ["AM5"], maxTdp: 160 }, icon: "cooler", offers: [55, 58] },
-  { id: "board-b650-atx", category: "motherboard", name: "Example B650 motherboard", detail: "AM5 · ATX · DDR5", specs: { socket: "AM5", memoryGen: "DDR5", form: "ATX" }, icon: "board", offers: [120, 115] },
-  { id: "board-b650-matx", category: "motherboard", name: "Example compact motherboard", detail: "AM5 · micro-ATX · DDR5", specs: { socket: "AM5", memoryGen: "DDR5", form: "mATX" }, icon: "board", offers: [128, 122] },
+  { id: "board-b650-atx", category: "motherboard", name: "Example B650 motherboard", detail: "AM5 · ATX · DDR5", specs: { socket: "AM5", memoryGen: "DDR5", form: "ATX", sizeClass: "standard" }, icon: "board", offers: [120, 115] },
+  { id: "board-b650-matx", category: "motherboard", name: "Example compact motherboard", detail: "AM5 · micro-ATX · DDR5", specs: { socket: "AM5", memoryGen: "DDR5", form: "mATX", sizeClass: "compact" }, icon: "board", offers: [128, 122] },
   { id: "board-b550", category: "motherboard", name: "Example B550 motherboard", detail: "AM4 · micro-ATX · DDR4", specs: { socket: "AM4", memoryGen: "DDR4", form: "mATX" }, icon: "board", offers: [93, 89] },
   { id: "ram-32-ddr5", category: "memory", name: "Example 32 GB memory kit", detail: "2 × 16 GB · DDR5", specs: { memoryGen: "DDR5", capacity: 32 }, icon: "memory", offers: [85, 83] },
   { id: "ram-16-ddr4", category: "memory", name: "Example 16 GB memory kit", detail: "2 × 8 GB · DDR4", specs: { memoryGen: "DDR4", capacity: 16 }, icon: "memory", offers: [49, 46] },
@@ -35,8 +35,8 @@ export const PRODUCTS = [
   { id: "psu-550", category: "power", name: "Example 550 W power supply", detail: "550 W · ATX · 80+ rated", specs: { watts: 550 }, icon: "power", offers: [66, 64] },
   { id: "psu-650", category: "power", name: "Example 650 W power supply", detail: "650 W · ATX · 80+ rated", specs: { watts: 650 }, icon: "power", offers: [75, 72] },
   { id: "psu-850", category: "power", name: "Example 850 W power supply", detail: "850 W · ATX · 80+ rated", specs: { watts: 850 }, icon: "power", offers: [105, 109] },
-  { id: "case-air", category: "case", name: "Example airflow case", detail: "micro-ATX · GPU up to 300 mm", specs: { boardSizes: ["mATX"], maxGpuLength: 300 }, icon: "case", offers: [65, 68] },
-  { id: "case-mid", category: "case", name: "Example mid-tower case", detail: "ATX / micro-ATX · GPU up to 360 mm", specs: { boardSizes: ["ATX", "mATX"], maxGpuLength: 360 }, icon: "case", offers: [82, 79] }
+  { id: "case-air", category: "case", name: "Example airflow case", detail: "micro-ATX · GPU up to 300 mm", specs: { boardSizes: ["mATX"], maxGpuLength: 300, sizeClass: "compact" }, icon: "case", offers: [65, 68] },
+  { id: "case-mid", category: "case", name: "Example mid-tower case", detail: "ATX / micro-ATX · GPU up to 360 mm", specs: { boardSizes: ["ATX", "mATX"], maxGpuLength: 360, sizeClass: "standard" }, icon: "case", offers: [82, 79] }
 ];
 
 const retailerOrder = [RETAILERS.sampleA.id, RETAILERS.sampleB.id];
@@ -84,4 +84,3 @@ export const DEFAULT_BUILD = {
   power: "psu-650",
   case: "case-mid"
 };
-
