@@ -2,6 +2,7 @@ import { readStorageValue, removeStorageValue, writeStorageValue } from "./brows
 
 export const LOCAL_ACCOUNT_STORAGE_KEY = "rigwise-local-account-id-v1";
 export const LEGACY_SAVED_BUILDS_KEY = "rigwise-demo-builds-v1";
+export const MAX_LOCAL_BACKUP_BYTES = 500_000;
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ACCOUNT_ID_PATTERN = /^RW-[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/;
@@ -57,3 +58,4 @@ export function migrateLegacySavedBuilds(accountId, storage) {
   removeStorageValue(LEGACY_SAVED_BUILDS_KEY, storage);
   return { key: accountKey, migrated: true };
 }
+

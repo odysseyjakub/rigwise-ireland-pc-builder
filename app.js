@@ -2,15 +2,16 @@ import { BUNDLES, COMPONENTS, COUNTIES, DEFAULT_BUILD, OFFERS, PRODUCTS, RETAILE
 import { checkCompatibility } from "./compatibility.js";
 import { generateAutoBuild } from "./auto-build.js";
 import { readStorageValue, removeStorageValue, writeStorageValue } from "./browser-storage.js";
-import { getOrCreateLocalAccount, migrateLegacySavedBuilds } from "./local-account.js";
+import { createLocalAccountBackup, parseLocalAccountBackup } from "./account-backup.js";
+import { getOrCreateLocalAccount, migrateLegacySavedBuilds, LOCAL_ACCOUNT_STORAGE_KEY, MAX_LOCAL_BACKUP_BYTES, savedBuildKeyForAccount } from "./local-account.js";
 import { compareCatalogProducts, PRODUCT_CATEGORIES } from "./comparison.js";
 import { cheapestItemPlan, optimizeBasket } from "./optimizer.js";
 
 const $ = selector => document.querySelector(selector);
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(value);
 const productById = id => PRODUCTS.find(product => product.id === id);
-const localAccount = getOrCreateLocalAccount();
-const STORAGE_KEY = localAccount.persisted
+let localAccount = getOrCreateLocalAccount();
+let STORAGE_KEY = localAccount.persisted
   ? migrateLegacySavedBuilds(localAccount.id).key
   : "rigwise-demo-builds-v1";
 const ICONS = {
@@ -488,6 +489,59 @@ $("#copy-account-id").addEventListener("click", async () => {
   }
 });
 
+$("#export-account-backup").addEventListener("click", () => {
+  try {
+    const serialized = createLocalAccountBackup(localAccount.id, readSavedBuilds());
+    const file = new Blob([serialized], { type: "application/json" });
+    const url = URL.createObjectURL(file);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "rigwise-backup-" + localAccount.id + ".json";
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast("Your local ID and saved builds were backed up.");
+  } catch {
+    showToast("A backup could not be created from this browser's saved data.");
+  }
+});
+
+$("#choose-account-backup").addEventListener("click", () => $("#account-backup-file").click());
+$("#account-backup-file").addEventListener("change", async event => {
+  const input = event.currentTarget;
+  const file = input.files?.[0];
+  if (!file) return;
+  try {
+    if (file.size > MAX_LOCAL_BACKUP_BYTES) throw new Error("Backup exceeds the supported file size.");
+    const backup = parseLocalAccountBackup(await file.text());
+    const currentBuilds = readSavedBuilds();
+    if ((currentBuilds.length || backup.accountId !== localAccount.id) && !window.confirm("Restore this backup? It will replace this browser's current local ID and saved builds.")) return;
+
+    const nextKey = savedBuildKeyForAccount(backup.accountId);
+    const previousBuilds = readStorageValue(nextKey);
+    if (!writeStorageValue(nextKey, JSON.stringify(backup.savedBuilds))) {
+      showToast("Your browser could not write the restored builds.");
+      return;
+    }
+    if (!writeStorageValue(LOCAL_ACCOUNT_STORAGE_KEY, backup.accountId)) {
+      if (previousBuilds === null) removeStorageValue(nextKey);
+      else writeStorageValue(nextKey, previousBuilds);
+      showToast("Your browser could not restore the local ID.");
+      return;
+    }
+    localAccount = { id: backup.accountId, persisted: true, created: false };
+    STORAGE_KEY = nextKey;
+    renderLocalAccount();
+    renderSavedBuilds();
+    showToast("Backup restored in this browser.");
+  } catch {
+    showToast("That backup is invalid or not supported.");
+  } finally {
+    input.value = "";
+  }
+});
+
 $("#year").textContent = new Date().getFullYear();
 if (readStorageValue("rigwise-theme") === "dark") document.body.classList.add("dark-theme");
 renderLocalAccount();
@@ -499,3 +553,4 @@ if (shared) {
   showToast("Shared example build loaded.");
 }
 render();
+

@@ -18,7 +18,7 @@ Open index.html in a modern browser, or serve this directory with any static web
 - Basket prices and delivery are accumulated in integer cents. The solver exactly enumerates up to 10,000 complete plans, ordered to find promising candidates early; if the limit is reached, it returns a feasible best-known plan and labels it without claiming optimality. Unknown availability and retailers without a known shipping rule are excluded. Bundles cover their included build parts as one purchase, so overlapping bundles cannot double-count a required component.
 - Expandable sample offer comparisons and lowest-total/fewest-shop strategies.
 - Side-by-side example product comparisons with aligned specifications, compatibility against the current sample build, and explicitly synthetic item-price comparisons.
-- Browser-local anonymous account ID, saved builds associated with that ID, share links and a light/dark theme. No email, password, database, or cross-device sync is used; existing local builds migrate to the ID on first visit.
+- Browser-local anonymous account ID, saved builds associated with that ID, share links and a light/dark theme. Download or restore a versioned JSON backup to move the ID and saved builds between browsers. No email, password, database, or automatic cloud sync is used; existing local builds migrate to the ID on first visit.
 - Awin feed normalisation for comma, semicolon, pipe and tab-delimited exports, including `product_GTIN` matching groundwork in awin-feed.js; imported observations cannot enter recommendations until each required source, match, stock, link, Ireland delivery, tax and order-shipping check is verified.
 - An evidence-gated Irish checkout/import cost calculator in irish-costs.js, with versioned rule dates, consumer charge pass-through checks, fresh dated currency conversion, and an optional verified-order-cost hook in the basket optimiser.
 
@@ -29,3 +29,4 @@ Prices, retailer labels, bundles, stock and delivery rules are synthetic fixture
 The standalone tax calculator requires verified inputs and is not connected to live offers or the visible demo. No displayed basket is a tax-complete purchasing quote. Its rule snapshot and official sources are documented in [IRISH-TAX-RULES.md](IRISH-TAX-RULES.md).
 
 The current retailer-source review is in [RETAILER-SOURCES.md](RETAILER-SOURCES.md). The next production milestone is authorised retailer feed access, followed by source-aware product matching, verified delivery and tax evidence, live freshness tracking, and independently checked purchasing links. Until those inputs are connected, the buying plan must not be used to place an order.
+
