@@ -36,3 +36,20 @@ export function removeStorageValue(key, storage) {
     return false;
   }
 }
+
+export function clearStorageWithPrefix(prefix, storage) {
+  if (typeof prefix !== "string" || prefix === "") return false;
+  try {
+    const target = resolveStorage(storage);
+    if (!target || typeof target.key !== "function") return false;
+    const keys = [];
+    for (let index = 0; index < target.length; index += 1) {
+      const key = target.key(index);
+      if (typeof key === "string" && key.startsWith(prefix)) keys.push(key);
+    }
+    for (const key of keys) target.removeItem(key);
+    return keys.every(key => target.getItem(key) === null);
+  } catch {
+    return false;
+  }
+}

@@ -1,7 +1,7 @@
 import { BUNDLES, COMPONENTS, COUNTIES, DEFAULT_BUILD, OFFERS, PRODUCTS, RETAILERS, SHIPPING_RULES } from "./data.js";
 import { checkCompatibility } from "./compatibility.js";
 import { generateAutoBuild } from "./auto-build.js";
-import { readStorageValue, removeStorageValue, writeStorageValue } from "./browser-storage.js";
+import { clearStorageWithPrefix, readStorageValue, removeStorageValue, writeStorageValue } from "./browser-storage.js";
 import { createLocalAccountBackup, parseLocalAccountBackup } from "./account-backup.js";
 import { getOrCreateLocalAccount, migrateLegacySavedBuilds, LOCAL_ACCOUNT_STORAGE_KEY, MAX_LOCAL_BACKUP_BYTES, savedBuildKeyForAccount } from "./local-account.js";
 import { MAX_AWIN_REVIEW_BYTES, reviewAwinFeedLocally } from "./feed-review.js";
@@ -543,6 +543,16 @@ $("#account-backup-file").addEventListener("change", async event => {
   }
 });
 
+$("#clear-local-data").addEventListener("click", () => {
+  const confirmed = window.confirm("Clear this browser's Rigwise ID, saved builds and preferences? Download a backup first if you want to keep your builds.");
+  if (!confirmed) return;
+  if (!clearStorageWithPrefix("rigwise-")) {
+    showToast("The browser could not clear all Rigwise data.");
+    return;
+  }
+  location.reload();
+});
+
 $("#awin-feed-review-form").addEventListener("submit", async event => {
   event.preventDefault();
   const form = event.currentTarget;
@@ -599,4 +609,3 @@ if (shared) {
   showToast("Shared example build loaded.");
 }
 render();
-
