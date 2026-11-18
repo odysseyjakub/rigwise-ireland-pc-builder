@@ -66,3 +66,38 @@
   .catalogue-grid { grid-template-columns: 1fr; }
   .component-footer { align-items: start; flex-direction: column; padding: 20px 18px; }
 }
+
+/* Keep source notes and hardware specifications readable at every breakpoint. */
+.component-intro>p { font-size: 16px; }
+.component-trust-note { font-size: 14px; }
+.component-trust-note strong { font-size: 12px; }
+.reference-heading p, .catalogue-heading p { font-size: 15px; }
+.reference-status, .catalogue-count { font-size: 12px; }
+.reference-check strong, .reference-check span:last-child { font-size: 14px; }
+.reference-footnote { font-size: 13px; }
+.catalogue-controls label { font-size: 14px; }
+.catalogue-controls input, .catalogue-controls select { font-size: 14px; }
+.catalogue-card-top { font-size: 12px; }
+.catalogue-card-brand { font-size: 14px; }
+.catalogue-part-number { font-size: 13px; }
+.catalogue-part-number code { font-size: 12px; }
+.catalogue-specs { font-size: 14px; }
+.catalogue-no-offer { font-size: 12px; }
+.catalogue-source { font-size: 13px; }
+.catalogue-empty { font-size: 14px; }
+.component-footer { font-size: 12px; }
+.component-footer nav a { font-size: 13px; }
+@media (max-width: 640px) {
+  .components-page .main-nav { height: auto; flex-wrap: wrap; justify-content: flex-start; gap: 3px 16px; }
+  .components-page .nav-link { height: auto; padding-block: 5px; font-size: 13px; }
+  .component-intro>p { font-size: 16px; }
+  .reference-heading p, .catalogue-heading p { font-size: 15px; }
+  .reference-check strong, .reference-check span:last-child { font-size: 14px; }
+  .reference-footnote { font-size: 13px; }
+  .catalogue-controls label { font-size: 14px; }
+  .catalogue-controls input, .catalogue-controls select { font-size: 16px; }
+  .catalogue-card-top { font-size: 12px; }
+  .catalogue-card-brand, .catalogue-specs { font-size: 14px; }
+  .catalogue-no-offer, .component-footer { font-size: 12px; }
+}
+

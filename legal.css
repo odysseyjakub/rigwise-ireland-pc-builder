@@ -28,3 +28,11 @@
   .legal-main { margin-top: 36px; }
   .legal-footer { padding: 17px 18px; }
 }
+.legal-nav a, .legal-footer a { font-size: 14px; }
+.legal-eyebrow { font-size: 12px; }
+.legal-meta { font-size: 12px; }
+.legal-lead { font-size: 16px; }
+.legal-alert { font-size: 14px; }
+.legal-article p, .legal-article li { font-size: 16px; }
+.legal-footer { font-size: 13px; }
+
