@@ -57,10 +57,10 @@ function detailedProducts() {
   patch("storage-2tb", { capacityGb: 2000, interface: "NVMe", formFactor: "M.2 2280", pcieGeneration: 4 });
 
   for (const id of ["psu-550", "psu-650", "psu-850"]) {
-    patch(id, { formFactor: "ATX", connectors: ["24-pin", "CPU-8pin", "1x8-pin", "2x8-pin"] });
+    patch(id, { formFactor: "ATX", connectors: ["24-pin", "CPU-8pin", "1x8-pin", "2x8-pin"], lengthMm: 140 });
   }
-  patch("case-air", { maxGpuSlots: 2.7, maxCoolerHeightMm: 155, radiatorSupportMm: [120, 240], psuFormats: ["ATX"] });
-  patch("case-mid", { maxGpuSlots: 3.5, maxCoolerHeightMm: 165, radiatorSupportMm: [120, 240, 360], psuFormats: ["ATX"] });
+  patch("case-air", { maxGpuSlots: 2.7, maxCoolerHeightMm: 155, maxPsuLengthMm: 160, radiatorSupportMm: [120, 240], psuFormats: ["ATX"] });
+  patch("case-mid", { maxGpuSlots: 3.5, maxCoolerHeightMm: 165, maxPsuLengthMm: 220, radiatorSupportMm: [120, 240, 360], psuFormats: ["ATX"] });
   return products;
 }
 
@@ -204,4 +204,3 @@ test("marks missing specification fields unknown instead of treating them as pas
   assert.ok(has(result, "storage-interface", "unknown"));
   assert.notEqual(result.status, "compatible");
 });
-

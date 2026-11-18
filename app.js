@@ -7,6 +7,7 @@ import { getOrCreateLocalAccount, migrateLegacySavedBuilds, LOCAL_ACCOUNT_STORAG
 import { MAX_AWIN_REVIEW_BYTES, reviewAwinFeedLocally } from "./feed-review.js";
 import { compareCatalogProducts, PRODUCT_CATEGORIES } from "./comparison.js";
 import { cheapestItemPlan, optimizeBasket } from "./optimizer.js";
+import { VERIFIED_CATALOGUE_PRODUCTS } from "./catalogue-data.js";
 
 const $ = selector => document.querySelector(selector);
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(value);
@@ -574,7 +575,7 @@ $("#awin-feed-review-form").addEventListener("submit", async event => {
     const result = reviewAwinFeedLocally(await file.text(), {
       advertiserId: $("#awin-advertiser-id").value,
       retailerName: $("#awin-retailer-name").value,
-      catalogProducts: PRODUCTS
+      catalogProducts: [...PRODUCTS, ...VERIFIED_CATALOGUE_PRODUCTS]
     });
     const heading = document.createElement("strong");
     heading.textContent = result.retailerName + " · Awin advertiser " + result.advertiserId;

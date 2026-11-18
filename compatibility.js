@@ -199,7 +199,11 @@ export function checkCompatibility({ components, products, requirements = {} }) 
   if (cpu && cooler) {
     const sockets = cooler.specs?.sockets;
     const cpuSocket = cpu.specs?.socket;
-    if (!Array.isArray(sockets) || !hasValue(cpuSocket)) {
+    const coolerIsBundledForCpu = cpu.specs?.bundledCoolerId === cooler.id
+      && cooler.specs?.bundledWithCpuId === cpuId;
+    if (coolerIsBundledForCpu) {
+      add("cooler-socket", PASS, "Cooler mounting", "The manufacturer lists this thermal solution in the selected boxed CPU package.");
+    } else if (!Array.isArray(sockets) || !hasValue(cpuSocket)) {
       unknown("cooler-socket", "Cooler mounting", "Cooler mounting sockets or CPU socket data is missing.");
     } else if (!sockets.includes(cpuSocket)) {
       add("cooler-socket", FAIL, "Cooler mounting", "The cooler does not list support for the selected " + cpuSocket + " socket.");
@@ -210,7 +214,11 @@ export function checkCompatibility({ components, products, requirements = {} }) 
     const coolerCapacity = cooler.specs?.maxTdp;
     const cpuWatts = cpu.specs?.watts;
     if (!hasValue(coolerCapacity) || !hasValue(cpuWatts)) {
-      unknown("cooler-capacity", "Cooler capacity", "The cooler rating or CPU power data is missing.");
+      if (coolerIsBundledForCpu && hasValue(cpuWatts)) {
+        add("cooler-capacity", PASS, "Bundled thermal solution", "The CPU manufacturer includes this thermal solution with the selected boxed processor; no independent cooler performance rating is recorded.");
+      } else {
+        unknown("cooler-capacity", "Cooler capacity", "The cooler rating or CPU power data is missing.");
+      }
     } else if (coolerCapacity < cpuWatts) {
       add("cooler-capacity", WARNING, "Cooler capacity", "The example cooler is rated for " + coolerCapacity + " W; the CPU is rated at " + cpuWatts + " W.");
     } else {
@@ -273,13 +281,22 @@ export function checkCompatibility({ components, products, requirements = {} }) 
   if (cpu && power) {
     const cpuWatts = cpu.specs?.watts;
     const gpuWatts = gpu?.specs?.watts ?? 0;
+    const recommendedSystemPowerWatts = gpu?.specs?.recommendedSystemPowerW;
     const powerWatts = power.specs?.watts;
-    if (!hasValue(cpuWatts) || (gpu && !hasValue(gpu.specs?.watts)) || !hasValue(powerWatts)) {
+    const calculatedTargetKnown = hasValue(cpuWatts) && (!gpu || hasValue(gpu.specs?.watts));
+    if (!hasValue(powerWatts) || (!calculatedTargetKnown && !hasValue(recommendedSystemPowerWatts))) {
       unknown("psu-capacity", "Power supply headroom", "CPU, graphics card, or power supply wattage data is missing.");
     } else {
-      const target = Math.ceil((cpuWatts + gpuWatts + 150) * 1.3 / 50) * 50;
+      const calculatedTarget = calculatedTargetKnown
+        ? Math.ceil((cpuWatts + gpuWatts + 150) * 1.3 / 50) * 50
+        : 0;
+      const target = Math.max(calculatedTarget, recommendedSystemPowerWatts || 0);
       if (powerWatts < target) add("psu-capacity", WARNING, "Power supply headroom", "The example parts suggest a " + target + " W supply for illustrative headroom; the selected unit is " + powerWatts + " W.");
-      else add("psu-capacity", PASS, "Power supply headroom", "The selected supply meets the example headroom estimate of " + target + " W.");
+      else if (!calculatedTargetKnown && hasValue(recommendedSystemPowerWatts)) {
+        add("psu-capacity", PASS, "Power supply headroom", "The selected supply meets the graphics-card manufacturer's stated " + recommendedSystemPowerWatts + " W system-PSU recommendation; exact total system draw is not estimated.");
+      } else {
+        add("psu-capacity", PASS, "Power supply headroom", "The selected supply meets the example headroom estimate of " + target + " W.");
+      }
     }
   } else {
     unknown("psu-capacity", "Power supply headroom", "CPU or power supply data is missing.");
@@ -319,6 +336,16 @@ export function checkCompatibility({ components, products, requirements = {} }) 
     add("psu-case-fit", PASS, "Power supply and case size", "The case lists support for the selected PSU form factor.");
   }
 
+  const psuLength = power?.specs?.lengthMm;
+  const casePsuLength = pcCase?.specs?.maxPsuLengthMm;
+  if (!hasValue(psuLength) || !hasValue(casePsuLength)) {
+    unknown("psu-case-length", "Power supply length", "The PSU length or case PSU clearance is missing.");
+  } else if (psuLength > casePsuLength) {
+    add("psu-case-length", FAIL, "Power supply length", "The PSU is " + psuLength + " mm long; the case lists " + casePsuLength + " mm clearance.");
+  } else {
+    add("psu-case-length", PASS, "Power supply length", "The PSU fits within the case's listed length limit.");
+  }
+
   const incompatibleCount = checks.filter(check => check.status === FAIL).length;
   const warningCount = checks.filter(check => check.status === WARNING).length;
   const unknownCount = checks.filter(check => check.status === UNKNOWN).length;
@@ -326,4 +353,3 @@ export function checkCompatibility({ components, products, requirements = {} }) 
   const issues = checks.filter(check => ![PASS, NOT_APPLICABLE].includes(check.status));
   return { status, checks, issues, incompatibleCount, warningCount, unknownCount };
 }
-

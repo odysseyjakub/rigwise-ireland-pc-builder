@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en-IE">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A small source-linked catalogue of PC components with manufacturer specifications and no invented retailer offers.">
+<meta name="theme-color" content="#f5f5f0">
+<title>Components — Rigwise</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="components.css">
+</head>
+<body class="components-page">
+<header class="site-header component-header">
+  <a class="brand" href="index.html" aria-label="Rigwise home"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M4 5h8v8H4zM16 5h8v8h-8zM4 17h8v7H4zM16 17h8v7h-8z"/></svg></span><span>rigwise<span class="brand-period">.</span></span></a>
+  <nav class="main-nav" aria-label="Main navigation"><a class="nav-link" href="index.html#builder">PC builder</a><a class="nav-link active" href="components.html" aria-current="page">Components</a><a class="nav-link" href="index.html#compare">Compare</a><a class="nav-link" href="privacy.html">Privacy</a></nav>
+  <div class="component-header-actions"><button id="component-theme-toggle" class="icon-button" type="button" aria-label="Switch to dark theme" title="Switch theme"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.5"/><path d="M10 1.5v2M10 16.5v2M18.5 10h-2M3.5 10h-2M16 4l-1.4 1.4M5.4 14.6 4 16M16 16l-1.4-1.4M5.4 5.4 4 4"/></svg></button><a class="button button-dark component-builder-link" href="index.html#builder">Open builder <span aria-hidden="true">↗</span></a></div>
+</header>
+<main class="component-main">
+  <section class="component-intro" aria-labelledby="component-title">
+    <div class="eyebrow"><span class="eyebrow-line"></span> MANUFACTURER-SOURCED HARDWARE</div>
+    <h1 id="component-title">Real parts.<br><span>No invented offers.</span></h1>
+    <p>This starter catalogue records exact product models and specifications from manufacturer pages. It does not include retailer prices, current stock, Irish delivery, or a purchasing recommendation.</p>
+    <div class="component-trust-note"><strong>Data boundary</strong><span>Source pages were checked on 18 November 2026. Product availability can change; each manufacturer link is the source of record. Retailer offer access is not connected.</span></div>
+  </section>
+  <section class="reference-build" aria-labelledby="reference-title">
+    <div class="reference-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> DOCUMENTED FIT EXAMPLE</div><h2 id="reference-title">One reference build.</h2><p>Some checks remain unknown where official data is missing. No part prices are shown.</p></div><span id="reference-status" class="reference-status" aria-live="polite">Checking parts…</span></div>
+    <div id="reference-checks" class="reference-checks" aria-live="polite"></div>
+    <p class="reference-footnote">Memory is listed at its 4800 MT/s JEDEC default. Its 6000 MT/s EXPO profile is a memory overclock and is not assumed. The exact motherboard BIOS/QVL and stock-cooler clearance data still need confirmation.</p>
+  </section>
+  <section class="catalogue-section" aria-labelledby="catalogue-title">
+    <div class="catalogue-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> PART REFERENCES</div><h2 id="catalogue-title">Browse the catalogue.</h2><p>Search exact model names and manufacturer part numbers.</p></div><span id="catalogue-count" class="catalogue-count" aria-live="polite"></span></div>
+    <div class="catalogue-controls">
+      <label for="catalogue-search">Search components<input id="catalogue-search" type="search" placeholder="e.g. SN770 or B650M-P" autocomplete="off"></label>
+      <label for="catalogue-category">Category<select id="catalogue-category"><option value="">All components</option></select></label>
+    </div>
+    <div id="catalogue-products" class="catalogue-grid" aria-live="polite"></div>
+  </section>
+</main>
+<footer class="component-footer"><a class="brand" href="index.html">rigwise<span class="brand-period">.</span></a><span>Manufacturer specification references · no live retailer data</span><nav aria-label="Footer"><a href="privacy.html">Privacy</a><a href="cookies.html">Cookies</a><a href="terms.html">Terms</a><a href="affiliate.html">Affiliate</a><a href="contact.html">Contact</a></nav></footer>
+<script type="module" src="components-page.js"></script>
+</body>
+</html>
