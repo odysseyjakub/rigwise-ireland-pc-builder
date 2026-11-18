@@ -8,6 +8,7 @@ import { MAX_AWIN_REVIEW_BYTES, reviewAwinFeedLocally } from "./feed-review.js";
 import { compareCatalogProducts, PRODUCT_CATEGORIES } from "./comparison.js";
 import { cheapestItemPlan, optimizeBasket } from "./optimizer.js";
 import { VERIFIED_CATALOGUE_PRODUCTS } from "./catalogue-data.js";
+import { decodeShareHash, encodeShareHash } from "./share-state.js";
 
 const $ = selector => document.querySelector(selector);
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(value);
@@ -37,15 +38,7 @@ function readSavedBuilds() {
 }
 
 function fromShareHash() {
-  if (!location.hash.startsWith("#build=")) return null;
-  try {
-    const encoded = location.hash.slice(7).replace(/-/g, "+").replace(/_/g, "/");
-    const decoded = JSON.parse(decodeURIComponent(escape(atob(encoded))));
-    if (!decoded || !decoded.build || !COMPONENTS.every(component => PRODUCTS.some(product => product.id === decoded.build[component.id] && product.category === component.category))) return null;
-    return { ...decoded, county: COUNTIES.includes(decoded.county) ? decoded.county : undefined };
-  } catch {
-    return null;
-  }
+  return decodeShareHash(location.hash, { components: COMPONENTS, products: PRODUCTS, counties: COUNTIES });
 }
 
 const shared = fromShareHash();
@@ -363,8 +356,12 @@ function workloadLabel(value) {
 
 function shareBuild() {
   const payload = { build, budget, workload, county };
-  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-  const url = location.origin + location.pathname + "#build=" + encoded;
+  const hash = encodeShareHash(payload);
+  if (!hash) {
+    showToast("This build could not be encoded for sharing.");
+    return;
+  }
+  const url = location.origin + location.pathname + hash;
   if (navigator.clipboard?.writeText) {
     navigator.clipboard.writeText(url).then(() => showToast("Share link copied.")).catch(() => showToast("Copy the link from your browser address bar after sharing."));
   } else {
@@ -610,3 +607,4 @@ if (shared) {
   showToast("Shared example build loaded.");
 }
 render();
+
