@@ -121,8 +121,10 @@
 .dark-theme.resource-page .source-links a,.dark-theme.resource-page .resource-footer nav a { color: #c2d9bd; }
 .dark-theme.resource-page .resource-kicker,.dark-theme.resource-page .guide-meta,.dark-theme.resource-page .resource-footer { color: #aab8aa; }
 @media (max-width: 900px) {
-  .resource-header { padding-inline: 22px; }
-  .resource-header .main-nav { gap: 15px; }
+  .resource-page .resource-header { height: auto; min-height: 73px; flex-wrap: wrap; gap: 8px 12px; padding: 10px 22px; }
+  .resource-header .main-nav { order: 3; width: 100%; height: auto; flex-wrap: wrap; justify-content: flex-start; gap: 3px 15px; }
+  .resource-page .nav-link { height: auto; padding-block: 5px; font-size: 12px; }
+  .resource-header-actions { margin-left: auto; }
   .deal-empty { grid-template-columns: 60px minmax(0,1fr); }
   .deal-empty .button { grid-column: 2; justify-self: start; }
   .evidence-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
@@ -163,4 +165,3 @@
   .evidence-card h3 { margin-top: 12px; }
   .source-links { align-items: stretch; flex-direction: column; }
 }
-

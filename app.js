@@ -297,9 +297,14 @@ function renderCompatibility() {
 function renderSavedBuilds() {
   const host = $("#saved-builds");
   const saved = readSavedBuilds();
-  host.hidden = saved.length === 0;
-  host.innerHTML = saved.length ? '<div class="saved-heading"><span>BUILDS SAVED ON THIS DEVICE</span><button type="button" data-clear-saved class="saved-clear">Clear all</button></div><div class="saved-list">' +
-    saved.map(item => '<div class="saved-item"><button type="button" data-load-saved="' + item.id + '" class="saved-name">' + escapeHTML(item.name) + '<small>' + new Date(item.createdAt).toLocaleDateString("en-IE") + ' · illustrative total ' + money(Number(item.total) || 0) + '</small></button><button type="button" class="saved-remove" data-remove-saved="' + item.id + '" aria-label="Remove ' + escapeHTML(item.name) + '">×</button></div>').join("") + '</div>' : "";
+  host.hidden = false;
+  const clearButton = saved.length ? '<button type="button" data-clear-saved class="saved-clear">Clear all</button>' : '<span class="saved-device-label">Stored in this browser</span>';
+  const savedItems = saved.map(item => {
+    const safeId = escapeHTML(item.id);
+    return '<div class="saved-item"><button type="button" data-load-saved="' + safeId + '" class="saved-name">' + escapeHTML(item.name) + '<small>' + new Date(item.createdAt).toLocaleDateString("en-IE") + ' · illustrative total ' + money(Number(item.total) || 0) + '</small></button><button type="button" class="saved-remove" data-remove-saved="' + safeId + '" aria-label="Remove ' + escapeHTML(item.name) + '">×</button></div>';
+  }).join("");
+  host.innerHTML = '<div class="saved-heading"><span>SAVED BUILDS</span>' + clearButton + '</div>' +
+    (saved.length ? '<div class="saved-list">' + savedItems + '</div>' : '<p class="saved-empty">No builds saved yet. Choose “Save build” to keep one on this device.</p>');
 }
 
 function renderLocalAccount() {

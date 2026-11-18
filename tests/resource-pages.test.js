@@ -12,6 +12,20 @@ test("builder and catalogue navigation link to the deals and guide pages", async
   }
 });
 
+test("primary navigation exposes saved builds and the browser-local account", async () => {
+  const pages = await Promise.all(["index.html", "components.html", "deals.html", "guides.html", "cost-check.html"].map(read));
+  for (const page of pages) {
+    assert.match(page, /Saved Builds/);
+    assert.match(page, /href="(?:index\.html)?#saved-builds"/);
+    assert.match(page, /href="(?:index\.html)?#account"/);
+  }
+  const home = await read("index.html");
+  const app = await read("app.js");
+  assert.match(home, /id="saved-builds" class="saved-builds"/);
+  assert.match(app, /No builds saved yet/);
+  assert.match(app, /escapeHTML\(item\.id\)/);
+});
+
 test("deals page clearly states that no current verified offers are connected", async () => {
   const deals = await read("deals.html");
   assert.match(deals, /NO VERIFIED OFFERS/);
@@ -56,4 +70,3 @@ test("resource pages share the saved browser theme preference", async () => {
   assert.match(css, /@media \(max-width: 740px\)/);
   assert.match(css, /\.dark-theme\.resource-page/);
 });
-
