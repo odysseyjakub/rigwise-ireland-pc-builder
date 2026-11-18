@@ -19,7 +19,7 @@ Open index.html in a modern browser, or serve this directory with any static web
 - Expandable sample offer comparisons and lowest-total/fewest-shop strategies.
 - Side-by-side example product comparisons with aligned specifications, compatibility against the current sample build, and explicitly synthetic item-price comparisons.
 - Browser-local anonymous account ID, saved builds associated with that ID, share links and a light/dark theme. No email, password, database, or cross-device sync is used; existing local builds migrate to the ID on first visit.
-- Awin CSV/TSV feed normalisation and conservative product matching groundwork in awin-feed.js; imported observations cannot enter recommendations until each required source, match, stock, link, Ireland delivery, tax and order-shipping check is verified.
+- Awin feed normalisation for comma, semicolon, pipe and tab-delimited exports, including `product_GTIN` matching groundwork in awin-feed.js; imported observations cannot enter recommendations until each required source, match, stock, link, Ireland delivery, tax and order-shipping check is verified.
 - An evidence-gated Irish checkout/import cost calculator in irish-costs.js, with versioned rule dates, consumer charge pass-through checks, fresh dated currency conversion, and an optional verified-order-cost hook in the basket optimiser.
 
 ## Data boundary
