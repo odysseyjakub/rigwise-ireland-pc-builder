@@ -48,3 +48,28 @@ export function compareCatalogProducts({ category, productIds, products, offers 
   };
 }
 
+/**
+ * Compare source-linked manufacturer catalogue records without importing or
+ * implying retailer offers or prices.
+ */
+export function compareManufacturerProducts({ category, productIds, products }) {
+  if (!PRODUCT_CATEGORIES[category]) throw new Error("Choose a supported product category");
+  if (!Array.isArray(productIds) || !Array.isArray(products)) {
+    throw new Error("Product ids and products must be arrays");
+  }
+  const ids = productIds.filter(id => typeof id === "string" && id.length > 0);
+  if (ids.length < 2 || ids.length > 3) throw new Error("Compare two or three products");
+  if (new Set(ids).size !== ids.length) throw new Error("Choose different products to compare");
+
+  const columns = ids.map(id => {
+    const product = products.find(candidate => candidate.id === id);
+    if (!product) throw new Error("Unknown product: " + id);
+    if (product.category !== category) throw new Error("All compared products must be in the same category");
+    return {
+      product,
+      specs: product.specs && typeof product.specs === "object" ? { ...product.specs } : {}
+    };
+  });
+  const specKeys = [...new Set(columns.flatMap(column => Object.keys(column.specs)))];
+  return { category, categoryLabel: PRODUCT_CATEGORIES[category], columns, specKeys };
+}

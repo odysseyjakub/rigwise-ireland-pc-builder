@@ -22,6 +22,7 @@ export const VERIFIED_CATALOGUE_PRODUCTS = [
       integratedGraphics: true,
       coreCount: 6,
       threadCount: 12,
+      thermalSolutionIncluded: true,
       bundledCoolerId: "amd-wraith-stealth-included"
     },
     keySpecs: ["6 cores / 12 threads", "AM5", "65 W default TDP", "Boxed SKU lists the Wraith Stealth thermal solution"]
@@ -42,7 +43,8 @@ export const VERIFIED_CATALOGUE_PRODUCTS = [
       watts: 120,
       integratedGraphics: true,
       coreCount: 8,
-      threadCount: 16
+      threadCount: 16,
+      thermalSolutionIncluded: false
     },
     keySpecs: ["8 cores / 16 threads", "AM5", "120 W default TDP", "No thermal solution included"]
   },

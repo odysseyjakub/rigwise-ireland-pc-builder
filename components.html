@@ -28,6 +28,18 @@
     <div id="reference-checks" class="reference-checks" aria-live="polite"></div>
     <p class="reference-footnote">Memory is listed at its 4800 MT/s JEDEC default. Its 6000 MT/s EXPO profile is a memory overclock and is not assumed. The exact motherboard BIOS/QVL and stock-cooler clearance data still need confirmation.</p>
   </section>
+  <section class="catalogue-compare" aria-labelledby="catalogue-compare-title">
+    <div class="catalogue-compare-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> SPECIFICATION COMPARISON</div><h2 id="catalogue-compare-title">Compare documented models.</h2><p>Line up two or three manufacturer-listed products in the same category. No prices or retailer offers are included.</p></div></div>
+    <div class="manufacturer-compare-controls">
+      <label for="catalogue-compare-category">Category<select id="catalogue-compare-category"></select></label>
+      <label for="catalogue-compare-model-a">Model one<select id="catalogue-compare-model-a"></select></label>
+      <label for="catalogue-compare-model-b">Model two<select id="catalogue-compare-model-b"></select></label>
+      <label for="catalogue-compare-model-c">Optional third model<select id="catalogue-compare-model-c"></select></label>
+      <button id="catalogue-compare-button" class="button button-dark" type="button">Compare specifications</button>
+    </div>
+    <p id="catalogue-compare-status" class="manufacturer-compare-status" role="status" aria-live="polite">Choose a category and at least two models.</p>
+    <div id="catalogue-compare-results" class="manufacturer-comparison-results"></div>
+  </section>
   <section class="catalogue-section" aria-labelledby="catalogue-title">
     <div class="catalogue-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> PART REFERENCES</div><h2 id="catalogue-title">Browse the catalogue.</h2><p>Search exact model names and manufacturer part numbers.</p></div><span id="catalogue-count" class="catalogue-count" aria-live="polite"></span></div>
     <div class="catalogue-controls">

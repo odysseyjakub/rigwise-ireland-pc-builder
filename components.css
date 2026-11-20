@@ -39,6 +39,23 @@
 .catalogue-no-offer { color: #805b2f; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
 .catalogue-source { color: #47694e; font-size: 10px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .catalogue-empty { grid-column: 1/-1; padding: 24px; border: 1px dashed #cdd5ca; color: #6d796f; font-size: 12px; text-align: center; }
+.catalogue-compare { margin-top: 58px; padding: 24px; border: 1px solid #dfe3dc; border-radius: 9px; background: #fbfcf8; }
+.catalogue-compare-heading h2 { margin: 8px 0 5px; font: 700 30px/1.1 "Manrope", sans-serif; letter-spacing: -.04em; }
+.catalogue-compare-heading p { max-width: 650px; margin: 0; color: #718074; font-size: 15px; line-height: 1.6; }
+.manufacturer-compare-controls { display: grid; grid-template-columns: repeat(4,minmax(150px,1fr)); gap: 12px; align-items: end; margin-top: 18px; }
+.manufacturer-compare-controls label { display: grid; gap: 6px; color: #59675c; font-size: 13px; font-weight: 700; }
+.manufacturer-compare-controls select { width: 100%; min-height: 42px; padding: 9px 10px; border: 1px solid #d6ddd3; border-radius: 6px; background: #fbfcf8; color: #19251d; font: 14px "DM Sans", sans-serif; }
+.manufacturer-compare-controls select:focus { outline: 2px solid #77987b; outline-offset: 2px; }
+.manufacturer-compare-controls button { min-height: 42px; padding: 9px 14px; white-space: nowrap; }
+.manufacturer-compare-controls button:disabled { cursor: not-allowed; opacity: .55; }
+.manufacturer-compare-status { margin: 14px 0 0; color: #617065; font-size: 13px; line-height: 1.5; }
+.manufacturer-comparison-results { max-width: 100%; margin-top: 14px; overflow-x: auto; }
+.manufacturer-comparison-table { width: 100%; min-width: 620px; border-collapse: collapse; background: #fbfcf8; color: #243129; font-size: 13px; }
+.manufacturer-comparison-table th,.manufacturer-comparison-table td { padding: 11px 13px; border: 1px solid #dfe3dc; text-align: left; vertical-align: top; }
+.manufacturer-comparison-table thead th { background: #eef1e9; font-weight: 700; }
+.manufacturer-comparison-table thead th a { color: #355d3d; text-underline-offset: 3px; }
+.manufacturer-comparison-table tbody th { width: 190px; font-weight: 700; }
+.manufacturer-comparison-table tbody td { color: #59675c; }
 .component-footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 22px max(24px,calc((100vw - 1120px)/2)); border-top: 1px solid #dfe3dc; color: #748075; font-size: 10px; }
 .component-footer .brand { text-decoration: none; }
 .component-footer nav { display: flex; flex-wrap: wrap; gap: 15px; }
@@ -48,9 +65,16 @@
 .dark-theme .component-trust-note { background: #1c251f; color: #adb9ac; }
 .dark-theme .component-trust-note strong,.dark-theme .catalogue-card h3,.dark-theme .catalogue-part-number code { color: #eef2eb; }
 .dark-theme .reference-check,.dark-theme .catalogue-card,.dark-theme .catalogue-controls input,.dark-theme .catalogue-controls select { border-color: #344038; background: #18211c; color: #edf2ec; }
+.dark-theme .catalogue-compare,.dark-theme .manufacturer-comparison-table { border-color: #344038; background: #18211c; color: #edf2ec; }
+.dark-theme .manufacturer-compare-controls label,.dark-theme .manufacturer-compare-status,.dark-theme .manufacturer-comparison-table tbody td { color: #aab5aa; }
+.dark-theme .manufacturer-compare-controls select { border-color: #344038; background: #18211c; color: #edf2ec; }
+.dark-theme .manufacturer-comparison-table th,.dark-theme .manufacturer-comparison-table td { border-color: #344038; }
+.dark-theme .manufacturer-comparison-table thead th { background: #222e26; }
+.dark-theme .manufacturer-comparison-table thead th a { color: #9abc9d; }
 .dark-theme .catalogue-controls label,.dark-theme .reference-check span:last-child,.dark-theme .catalogue-specs { color: #aab5aa; }
 .dark-theme .component-footer { border-color: #344038; }
 @media (max-width: 900px) { .catalogue-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .reference-checks { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .manufacturer-compare-controls { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 640px) {
   .components-page .site-header { height: auto; min-height: 65px; padding: 12px 18px; flex-wrap: wrap; }
   .components-page .main-nav { order: 3; width: 100%; justify-content: space-between; gap: 12px; }
@@ -64,6 +88,9 @@
   .reference-check span:last-child { grid-column: 2; }
   .catalogue-controls { grid-template-columns: 1fr; }
   .catalogue-grid { grid-template-columns: 1fr; }
+  .catalogue-compare { margin-top: 42px; padding: 16px; }
+  .manufacturer-compare-controls { grid-template-columns: 1fr; }
+  .manufacturer-compare-controls button { width: 100%; }
   .component-footer { align-items: start; flex-direction: column; padding: 20px 18px; }
 }
 
@@ -100,4 +127,3 @@
   .catalogue-card-brand, .catalogue-specs { font-size: 14px; }
   .catalogue-no-offer, .component-footer { font-size: 12px; }
 }
-

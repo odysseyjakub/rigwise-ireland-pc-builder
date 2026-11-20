@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { compareCatalogProducts } from "../comparison.js";
+import { compareCatalogProducts, compareManufacturerProducts } from "../comparison.js";
+import { VERIFIED_CATALOGUE_PRODUCTS } from "../catalogue-data.js";
 import { OFFERS, PRODUCTS } from "../data.js";
 
 test("comparison returns aligned specifications and qualifying example prices", () => {
@@ -42,3 +43,29 @@ test("comparison requires two or three distinct products from one category", () 
   assert.throws(() => compareCatalogProducts({ ...args, productIds: ["missing", "cpu-8"] }), /Unknown product/);
 });
 
+test("manufacturer comparison aligns source specs without adding example prices", () => {
+  const result = compareManufacturerProducts({
+    category: "cpu",
+    productIds: ["amd-ryzen-5-9600x-box", "amd-ryzen-5-7600-box"],
+    products: VERIFIED_CATALOGUE_PRODUCTS
+  });
+  assert.equal(result.categoryLabel, "Processors");
+  assert.equal(result.columns.length, 2);
+  assert.ok(result.specKeys.includes("socket"));
+  assert.ok(result.specKeys.includes("thermalSolutionIncluded"));
+  assert.equal(result.columns[0].specs.coreCount, 6);
+  assert.equal(result.columns[0].specs.thermalSolutionIncluded, false);
+  assert.equal(result.columns[1].specs.thermalSolutionIncluded, true);
+  assert.equal(Object.hasOwn(result.columns[0], "lowestExamplePrice"), false);
+});
+
+test("manufacturer comparison rejects incomplete, duplicate and cross-category selections", () => {
+  const args = {
+    category: "graphics",
+    productIds: ["asus-dual-rtx4060-o8g", "asus-dual-rtx5070-o12g"],
+    products: VERIFIED_CATALOGUE_PRODUCTS
+  };
+  assert.throws(() => compareManufacturerProducts({ ...args, productIds: [args.productIds[0]] }), /two or three/);
+  assert.throws(() => compareManufacturerProducts({ ...args, productIds: [args.productIds[0], args.productIds[0]] }), /different products/);
+  assert.throws(() => compareManufacturerProducts({ ...args, productIds: [args.productIds[0], "amd-ryzen-5-9600x-box"] }), /same category/);
+});

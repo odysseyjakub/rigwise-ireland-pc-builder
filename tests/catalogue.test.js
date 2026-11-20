@@ -48,6 +48,22 @@ test("the source-linked catalogue page labels each part as lacking retailer offe
   assert.match(script, /noopener noreferrer/);
 });
 
+test("the source catalogue exposes an accessible, price-free manufacturer comparison", async () => {
+  const [html, script] = await Promise.all([
+    readFile(new URL("../components.html", import.meta.url), "utf8"),
+    readFile(new URL("../components-page.js", import.meta.url), "utf8")
+  ]);
+  for (const id of ["catalogue-compare-category", "catalogue-compare-model-a", "catalogue-compare-model-b", "catalogue-compare-model-c"]) {
+    assert.match(html, new RegExp('id="' + id + '"'));
+    assert.match(html, new RegExp('for="' + id + '"'));
+  }
+  assert.match(html, /aria-live="polite"/);
+  assert.match(html, /No prices or retailer offers are included/);
+  assert.match(script, /compareManufacturerProducts/);
+  assert.match(script, /Not recorded in this catalogue/);
+  assert.match(script, /noopener noreferrer/);
+});
+
 test("the reference build uses every required slot and exposes unresolved checks", () => {
   assert.deepEqual(Object.keys(REFERENCE_BUILD).sort(), COMPONENTS.map(component => component.id).sort());
   assert.equal(REFERENCE_BUILD_COMPONENTS.length, COMPONENTS.length);
