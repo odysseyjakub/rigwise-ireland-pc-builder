@@ -10,6 +10,7 @@ import { cheapestItemPlan, optimizeBasket } from "./optimizer.js";
 import { VERIFIED_CATALOGUE_PRODUCTS } from "./catalogue-data.js";
 import { decodeShareHash, encodeShareHash } from "./share-state.js";
 import { createSavedBuildSnapshot, duplicateSavedBuild, MAX_SAVED_BUILDS, prependSavedBuild, renameSavedBuild } from "./saved-builds.js";
+import { buildShopMapPreviewUrl } from "./shop-map.js";
 
 const $ = selector => document.querySelector(selector);
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(value);
@@ -101,9 +102,15 @@ function appendExternalLink(container, label, href) {
   container.append(link);
 }
 
+function closeShopMapPreview() {
+  $("#local-shop-map").hidden = true;
+  $("#local-shop-map-frame").removeAttribute("src");
+}
+
 function renderLocalShopResults(payload) {
   const host = $("#local-shop-results");
   const status = $("#local-shops-status");
+  closeShopMapPreview();
   host.replaceChildren();
   const results = Array.isArray(payload.results) ? payload.results : [];
   const dataDate = payload.dataTimestamp && Number.isFinite(Date.parse(payload.dataTimestamp))
@@ -142,6 +149,18 @@ function renderLocalShopResults(payload) {
       const website = shop.website ? new URL(shop.website) : null;
       if (website && ["https:", "http:"].includes(website.protocol)) appendExternalLink(actions, "Website", website.href);
     } catch { /* ignore malformed external links */ }
+    const previewUrl = buildShopMapPreviewUrl(shop.coordinates);
+    if (previewUrl) {
+      const preview = document.createElement("button");
+      preview.type = "button";
+      preview.textContent = "Preview map";
+      preview.dataset.shopMap = "";
+      preview.dataset.lat = String(shop.coordinates.lat);
+      preview.dataset.lon = String(shop.coordinates.lon);
+      preview.setAttribute("aria-controls", "local-shop-map");
+      preview.setAttribute("aria-label", "Show map preview for " + shop.name);
+      actions.append(preview);
+    }
     item.append(detail, actions);
     host.append(item);
   }
@@ -157,6 +176,7 @@ async function findLocalShops() {
   button.disabled = true;
   status.textContent = "Looking for mapped computer and electronics shops in " + countyAtRequest + "…";
   $("#local-shop-results").replaceChildren();
+  closeShopMapPreview();
   try {
     const response = await fetch("/api/shops?county=" + encodeURIComponent(countyAtRequest), {
       headers: { Accept: "application/json" },
@@ -648,8 +668,21 @@ $("#county").addEventListener("change", event => {
   $("#find-local-shops").disabled = false;
   $("#local-shops-status").textContent = "No lookup yet. Results load only when you choose this button.";
   $("#local-shop-results").replaceChildren();
+  closeShopMapPreview();
 });
 $("#find-local-shops").addEventListener("click", findLocalShops);
+$("#local-shop-results").addEventListener("click", event => {
+  const button = event.target.closest("[data-shop-map]");
+  if (!button) return;
+  const src = buildShopMapPreviewUrl({ lat: Number(button.dataset.lat), lon: Number(button.dataset.lon) });
+  if (!src) return;
+  const frame = $("#local-shop-map-frame");
+  frame.title = button.getAttribute("aria-label").replace(/^Show map preview for /, "OpenStreetMap preview for ");
+  frame.src = src;
+  $("#local-shop-map").hidden = false;
+  $("#local-shop-map").scrollIntoView({ behavior: "smooth", block: "nearest" });
+});
+$("#local-shop-map-close").addEventListener("click", closeShopMapPreview);
 $("#generate-build").addEventListener("click", generateBuild);
 $("#save-build").addEventListener("click", () => openSavedBuildDialog("save"));
 $("#share-build").addEventListener("click", shareBuild);

@@ -26,6 +26,17 @@ test("primary navigation exposes saved builds and the browser-local account", as
   assert.match(app, /escapeHTML\(item\.id\)/);
 });
 
+test("mapped shop candidates offer an on-demand OpenStreetMap preview with a visible evidence boundary", async () => {
+  const [home, app, map] = await Promise.all([read("index.html"), read("app.js"), read("shop-map.js")]);
+  assert.match(home, /id="local-shop-map" class="local-shop-map" hidden/);
+  assert.match(home, /id="local-shop-map-frame"[^>]*loading="lazy"/);
+  assert.match(home, /map preview connects to OpenStreetMap only when you choose it/);
+  assert.match(app, /data-shop-map/);
+  assert.match(app, /closeShopMapPreview\(\)/);
+  assert.match(map, /https:\/\/www\.openstreetmap\.org\/export\/embed\.html/);
+  assert.match(map, /IRELAND_BOUNDS/);
+});
+
 test("deals page clearly states that no current verified offers are connected", async () => {
   const deals = await read("deals.html");
   assert.match(deals, /NO VERIFIED OFFERS/);
