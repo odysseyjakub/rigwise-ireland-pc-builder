@@ -47,6 +47,52 @@ export const VERIFIED_CATALOGUE_PRODUCTS = [
     keySpecs: ["8 cores / 16 threads", "AM5", "120 W default TDP", "No thermal solution included"]
   },
   {
+    id: "amd-ryzen-5-9600x-box",
+    category: "cpu",
+    name: "Ryzen 5 9600X (boxed)",
+    brand: "AMD",
+    manufacturerPartNumber: "100-100001405WOF",
+    sourceUrl: "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-5-9600x.html",
+    sourceTitle: "AMD Ryzen 5 9600X specifications",
+    sourceCheckedAt: "2026-11-20",
+    specs: {
+      socket: "AM5",
+      compatibleChipsets: ["A620", "B650", "B650E", "B840", "B850", "X670", "X670E", "X870", "X870E"],
+      memoryGen: "DDR5",
+      watts: 65,
+      integratedGraphics: true,
+      coreCount: 6,
+      threadCount: 12,
+      baseClockGHz: 3.9,
+      maxBoostClockGHz: 5.4,
+      thermalSolutionIncluded: false
+    },
+    keySpecs: ["6 cores / 12 threads", "AM5 / DDR5", "65 W default TDP", "Up to 5.4 GHz boost", "Thermal solution not included"]
+  },
+  {
+    id: "amd-ryzen-7-9700x-box",
+    category: "cpu",
+    name: "Ryzen 7 9700X (boxed)",
+    brand: "AMD",
+    manufacturerPartNumber: "100-100001404WOF",
+    sourceUrl: "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-7-9700x.html",
+    sourceTitle: "AMD Ryzen 7 9700X specifications",
+    sourceCheckedAt: "2026-11-20",
+    specs: {
+      socket: "AM5",
+      compatibleChipsets: ["A620", "B650", "B650E", "B840", "B850", "X670", "X670E", "X870", "X870E"],
+      memoryGen: "DDR5",
+      watts: 65,
+      integratedGraphics: true,
+      coreCount: 8,
+      threadCount: 16,
+      baseClockGHz: 3.8,
+      maxBoostClockGHz: 5.5,
+      thermalSolutionIncluded: false
+    },
+    keySpecs: ["8 cores / 16 threads", "AM5 / DDR5", "65 W default TDP", "Up to 5.5 GHz boost", "Thermal solution not included"]
+  },
+  {
     id: "msi-pro-b650m-p",
     category: "motherboard",
     name: "PRO B650M-P",
@@ -102,6 +148,35 @@ export const VERIFIED_CATALOGUE_PRODUCTS = [
     keySpecs: ["AM5 / AMD B650", "ATX", "4 DDR5 slots, up to 256 GB", "3 PCIe 4.0 M.2 slots", "DDR5-7600+ overclocked memory support"]
   },
   {
+    id: "msi-b850-gaming-plus-wifi",
+    category: "motherboard",
+    name: "B850 GAMING PLUS WIFI",
+    brand: "MSI",
+    manufacturerPartNumber: "B850 GAMING PLUS WIFI",
+    sourceUrl: "https://www.msi.com/Motherboard/B850-GAMING-PLUS-WIFI/Specification",
+    sourceTitle: "MSI B850 GAMING PLUS WIFI specifications",
+    sourceCheckedAt: "2026-11-20",
+    specs: {
+      socket: "AM5",
+      chipset: "B850",
+      form: "ATX",
+      boardSizes: ["ATX"],
+      memoryGen: "DDR5",
+      maxMemoryGb: 256,
+      memorySlots: 4,
+      maxMemorySpeedMts: 5600,
+      maxMemoryOcSpeedMts: 8200,
+      supportedCpuSeries: ["Ryzen 7000", "Ryzen 8000", "Ryzen 9000"],
+      pcieSlots: ["PCIe 5.0"],
+      m2Slots: [
+        { interfaces: ["NVMe"], formFactors: ["M.2 2280", "M.2 2260"], pcieGenerations: [5] },
+        { interfaces: ["NVMe"], formFactors: ["M.2 22110", "M.2 2280"], pcieGenerations: [4] },
+        { interfaces: ["NVMe"], formFactors: ["M.2 2280", "M.2 2260"], pcieGenerations: [4] }
+      ]
+    },
+    keySpecs: ["AM5 / AMD B850", "ATX", "4 DDR5 slots, up to 256 GB", "3 M.2 slots: PCIe 5.0 ×4, PCIe 4.0 ×4 and PCIe 4.0 ×2", "DDR5-5600 JEDEC; up to DDR5-8200+ overclocked for supported configurations"]
+  },
+  {
     id: "kingston-fury-beast-32gb-ddr5-6000",
     category: "memory",
     name: "FURY Beast 32 GB (2 × 16 GB) DDR5-6000",
@@ -139,6 +214,25 @@ export const VERIFIED_CATALOGUE_PRODUCTS = [
       powerConnectors: ["PCIe-8pin"]
     },
     keySpecs: ["8 GB GDDR6", "PCIe 4.0", "227.2 × 123.24 × 49.6 mm", "2.5 slots", "1 × 8-pin; ASUS recommends a 550 W system PSU"]
+  },
+  {
+    id: "asus-dual-rtx5070-o12g",
+    category: "graphics",
+    name: "Dual GeForce RTX 5070 OC Edition 12 GB",
+    brand: "ASUS",
+    manufacturerPartNumber: "DUAL-RTX5070-O12G",
+    sourceUrl: "https://www.asus.com/uk/motherboards-components/graphics-cards/dual/dual-rtx5070-o12g/techspec/",
+    sourceTitle: "ASUS Dual RTX 5070 OC Edition specifications",
+    sourceCheckedAt: "2026-11-20",
+    specs: {
+      interface: "PCIe 5.0",
+      memoryGb: 12,
+      length: 249,
+      thicknessSlots: 2.53,
+      recommendedSystemPowerW: 750,
+      powerConnector: "16-pin"
+    },
+    keySpecs: ["12 GB GDDR7", "PCI Express 5.0", "249 × 126 × 50.6 mm", "2.53 slots", "16-pin power; ASUS recommends a 750 W system PSU"]
   },
   {
     id: "wd-black-sn770-1tb",

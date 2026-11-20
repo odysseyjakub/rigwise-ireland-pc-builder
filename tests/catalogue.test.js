@@ -12,11 +12,30 @@ test("manufacturer records have exact identities, dated first-party sources, and
     assert.ok(product.name);
     assert.ok(product.brand);
     assert.match(product.sourceUrl, /^https:\/\//);
-    assert.equal(product.sourceCheckedAt, "2026-11-18");
+    assert.match(product.sourceCheckedAt, /^\d{4}-\d{2}-\d{2}$/);
+    assert.ok(Number.isFinite(Date.parse(product.sourceCheckedAt)));
     assert.equal(Object.hasOwn(product, "offers"), false);
     assert.equal(Object.hasOwn(product, "price"), false);
     assert.equal(Object.hasOwn(product, "availability"), false);
   }
+});
+
+test("the catalogue includes source-checked AM5 alternatives with exact model identifiers", () => {
+  const byId = Object.fromEntries(VERIFIED_CATALOGUE_PRODUCTS.map(product => [product.id, product]));
+  const cpu9600x = byId["amd-ryzen-5-9600x-box"];
+  const cpu9700x = byId["amd-ryzen-7-9700x-box"];
+  const board = byId["msi-b850-gaming-plus-wifi"];
+  const gpu = byId["asus-dual-rtx5070-o12g"];
+
+  assert.equal(cpu9600x.manufacturerPartNumber, "100-100001405WOF");
+  assert.deepEqual([cpu9600x.specs.socket, cpu9600x.specs.coreCount, cpu9600x.specs.threadCount, cpu9600x.specs.watts], ["AM5", 6, 12, 65]);
+  assert.equal(cpu9600x.specs.thermalSolutionIncluded, false);
+  assert.equal(cpu9700x.manufacturerPartNumber, "100-100001404WOF");
+  assert.deepEqual([cpu9700x.specs.coreCount, cpu9700x.specs.threadCount, cpu9700x.specs.maxBoostClockGHz], [8, 16, 5.5]);
+  assert.deepEqual([board.specs.socket, board.specs.chipset, board.specs.form, board.specs.memorySlots], ["AM5", "B850", "ATX", 4]);
+  assert.deepEqual(board.specs.supportedCpuSeries, ["Ryzen 7000", "Ryzen 8000", "Ryzen 9000"]);
+  assert.equal(gpu.manufacturerPartNumber, "DUAL-RTX5070-O12G");
+  assert.deepEqual([gpu.specs.memoryGb, gpu.specs.length, gpu.specs.thicknessSlots, gpu.specs.recommendedSystemPowerW], [12, 249, 2.53, 750]);
 });
 
 test("the source-linked catalogue page labels each part as lacking retailer offers", async () => {
