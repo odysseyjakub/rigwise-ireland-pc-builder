@@ -29,6 +29,7 @@ test("FPS response preserves measured versus modeled provenance and rejects unsa
 test("FPS failures distinguish an untrusted network path from unavailable provider data", () => {
   assert.equal(classifyFpsFailure(new TypeError("fetch failed", { cause: { code: "CERT_AUTHORITY_INVALID" } })), "network");
   assert.equal(classifyFpsFailure(new Error("FPSHQ request failed (HTTP 503).")), "http-503");
+  assert.equal(classifyFpsFailure(new Error("FPSHQ request failed (HTTP 404). unknown GPU slug")), "model-not-found");
   assert.equal(classifyFpsFailure(new Error("Unknown source")), "unavailable");
 });
 
@@ -93,7 +94,7 @@ test("Vercel FPS endpoint returns sourced results and safely isolates upstream f
     fetcher: async (url, options) => {
       seen.push({ url, options });
       const requested = new URL(url);
-      if (requested.searchParams.get("res") === "1440p") return { ok: false, status: 503 };
+      if (requested.searchParams.get("res") === "1440p") return { ok: false, status: 503, text: async () => "not json" };
       return {
         ok: true,
         json: async () => ({ ok: true, fps: 88, fps_min: 77, fps_max: 99, source: "benchmark", url: "https://fpshq.com/games/cyberpunk-2077/" })

@@ -13,6 +13,8 @@ export function classifyFpsFailure(error) {
   const message = String(error instanceof Error ? error.message : error || "");
   const causeCode = String(error?.cause?.code || "");
   if (/fetch failed|certificate|TLS/i.test(message) || /CERT|TLS|UNABLE_TO_VERIFY|EAI_AGAIN|ECONNREFUSED|ECONNRESET/.test(causeCode)) return "network";
+  if (/unknown (game|gpu|cpu)|no (game|gpu|cpu) match/i.test(message)) return "model-not-found";
+  if (/no benchmark|no data|no prediction/i.test(message)) return "no-data";
   const status = message.match(/FPSHQ request failed \(HTTP ([45]\d{2})\)/);
   if (status) return "http-" + status[1];
   return "unavailable";
@@ -70,7 +72,19 @@ export async function requestFpsEstimate({ gameSlug, gpuSlug, cpuSlug, resolutio
     referrerPolicy: "no-referrer",
     signal: AbortSignal.timeout(15_000)
   });
-  if (!response?.ok) throw new Error("FPSHQ request failed (HTTP " + (Number(response?.status) || 0) + ").");
+  if (!response?.ok) {
+    let reason = "";
+    try {
+      const body = await response.text();
+      if (body.length <= 20_000) {
+        const payload = JSON.parse(body);
+        reason = String(payload.error || payload.message || payload.detail || "").slice(0, 200);
+      }
+    } catch {
+      // HTML and non-JSON provider responses do not contain a usable diagnostic.
+    }
+    throw new Error("FPSHQ request failed (HTTP " + (Number(response?.status) || 0) + "). " + reason);
+  }
   return normalizeFpsResponse(await response.json());
 }
 

@@ -322,6 +322,8 @@ async function loadFpsEstimates({ retry = false } = {}) {
         ? "Some combinations are unavailable in FPSHQ. Available results are shown below."
         : unavailable.length && unavailable.every(result => result.reason === "network")
           ? "FPSHQ could not be reached from Vercel over HTTPS. Estimates are unavailable right now."
+          : unavailable.length && unavailable.every(result => result.reason === "model-not-found")
+            ? "FPSHQ does not recognise this processor or graphics-card model yet."
           : "No FPS results were returned for this hardware combination.";
     retryButton.hidden = availableCount === rows.length * FPS_RESOLUTIONS.length;
   } catch {
