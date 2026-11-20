@@ -13,7 +13,8 @@ export function classifyFpsFailure(error) {
   const message = String(error instanceof Error ? error.message : error || "");
   const causeCode = String(error?.cause?.code || "");
   if (/fetch failed|certificate|TLS/i.test(message) || /CERT|TLS|UNABLE_TO_VERIFY|EAI_AGAIN|ECONNREFUSED|ECONNRESET/.test(causeCode)) return "network";
-  if (/FPSHQ request failed \(HTTP (4|5)/.test(message)) return "provider";
+  const status = message.match(/FPSHQ request failed \(HTTP ([45]\d{2})\)/);
+  if (status) return "http-" + status[1];
   return "unavailable";
 }
 

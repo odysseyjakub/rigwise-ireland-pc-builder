@@ -28,7 +28,7 @@ test("FPS response preserves measured versus modeled provenance and rejects unsa
 
 test("FPS failures distinguish an untrusted network path from unavailable provider data", () => {
   assert.equal(classifyFpsFailure(new TypeError("fetch failed", { cause: { code: "CERT_AUTHORITY_INVALID" } })), "network");
-  assert.equal(classifyFpsFailure(new Error("FPSHQ request failed (HTTP 503).")), "provider");
+  assert.equal(classifyFpsFailure(new Error("FPSHQ request failed (HTTP 503).")), "http-503");
   assert.equal(classifyFpsFailure(new Error("Unknown source")), "unavailable");
 });
 
@@ -108,6 +108,6 @@ test("Vercel FPS endpoint returns sourced results and safely isolates upstream f
   assert.equal(payload.rows.length, 5);
   assert.equal(payload.rows[0].resolutions[0].source, "benchmark");
   assert.equal(payload.rows[0].resolutions[1].status, "unavailable");
-  assert.equal(payload.rows[0].resolutions[1].reason, "provider");
+  assert.equal(payload.rows[0].resolutions[1].reason, "http-503");
 });
 
