@@ -1,5 +1,5 @@
 export const IRISH_LANDED_COST_RULES = Object.freeze({
-  version: "2026-11-17",
+  version: "2026-11-20",
   currency: "EUR",
   standardVatRateBasisPoints: 2300,
   standardVatEffectiveFrom: "2026-01-01",

@@ -42,8 +42,77 @@
     <section class="outside-eu-note" aria-labelledby="outside-eu-title">
       <div class="eyebrow"><span class="eyebrow-line"></span> OUTSIDE-EU DISPATCH</div>
       <h2 id="outside-eu-title">Check the dispatch country before assuming the final price.</h2>
-      <p>Revenue says a €3 customs-duty charge per distinct item applies to qualifying e-commerce packages valued at €150 or less from outside the EU from 1 July 2026. A €2 Union Handling Fee per distinct item also applies from 1 November 2026. VAT and any carrier administration charge may be collected at checkout or on delivery. A shop’s domain or currency does not prove where an item ships from.</p>
-      <p class="outside-eu-boundary">This form does not calculate outside-EU landed charges or tariff rates. Use the Revenue guidance for the exact dispatch route, customs classification and seller charge treatment before relying on a total.</p>
+      <p>Revenue says a €3 customs-duty charge per distinct item applies to qualifying e-commerce packages valued at €150 or less from outside the EU from 1 July 2026. A €2 Union Handling Fee per distinct item applies from 1 November 2026. Revenue describes the handling fee as a charge aimed at platforms and businesses; it affects your cost only if the seller passes it on. VAT and any carrier administration charge may be collected at checkout or on delivery. A shop’s domain or currency does not prove where an item ships from.</p>
+      <p class="outside-eu-boundary">The optional local calculator below requires you to enter the relevant customs values and confirm seller charge treatment. It does not look up tariff rates, customs territory, or seller terms for you.</p>
+      <details class="import-cost-details">
+        <summary>Calculate a manually verified import-cost scenario</summary>
+        <div class="import-cost-content">
+          <p>Use an expected customs entry date for a scenario or the date from an actual customs record. Add one row per distinct product/tariff type; group identical products into one row. For an exact total, use official customs paperwork and confirm which charges the seller or carrier passes on.</p>
+          <form id="import-cost-form" class="import-cost-form" novalidate>
+            <div class="import-cost-fields">
+              <label class="cost-field" for="import-entry-date">Expected or actual customs entry date<input id="import-entry-date" name="entryDate" type="date"></label>
+              <label class="cost-field" for="import-dispatch-territory">Dispatch customs territory<select id="import-dispatch-territory" name="dispatchTerritory"><option value="unknown">Unknown</option><option value="outside_eu">Outside the EU</option><option value="eu_fiscal">EU fiscal territory</option><option value="eu_non_fiscal">EU non-fiscal territory</option></select></label>
+              <label class="cost-field" for="import-checkout-total">Observed basket amount <span>Goods plus ordinary seller delivery; exclude separate customs or carrier charges</span><div class="cost-input-wrap"><span>€</span><input id="import-checkout-total" name="checkoutTotal" type="text" inputmode="decimal" placeholder="e.g. 220.00"></div></label>
+              <label class="evidence-check import-evidence"><input id="import-checkout-verified" name="checkoutTotalVerified" type="checkbox"> I verified this goods-and-delivery amount from the seller.</label>
+            </div>
+            <label class="evidence-check import-evidence"><input id="import-territory-verified" name="dispatchTerritoryVerified" type="checkbox"> I verified the actual dispatch customs territory for this package.</label>
+            <label class="evidence-check import-evidence"><input id="import-b2c-verified" name="isBusinessToConsumer" type="checkbox"> This is an online consumer purchase delivered to a private individual in Ireland.</label>
+            <label class="evidence-check import-evidence"><input id="import-is-gift" name="isGift" type="checkbox"> This package is a gift between private individuals.</label>
+            <fieldset id="outside-eu-fields" class="outside-eu-fields" hidden>
+              <legend>Outside-EU package evidence</legend>
+              <div class="import-cost-fields">
+                <label class="cost-field" for="import-intrinsic-value">Intrinsic goods value <span>Exclude delivery, freight and insurance</span><div class="cost-input-wrap"><span>€</span><input id="import-intrinsic-value" name="intrinsicValue" type="text" inputmode="decimal" placeholder="e.g. 149.00"></div></label>
+                <label class="evidence-check import-evidence"><input id="import-intrinsic-verified" name="intrinsicValueVerified" type="checkbox"> I verified the goods-only intrinsic value.</label>
+                <label class="cost-field" for="import-post-costs">Transport, handling and insurance after EU entry <span>Enter 0 only if confirmed none</span><div class="cost-input-wrap"><span>€</span><input id="import-post-costs" name="postImportCosts" type="text" inputmode="decimal" placeholder="e.g. 10.00"></div></label>
+                <label class="evidence-check import-evidence"><input id="import-post-costs-verified" name="postImportCostsVerified" type="checkbox"> I verified these post-entry costs from the delivery terms or carrier.</label>
+              </div>
+              <div class="import-lines-heading"><div><h3>Distinct customs lines</h3><p>Use the tariff classification and customs value shown in verified records.</p></div><button class="button button-outline" id="add-customs-line" type="button">Add product type</button></div>
+              <div id="import-customs-lines" class="import-customs-lines"></div>
+              <label class="evidence-check import-evidence"><input id="import-customs-values-verified" name="customsValuesVerified" type="checkbox"> I verified each tariff code, goods origin and customs value, including freight and insurance to the EU border.</label>
+              <label class="cost-field" for="import-low-value-duty">€3 low-value duty applicability<select id="import-low-value-duty" name="lowValueDutyTreatment"><option value="unknown">Not verified</option><option value="applicable">Verified as applicable</option><option value="not_applicable">Verified as not applicable</option></select><span>For qualifying packages valued at €150 or less; applicability and exceptions must be checked for this shipment.</span></label>
+              <div class="import-cost-fields">
+                <label class="cost-field" for="import-vat-rate">Verified applicable import VAT rate <span>Enter the rate confirmed for these goods</span><div class="cost-input-wrap"><input id="import-vat-rate" name="vatRate" type="text" inputmode="decimal" placeholder="e.g. 23"><span>%</span></div></label>
+                <label class="evidence-check import-evidence"><input id="import-vat-verified" name="vatRateVerified" type="checkbox"> I verified the applicable import VAT rate.</label>
+              </div>
+              <fieldset class="charge-treatment-fields">
+                <legend>Who charges each amount to you?</legend>
+                <p>Check the seller checkout, delivery terms, and carrier notice. Choose “Included” if a charge is already inside the basket amount above; choose “Added” only if it is separate.</p>
+                <div class="import-cost-fields">
+                  <label class="cost-field" for="import-customs-duty-treatment">Customs duty<select id="import-customs-duty-treatment" name="customsDutyTreatment"><option value="unknown">Not verified</option><option value="included_in_checkout">Included in checkout</option><option value="additional_at_checkout">Added at checkout</option><option value="additional_on_delivery">Charged on delivery</option><option value="absorbed_by_seller">Paid by seller</option><option value="not_applicable">Verified not applicable</option></select></label>
+                  <label class="cost-field" for="import-uhf-treatment">Union Handling Fee<select id="import-uhf-treatment" name="unionHandlingFeeTreatment"><option value="unknown">Not verified</option><option value="included_in_checkout">Included in checkout</option><option value="additional_at_checkout">Added at checkout</option><option value="additional_on_delivery">Charged on delivery</option><option value="absorbed_by_seller">Paid by seller</option><option value="not_applicable">Verified not applicable</option></select></label>
+                  <label class="cost-field" for="import-vat-treatment">Import VAT<select id="import-vat-treatment" name="importVatTreatment"><option value="unknown">Not verified</option><option value="included_in_checkout">Included in checkout</option><option value="additional_at_checkout">Added at checkout</option><option value="additional_on_delivery">Charged on delivery</option><option value="absorbed_by_seller">Paid by seller</option><option value="not_applicable">Verified not applicable</option></select></label>
+                  <label class="cost-field" for="import-vat-at-checkout">Import VAT amount collected at checkout <span>Required only if charged separately at checkout</span><div class="cost-input-wrap"><span>€</span><input id="import-vat-at-checkout" name="importVatAtCheckout" type="text" inputmode="decimal" placeholder="e.g. 23.00"></div></label>
+                  <label class="evidence-check import-evidence"><input id="import-vat-at-checkout-verified" name="importVatAtCheckoutVerified" type="checkbox"> I verified the import VAT amount charged at checkout.</label>
+                  <label class="cost-field" for="import-carrier-treatment">Carrier or postal administration<select id="import-carrier-treatment" name="carrierAdministrationTreatment"><option value="unknown">Not verified</option><option value="included_in_checkout">Included in checkout</option><option value="additional_at_checkout">Added at checkout</option><option value="additional_on_delivery">Charged on delivery</option><option value="absorbed_by_seller">Paid by seller</option><option value="not_applicable">Verified not applicable</option></select></label>
+                  <label class="cost-field" for="import-carrier-fee">Carrier administration amount <span>Enter 0 only if confirmed none</span><div class="cost-input-wrap"><span>€</span><input id="import-carrier-fee" name="carrierAdministrationFee" type="text" inputmode="decimal" placeholder="e.g. 10.00"></div></label>
+                </div>
+              </fieldset>
+            </fieldset>
+            <div class="cost-form-actions"><button class="button button-dark" type="submit">Calculate import scenario</button><button class="button button-outline" type="reset">Clear import inputs</button></div>
+          </form>
+          <section id="import-cost-result" class="import-cost-result" data-state="empty" aria-labelledby="import-cost-result-title" aria-live="polite"><h3 id="import-cost-result-title">Waiting for shipment evidence</h3><p id="import-cost-result-summary">No import total is calculated until you submit the shipment details.</p><div id="import-cost-result-details" class="cost-result-details"></div></section>
+        </div>
+        <template id="import-customs-line-template">
+          <fieldset class="cost-import-line">
+            <legend>Product type <span data-line-number></span></legend>
+            <button class="import-line-remove" type="button" data-remove-line>Remove line</button>
+            <div class="import-cost-fields">
+              <label class="cost-field">Product or distinct type<input type="text" data-field="distinctItemKey" autocomplete="off" placeholder="e.g. Graphics card"></label>
+              <label class="cost-field">Customs tariff code<input type="text" data-field="tariffCode" autocomplete="off" placeholder="Enter the verified code"></label>
+              <label class="cost-field">Quantity of identical items<input type="text" data-field="quantity" inputmode="numeric" value="1"></label>
+              <label class="cost-field">Customs value for this line <span>Include freight/insurance to the EU border</span><div class="cost-input-wrap"><span>€</span><input type="text" data-field="customsValue" inputmode="decimal" placeholder="e.g. 157.50"></div></label>
+              <label class="cost-field">Tariff duty rate <span>Needed above the low-value threshold; otherwise leave blank</span><div class="cost-input-wrap"><input type="text" data-field="dutyRate" inputmode="decimal" placeholder="e.g. 0"><span>%</span></div></label>
+              <label class="cost-field">Other verified duties or trade-remedy charges <div class="cost-input-wrap"><span>€</span><input type="text" data-field="additionalTaxes" inputmode="decimal" placeholder="0.00" value="0"></div></label>
+            </div>
+            <div class="import-line-evidence">
+              <label class="evidence-check"><input type="checkbox" data-field="classificationVerified"> I verified the tariff classification.</label>
+              <label class="evidence-check"><input type="checkbox" data-field="originVerified"> I verified the country of origin.</label>
+              <label class="evidence-check"><input type="checkbox" data-field="dutyRateVerified"> I verified this tariff rate.</label>
+              <label class="evidence-check"><input type="checkbox" data-field="additionalTaxesVerified"> I verified additional duties (including none, if zero).</label>
+            </div>
+          </fieldset>
+        </template>
+      </details>
       <div class="source-links"><a href="https://www.revenue.ie/en/customs/individuals/relief-low-value-consignments/index.aspx" target="_blank" rel="noopener noreferrer">Revenue: low-value e-commerce duty</a><a href="https://www.revenue.ie/en/customs/individuals/union-handling-fee/how-the-fee-applies.aspx" target="_blank" rel="noopener noreferrer">Revenue: Union Handling Fee</a><a href="https://www.revenue.ie/en/customs/individuals/buying-online-personal/outside-eu.aspx" target="_blank" rel="noopener noreferrer">Revenue: buying from outside the EU</a><a href="https://www.revenue.ie/en/vat/vat-rates/search-vat-rates/current-vat-rates.aspx" target="_blank" rel="noopener noreferrer">Revenue: current VAT rates</a></div>
       <p class="cost-rule-version">Rules reference: <span id="cost-rule-version"></span>. The applicable VAT basis and any exemptions must still be verified for the individual sale.</p>
     </section>
@@ -53,3 +122,4 @@
   <script type="module" src="cost-check.js"></script>
 </body>
 </html>
+

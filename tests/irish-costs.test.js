@@ -250,7 +250,7 @@ test("foreign currency conversion requires a fresh dated verified rate", () => {
 });
 
 test("rules publish the currently effective version and statutory dates", () => {
-  assert.equal(IRISH_LANDED_COST_RULES.version, "2026-11-17");
+  assert.equal(IRISH_LANDED_COST_RULES.version, "2026-11-20");
   assert.equal(IRISH_LANDED_COST_RULES.standardVatRateBasisPoints, 2300);
   assert.equal(IRISH_LANDED_COST_RULES.lowValueEcommerceDuty.effectiveFrom, "2026-07-01");
   assert.equal(IRISH_LANDED_COST_RULES.unionHandlingFee.effectiveFrom, "2026-11-01");
