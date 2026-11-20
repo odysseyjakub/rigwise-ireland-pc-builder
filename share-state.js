@@ -1,10 +1,10 @@
 import { normalizeAccessories } from "./accessories.js";
+import { isValidStoragePreference } from "./build-quiz-state.js";
 
 const VALID_WORKLOADS = new Set(["gaming", "creative", "everyday"]);
 const VALID_RESOLUTIONS = new Set(["1080p", "1440p", "4k"]);
 const VALID_FRAME_RATES = new Set([60, 120, 165]);
 const VALID_SIZE_PREFERENCES = new Set(["any", "compact"]);
-const VALID_STORAGE_PREFERENCES = new Set(["1tb", "2tb"]);
 const VALID_STRATEGIES = new Set(["lowest", "fewest"]);
 
 function toBase64Url(value) {
@@ -59,7 +59,7 @@ export function decodeShareHash(hash, { components, products, counties = [] } = 
     const strategy = decoded.strategy ?? "lowest";
     const accessories = Array.isArray(decoded.accessories) ? decoded.accessories : [];
     if (!VALID_RESOLUTIONS.has(targetResolution) || !VALID_FRAME_RATES.has(targetFrameRate) ||
-        !VALID_SIZE_PREFERENCES.has(sizePreference) || !VALID_STORAGE_PREFERENCES.has(storagePreference) ||
+        !VALID_SIZE_PREFERENCES.has(sizePreference) || !isValidStoragePreference(storagePreference) ||
         !VALID_STRATEGIES.has(strategy) || (decoded.accessories !== undefined && !Array.isArray(decoded.accessories))) return null;
 
     return {
@@ -78,3 +78,4 @@ export function decodeShareHash(hash, { components, products, counties = [] } = 
     return null;
   }
 }
+

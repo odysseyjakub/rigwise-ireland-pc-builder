@@ -6,7 +6,7 @@ import { getOrCreateLocalAccount, migrateLegacySavedBuilds } from "./local-accou
 import { cheapestItemPlan, optimizeBasket } from "./optimizer.js";
 import { decodeShareHash, encodeShareHash } from "./share-state.js";
 import { createSavedBuildSnapshot, duplicateSavedBuild, MAX_SAVED_BUILDS, prependSavedBuild, renameSavedBuild } from "./saved-builds.js";
-import { readQuizPreferences } from "./build-quiz-state.js";
+import { isValidStoragePreference, readQuizPreferences, storageGigabytes } from "./build-quiz-state.js";
 import { estimateAccessories, normalizeAccessories } from "./accessories.js";
 
 const $ = selector => document.querySelector(selector);
@@ -15,7 +15,6 @@ const productById = id => PRODUCTS.find(product => product.id === id);
 const VALID_RESOLUTIONS = new Set(["1080p", "1440p", "4k"]);
 const VALID_FRAME_RATES = new Set([60, 120, 165]);
 const VALID_SIZE_PREFERENCES = new Set(["any", "compact"]);
-const VALID_STORAGE_PREFERENCES = new Set(["1tb", "2tb"]);
 const VALID_STRATEGIES = new Set(["lowest", "fewest"]);
 let localAccount = getOrCreateLocalAccount();
 let STORAGE_KEY = localAccount.persisted
@@ -53,7 +52,7 @@ let workload = shared?.workload || quizPreferences?.workload || "gaming";
 let targetResolution = VALID_RESOLUTIONS.has(shared?.targetResolution ?? quizPreferences?.targetResolution) ? (shared?.targetResolution ?? quizPreferences?.targetResolution) : "1080p";
 let targetFrameRate = VALID_FRAME_RATES.has(shared?.targetFrameRate ?? quizPreferences?.targetFrameRate) ? (shared?.targetFrameRate ?? quizPreferences?.targetFrameRate) : 60;
 let sizePreference = VALID_SIZE_PREFERENCES.has(shared?.sizePreference ?? quizPreferences?.sizePreference) ? (shared?.sizePreference ?? quizPreferences?.sizePreference) : "any";
-let storagePreference = VALID_STORAGE_PREFERENCES.has(shared?.storagePreference ?? quizPreferences?.storagePreference) ? (shared?.storagePreference ?? quizPreferences?.storagePreference) : "1tb";
+let storagePreference = isValidStoragePreference(shared?.storagePreference ?? quizPreferences?.storagePreference) ? (shared?.storagePreference ?? quizPreferences?.storagePreference) : "1tb";
 let strategyPreference = VALID_STRATEGIES.has(shared?.strategy ?? quizPreferences?.strategy) ? (shared?.strategy ?? quizPreferences?.strategy) : "lowest";
 let accessories = normalizeAccessories(shared?.accessories ?? quizPreferences?.accessories ?? []);
 const storedCounty = readStorageValue("rigwise-county");
@@ -350,7 +349,7 @@ function render() {
   $("#target-resolution").value = targetResolution;
   $("#target-frame-rate").value = String(targetFrameRate);
   $("#size-preference").value = sizePreference;
-  $("#storage-preference").value = storagePreference;
+  $("#storage-preference").value = String(storageGigabytes(storagePreference) || 1000);
   $("#strategy").value = strategyPreference;
 }
 
@@ -605,7 +604,9 @@ $("#size-preference").addEventListener("change", event => {
   $("#build-status").textContent = workloadLabel(workload) + " build · preferences changed";
 });
 $("#storage-preference").addEventListener("change", event => {
-  storagePreference = VALID_STORAGE_PREFERENCES.has(event.target.value) ? event.target.value : "1tb";
+  const requestedGb = Number(event.target.value);
+  storagePreference = isValidStoragePreference(requestedGb + "gb") ? requestedGb + "gb" : "1tb";
+  event.target.value = String(storageGigabytes(storagePreference));
   $("#build-status").textContent = workloadLabel(workload) + " build · storage preference changed";
 });
 $("#generate-build").addEventListener("click", generateBuild);
@@ -639,3 +640,4 @@ if (!shared && quizPreferences) {
   $("#build-status").textContent = workloadLabel(workload) + " · questionnaire preferences";
   generateBuild();
 }
+

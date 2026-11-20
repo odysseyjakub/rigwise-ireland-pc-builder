@@ -6,9 +6,22 @@ const VALID_WORKLOADS = new Set(["gaming", "creative", "everyday"]);
 const VALID_RESOLUTIONS = new Set(["1080p", "1440p", "4k"]);
 const VALID_FRAME_RATES = new Set([60, 120, 165]);
 const VALID_SIZES = new Set(["any", "compact"]);
-const VALID_STORAGE = new Set(["1tb", "2tb"]);
+export const MIN_STORAGE_GB = 256;
+export const MAX_STORAGE_GB = 8000;
 const VALID_STRATEGIES = new Set(["lowest", "fewest"]);
 const ACCESSORY_IDS = new Set(ACCESSORY_OPTIONS.map(option => option.id));
+
+export function storageGigabytes(preference) {
+  if (typeof preference !== "string") return null;
+  const match = preference.toLowerCase().match(/^(\d+(?:\.\d+)?)(gb|tb)$/);
+  if (!match) return null;
+  const amount = Number(match[1]) * (match[2] === "tb" ? 1000 : 1);
+  return Number.isInteger(amount) && amount >= MIN_STORAGE_GB && amount <= MAX_STORAGE_GB ? amount : null;
+}
+
+export function isValidStoragePreference(preference) {
+  return storageGigabytes(preference) !== null;
+}
 
 export function readQuizPreferences(search) {
   let params;
@@ -30,7 +43,7 @@ export function readQuizPreferences(search) {
   if (!Number.isInteger(budget) || budget < MIN_PC_BUDGET || budget > MAX_PC_BUDGET || budget % 50 !== 0 ||
       !VALID_WORKLOADS.has(workload) || !VALID_RESOLUTIONS.has(targetResolution) ||
       !VALID_FRAME_RATES.has(targetFrameRate) || !VALID_SIZES.has(sizePreference) ||
-      !VALID_STORAGE.has(storagePreference) || !VALID_STRATEGIES.has(strategy) ||
+      !isValidStoragePreference(storagePreference) || !VALID_STRATEGIES.has(strategy) ||
       accessories.some(id => !ACCESSORY_IDS.has(id))) return null;
   return { budget, workload, targetResolution, targetFrameRate, sizePreference, storagePreference, strategy, accessories: normalizeAccessories(accessories) };
 }
@@ -49,3 +62,4 @@ export function createQuizBuilderQuery(preferences) {
   });
   return params.toString();
 }
+

@@ -1,5 +1,6 @@
 import { checkCompatibility } from "./compatibility.js";
 import { optimizeBasket } from "./optimizer.js";
+import { storageGigabytes } from "./build-quiz-state.js";
 
 const WORKLOAD_WEIGHTS = Object.freeze({
   gaming: { cpu: 20, graphics: 65, memory: 0.25, storage: 2 },
@@ -20,7 +21,6 @@ const GAMING_WEIGHTS = Object.freeze({
 const VALID_RESOLUTIONS = new Set(["1080p", "1440p", "4k"]);
 const VALID_FRAME_RATES = new Set([60, 120, 165]);
 const VALID_SIZE_PREFERENCES = new Set(["any", "compact"]);
-const VALID_STORAGE_PREFERENCES = new Set(["1tb", "2tb"]);
 const VALID_STRATEGIES = new Set(["lowest", "fewest"]);
 const MINIMUM_COMPONENT_TIERS = Object.freeze({
   "1080p:60": { cpu: 1, graphics: 1 }, "1080p:120": { cpu: 2, graphics: 1 }, "1080p:165": { cpu: 2, graphics: 2 },
@@ -89,7 +89,8 @@ export function generateAutoBuild({
   if (!VALID_RESOLUTIONS.has(targetResolution)) throw new Error("Choose a supported gaming resolution");
   if (!VALID_FRAME_RATES.has(targetFrameRate)) throw new Error("Choose a supported target frame rate");
   if (!VALID_SIZE_PREFERENCES.has(sizePreference)) throw new Error("Choose a supported size preference");
-  if (!VALID_STORAGE_PREFERENCES.has(storagePreference)) throw new Error("Choose a supported storage preference");
+  const minimumStorageGb = storageGigabytes(storagePreference);
+  if (minimumStorageGb === null) throw new Error("Choose a supported storage preference");
   if (!VALID_STRATEGIES.has(strategy)) throw new Error("Choose a supported basket strategy");
   if (!Array.isArray(components) || !Array.isArray(products) || !Array.isArray(offers) || !Array.isArray(bundles)) {
     throw new Error("Components, products, offers, and bundles must be arrays");
@@ -99,7 +100,7 @@ export function generateAutoBuild({
   for (const component of components) {
     const matches = products.filter(product => {
       if (product.category !== component.category) return false;
-      if (component.category === "storage" && Number(product.specs?.capacity) < Number.parseInt(storagePreference, 10)) return false;
+      if (component.category === "storage" && Number(product.specs?.capacity) * 1000 < minimumStorageGb) return false;
       if (sizePreference === "compact" && ["motherboard", "case"].includes(component.category)) {
         return product.specs?.sizeClass === "compact";
       }
@@ -188,3 +189,4 @@ export function generateAutoBuild({
     ...counts
   };
 }
+

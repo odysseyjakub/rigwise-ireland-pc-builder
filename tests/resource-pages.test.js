@@ -34,13 +34,14 @@ test("primary navigation exposes saved builds and the browser-local account", as
   assert.match(savedScript, /makeButton\("Duplicate"/);
 });
 
-test("questionnaire asks budget, workload and size before sending preferences to the builder", async () => {
+test("questionnaire groups essentials, accepts exact storage targets and keeps accessories last", async () => {
   const [quiz, script, state, app] = await Promise.all([read("build-quiz.html"), read("build-quiz.js"), read("build-quiz-state.js"), read("app.js")]);
-  assert.match(quiz, /What is your PC budget/);
-  assert.match(quiz, /What will you use the PC for most/);
-  assert.match(quiz, /How much room do you have/);
-  assert.match(quiz, /data-quiz-step="peripherals"/);
+  assert.match(quiz, /data-quiz-step="needs"/);
+  assert.match(quiz, /data-quiz-step="performance"/);
+  assert.match(quiz, /data-quiz-step="fit"/);
   assert.match(quiz, /data-quiz-step="strategy"/);
+  assert.match(quiz, /name="storageGb" type="number" min="256" max="8000"/);
+  assert.match(quiz, /data-storage-gb="512"/);
   assert.match(quiz, /min="400" max="5500"/);
   assert.match(quiz, /Build my PC/);
   assert.match(script, /window\.location\.href = "builder\.html\?"/);
@@ -112,3 +113,4 @@ test("resource pages share the saved browser theme preference", async () => {
   assert.match(css, /@media \(max-width: 740px\)/);
   assert.match(css, /\.dark-theme\.resource-page/);
 });
+
