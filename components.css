@@ -14,6 +14,10 @@
 .reference-heading h2,.catalogue-heading h2 { margin: 8px 0 5px; font: 700 30px/1.1 "Manrope", sans-serif; letter-spacing: -.04em; }
 .reference-heading p,.catalogue-heading p { margin: 0; color: #718074; font-size: 12px; line-height: 1.55; }
 .reference-status,.catalogue-count { flex: none; color: #5e6c60; font: 700 10px "DM Mono", monospace; text-transform: uppercase; letter-spacing: .07em; }
+.reference-build-controls { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; margin: 16px 0; }
+.reference-build-controls label { display: grid; gap: 6px; color: #59675c; font-size: 13px; font-weight: 700; }
+.reference-build-controls select { width: 100%; min-height: 42px; padding: 9px 10px; border: 1px solid #d6ddd3; border-radius: 6px; background: #fbfcf8; color: #19251d; font: 13px "DM Sans", sans-serif; }
+.reference-build-controls select:focus { outline: 2px solid #77987b; outline-offset: 2px; }
 .reference-checks { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
 .reference-check { display: grid; grid-template-columns: 12px minmax(135px,.8fr) minmax(0,1.5fr); gap: 10px; align-items: start; padding: 12px 14px; border: 1px solid #dfe3dc; border-radius: 7px; background: #fbfcf8; }
 .reference-check strong { font-size: 11px; line-height: 1.45; }
@@ -64,6 +68,8 @@
 .dark-theme.components-page { background: #101713; color: #edf2ec; }
 .dark-theme .component-trust-note { background: #1c251f; color: #adb9ac; }
 .dark-theme .component-trust-note strong,.dark-theme .catalogue-card h3,.dark-theme .catalogue-part-number code { color: #eef2eb; }
+.dark-theme .reference-build-controls label { color: #aab5aa; }
+.dark-theme .reference-build-controls select { border-color: #344038; background: #18211c; color: #edf2ec; }
 .dark-theme .reference-check,.dark-theme .catalogue-card,.dark-theme .catalogue-controls input,.dark-theme .catalogue-controls select { border-color: #344038; background: #18211c; color: #edf2ec; }
 .dark-theme .catalogue-compare,.dark-theme .manufacturer-comparison-table { border-color: #344038; background: #18211c; color: #edf2ec; }
 .dark-theme .manufacturer-compare-controls label,.dark-theme .manufacturer-compare-status,.dark-theme .manufacturer-comparison-table tbody td { color: #aab5aa; }
@@ -73,7 +79,7 @@
 .dark-theme .manufacturer-comparison-table thead th a { color: #9abc9d; }
 .dark-theme .catalogue-controls label,.dark-theme .reference-check span:last-child,.dark-theme .catalogue-specs { color: #aab5aa; }
 .dark-theme .component-footer { border-color: #344038; }
-@media (max-width: 900px) { .catalogue-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .reference-checks { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .catalogue-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .reference-checks { grid-template-columns: 1fr; } .reference-build-controls { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 900px) { .manufacturer-compare-controls { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 640px) {
   .components-page .site-header { height: auto; min-height: 65px; padding: 12px 18px; flex-wrap: wrap; }
@@ -86,6 +92,7 @@
   .reference-heading,.catalogue-heading { align-items: start; flex-direction: column; gap: 10px; }
   .reference-check { grid-template-columns: 10px 1fr; }
   .reference-check span:last-child { grid-column: 2; }
+  .reference-build-controls { grid-template-columns: 1fr; }
   .catalogue-controls { grid-template-columns: 1fr; }
   .catalogue-grid { grid-template-columns: 1fr; }
   .catalogue-compare { margin-top: 42px; padding: 16px; }

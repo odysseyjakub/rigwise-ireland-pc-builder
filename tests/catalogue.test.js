@@ -80,6 +80,41 @@ test("the reference build uses every required slot and exposes unresolved checks
   assert.ok(result.checks.some(check => check.id === "psu-case-length" && check.status === "compatible"));
 });
 
+test("a newer source-linked AM5 build reports its 650 W supply warning and unresolved connector evidence", () => {
+  const selected = {
+    cpu: "amd-ryzen-5-7600-box",
+    cooler: "amd-wraith-stealth-included",
+    motherboard: "msi-pro-b650m-p",
+    memory: "kingston-fury-beast-32gb-ddr5-6000",
+    graphics: "asus-dual-rtx5070-o12g",
+    storage: "wd-black-sn770-1tb",
+    power: "corsair-rm650e-2025-eu",
+    case: "fractal-pop-mini-air-rgb-black"
+  };
+  const result = checkCompatibility({
+    components: COMPONENTS.map(component => ({ ...component, productId: selected[component.id] })),
+    products: VERIFIED_CATALOGUE_PRODUCTS,
+    requirements: { requiresDedicatedGpu: true }
+  });
+  assert.equal(result.incompatibleCount, 0);
+  assert.equal(result.checks.find(check => check.id === "psu-capacity").status, "warning");
+  assert.equal(result.checks.find(check => check.id === "gpu-board-interface").status, "warning");
+  assert.equal(result.checks.find(check => check.id === "gpu-power-connectors").status, "unknown");
+});
+
+test("the source-linked build exposes labelled model selectors that refresh checks", async () => {
+  const [html, script] = await Promise.all([
+    readFile(new URL("../components.html", import.meta.url), "utf8"),
+    readFile(new URL("../components-page.js", import.meta.url), "utf8")
+  ]);
+  assert.match(html, /id="reference-build-controls"/);
+  assert.match(html, /Configure documented models/);
+  assert.match(script, /populateReferenceBuildControls/);
+  assert.match(script, /aria-label/, "model selectors should have accessible names");
+  assert.match(script, /addEventListener\("change", renderChecks\)/);
+  assert.match(html, /no prices or retailer offers are shown/i);
+});
+
 test("an exact Awin brand and part number can match a manufacturer-sourced product", () => {
   const match = matchAwinProduct({
     product: { brand: "Western Digital", manufacturerPartNumber: "WDS100T3X0E" }

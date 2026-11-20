@@ -141,6 +141,22 @@ test("detects motherboard form factor and graphics length or thickness clearance
   assert.ok(has(evaluate({}, products), "gpu-thickness", "incompatible"));
 });
 
+test("recognises PCIe GPU generation interoperability and warns when the board limits link speed", () => {
+  const newerCard = detailedProducts();
+  newerCard.find(product => product.id === "gpu-mid").specs.interface = "PCIe 5.0";
+  newerCard.find(product => product.id === "board-b650-atx").specs.pcieSlots = ["PCIe 4.0"];
+  assert.ok(has(evaluate({}, newerCard), "gpu-board-interface", "warning"));
+
+  const olderCard = detailedProducts();
+  olderCard.find(product => product.id === "gpu-mid").specs.interface = "PCIe 4.0";
+  olderCard.find(product => product.id === "board-b650-atx").specs.pcieSlots = ["PCI Express 5.0"];
+  assert.ok(has(evaluate({}, olderCard), "gpu-board-interface", "compatible"));
+
+  const otherProtocol = detailedProducts();
+  otherProtocol.find(product => product.id === "gpu-mid").specs.interface = "AGP";
+  assert.ok(has(evaluate({}, otherProtocol), "gpu-board-interface", "incompatible"));
+});
+
 test("checks cooler mounting, thermal rating, case height and RAM clearance", () => {
   const mounting = evaluate({ cooler: "cooler-am4" });
   assert.ok(has(mounting, "cooler-socket", "incompatible"));

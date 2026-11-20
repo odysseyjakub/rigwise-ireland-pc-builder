@@ -31,3 +31,9 @@ test("manufacturer comparison controls reflow and the table scrolls at narrow wi
   assert.match(catalogueCss, /@media\s*\(max-width:\s*900px\)[\s\S]*?\.manufacturer-compare-controls\s*\{[^}]*grid-template-columns:\s*repeat\(2/);
   assert.match(catalogueCss, /@media\s*\(max-width:\s*640px\)[\s\S]*?\.manufacturer-compare-controls\s*\{[^}]*grid-template-columns:\s*1fr/);
 });
+
+test("source-linked build selectors reflow for tablet and mobile", () => {
+  assert.match(catalogueCss, /\.reference-build-controls\s*\{[^}]*grid-template-columns:\s*repeat\(4/);
+  assert.match(catalogueCss, /@media\s*\(max-width:\s*900px\)[\s\S]*?\.reference-build-controls\s*\{[^}]*grid-template-columns:\s*repeat\(2/);
+  assert.match(catalogueCss, /@media\s*\(max-width:\s*640px\)[\s\S]*?\.reference-build-controls\s*\{[^}]*grid-template-columns:\s*1fr/);
+});

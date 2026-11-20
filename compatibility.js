@@ -21,6 +21,16 @@ function compareVersions(left, right) {
   return 0;
 }
 
+function pcieGeneration(value) {
+  if (typeof value !== "string") return null;
+  const match = value.match(/\bPCI(?:e| Express)\s*(?:Gen(?:eration)?\s*)?(\d+(?:\.\d+)?)/i);
+  return match ? Number(match[1]) : null;
+}
+
+function pcieGenerationLabel(value) {
+  return Number.isInteger(value) ? value.toFixed(1) : String(value);
+}
+
 function hasValue(value) {
   return value !== undefined && value !== null && value !== "";
 }
@@ -181,10 +191,23 @@ export function checkCompatibility({ components, products, requirements = {} }) 
     const boardInterfaces = board?.specs?.pcieSlots;
     if (!hasValue(gpuInterface) || !Array.isArray(boardInterfaces)) {
       unknown("gpu-board-interface", "Graphics card interface", "The GPU interface or motherboard slot data is missing.");
-    } else if (!boardInterfaces.includes(gpuInterface)) {
-      add("gpu-board-interface", FAIL, "Graphics card interface", "The motherboard does not list a matching " + gpuInterface + " slot.");
-    } else {
+    } else if (boardInterfaces.includes(gpuInterface)) {
       add("gpu-board-interface", PASS, "Graphics card interface", "The motherboard lists a matching " + gpuInterface + " slot.");
+    } else if (/\bPCI(?:e| Express)\b/i.test(gpuInterface) && boardInterfaces.every(value => typeof value === "string" && /\bPCI(?:e| Express)\b/i.test(value))) {
+      const gpuGeneration = pcieGeneration(gpuInterface);
+      const boardGenerations = [...new Set(boardInterfaces.map(pcieGeneration).filter(Number.isFinite))];
+      if (gpuGeneration === null || boardGenerations.length !== 1) {
+        unknown("gpu-board-interface", "Graphics card interface", "Both parts list PCI Express, but the exact slot generation or primary slot configuration is not clear.");
+      } else {
+        const boardGeneration = boardGenerations[0];
+        if (gpuGeneration > boardGeneration) {
+          add("gpu-board-interface", WARNING, "Graphics card interface", "PCIe Gen " + pcieGenerationLabel(gpuGeneration) + " cards interoperate with this Gen " + pcieGenerationLabel(boardGeneration) + " slot; the link will run at the board's supported generation. Confirm the primary slot and lane width in the board manual.");
+        } else {
+          add("gpu-board-interface", PASS, "Graphics card interface", "PCIe is backward compatible; this card will use up to Gen " + pcieGenerationLabel(gpuGeneration) + " in the listed Gen " + pcieGenerationLabel(boardGeneration) + " slot.");
+        }
+      }
+    } else {
+      add("gpu-board-interface", FAIL, "Graphics card interface", "The motherboard does not list a compatible " + gpuInterface + " slot.");
     }
   } else if (requirements.requiresDedicatedGpu) {
     add("required-dedicated-gpu", FAIL, "Dedicated graphics requirement", "This workload requires a dedicated graphics card, but none is selected.");

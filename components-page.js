@@ -1,7 +1,7 @@
 import { checkCompatibility } from "./compatibility.js";
 import { compareManufacturerProducts } from "./comparison.js";
 import { COMPONENTS } from "./data.js";
-import { REFERENCE_BUILD_COMPONENTS, VERIFIED_CATALOGUE_PRODUCTS } from "./catalogue-data.js";
+import { REFERENCE_BUILD, VERIFIED_CATALOGUE_PRODUCTS } from "./catalogue-data.js";
 
 const categoryNames = new Map(COMPONENTS.map(component => [component.category, component.label]));
 const $ = selector => document.querySelector(selector);
@@ -14,7 +14,10 @@ function escapeHTML(value) {
 
 function renderChecks() {
   const result = checkCompatibility({
-    components: REFERENCE_BUILD_COMPONENTS,
+    components: COMPONENTS.map(component => ({
+      ...component,
+      productId: $("#reference-build-" + component.id).value
+    })),
     products: VERIFIED_CATALOGUE_PRODUCTS,
     requirements: { requiresDedicatedGpu: true }
   });
@@ -38,6 +41,31 @@ function renderChecks() {
     detail.textContent = check.detail;
     row.append(dot, title, detail);
     return row;
+  }));
+}
+
+function populateReferenceBuildControls() {
+  const controls = $("#reference-build-controls");
+  controls.replaceChildren(...COMPONENTS.map(component => {
+    const label = document.createElement("label");
+    label.htmlFor = "reference-build-" + component.id;
+    label.textContent = component.label;
+    const select = document.createElement("select");
+    select.id = "reference-build-" + component.id;
+    select.setAttribute("aria-label", "Select " + component.label);
+    const products = VERIFIED_CATALOGUE_PRODUCTS.filter(product => product.category === component.category);
+    select.append(...products.map(product => {
+      const option = document.createElement("option");
+      option.value = product.id;
+      option.textContent = product.brand + " · " + product.name;
+      return option;
+    }));
+    if (products.some(product => product.id === REFERENCE_BUILD[component.id])) {
+      select.value = REFERENCE_BUILD[component.id];
+    }
+    select.addEventListener("change", renderChecks);
+    label.append(select);
+    return label;
   }));
 }
 
@@ -212,6 +240,7 @@ function populateManufacturerComparison() {
 }
 
 populateCategories();
+populateReferenceBuildControls();
 populateManufacturerComparison();
 const themeToggle = $("#component-theme-toggle");
 try {
