@@ -37,9 +37,9 @@ test("privacy and storage pages state the browser-local data model and launch ga
 });
 
 test("mapped-shop lookup explains its source and limitations in the site UI", async () => {
-  const html = await read("builder.html");
+  const html = await read("local-shops.html");
   assert.match(html, /id="find-local-shops"/);
   assert.match(html, /OpenStreetMap contributors/);
-  assert.match(html, /stock and collection directly/);
+  assert.match(html, /do not verify that a business is open, sells PC parts, has stock, or offers collection/);
+  assert.match(html, /request a lookup/);
 });
-

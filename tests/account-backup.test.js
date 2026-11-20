@@ -15,6 +15,10 @@ const savedBuild = {
   targetResolution: "1440p",
   targetFrameRate: 120,
   sizePreference: "compact",
+  storagePreference: "2tb",
+  strategy: "fewest",
+  accessories: ["keyboard", "monitor"],
+  accessoryTotal: 275,
   county: "Galway",
   total: 1395.25,
   createdAt: exportedAt,
@@ -52,4 +56,3 @@ test("backup enforces the file-size and supported saved-build limits", () => {
   assert.throws(() => parseLocalAccountBackup(" ".repeat(500_001)), /too large/);
   assert.throws(() => createLocalAccountBackup(accountId, Array(9).fill(savedBuild), exportedAt), /saved build list is invalid/);
 });
-

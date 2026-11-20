@@ -1,5 +1,6 @@
-import { readStorageValue, removeStorageValue, writeStorageValue } from "./browser-storage.js";
-import { getOrCreateLocalAccount, migrateLegacySavedBuilds, savedBuildKeyForAccount } from "./local-account.js";
+import { clearStorageWithPrefix, readStorageValue, removeStorageValue, writeStorageValue } from "./browser-storage.js";
+import { createLocalAccountBackup, parseLocalAccountBackup } from "./account-backup.js";
+import { getOrCreateLocalAccount, LOCAL_ACCOUNT_STORAGE_KEY, MAX_LOCAL_BACKUP_BYTES, migrateLegacySavedBuilds, savedBuildKeyForAccount } from "./local-account.js";
 import { duplicateSavedBuild, MAX_SAVED_BUILDS, renameSavedBuild } from "./saved-builds.js";
 import { encodeShareHash } from "./share-state.js";
 
@@ -34,6 +35,9 @@ function makeShareUrl(item) {
     targetResolution: item.targetResolution,
     targetFrameRate: item.targetFrameRate,
     sizePreference: item.sizePreference,
+    storagePreference: item.storagePreference,
+    strategy: item.strategy,
+    accessories: item.accessories,
     county: item.county
   });
   return hash ? new URL("builder.html" + hash, location.href).href : null;
@@ -134,6 +138,59 @@ $("#copy-saved-account-id").addEventListener("click", async () => {
   }
 });
 
+$("#export-account-backup").addEventListener("click", () => {
+  try {
+    const serialized = createLocalAccountBackup(account.id, readBuilds());
+    const file = new Blob([serialized], { type: "application/json" });
+    const url = URL.createObjectURL(file);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "rigwise-backup-" + account.id + ".json";
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast("Local ID and saved builds backed up.");
+  } catch {
+    showToast("A backup could not be created from this browser's saved data.");
+  }
+});
+
+$("#choose-account-backup").addEventListener("click", () => $("#account-backup-file").click());
+$("#account-backup-file").addEventListener("change", async event => {
+  const input = event.currentTarget;
+  const file = input.files?.[0];
+  if (!file) return;
+  try {
+    if (file.size > MAX_LOCAL_BACKUP_BYTES) throw new Error("Backup exceeds the supported file size.");
+    const backup = parseLocalAccountBackup(await file.text());
+    const builds = readBuilds();
+    if ((builds.length || backup.accountId !== account.id) && !window.confirm("Restore this backup? It will replace this browser's current local ID and saved builds.")) return;
+    const nextKey = savedBuildKeyForAccount(backup.accountId);
+    const previous = readStorageValue(nextKey);
+    if (!writeStorageValue(nextKey, JSON.stringify(backup.savedBuilds))) throw new Error("Storage unavailable");
+    if (!writeStorageValue(LOCAL_ACCOUNT_STORAGE_KEY, backup.accountId)) {
+      if (previous === null) removeStorageValue(nextKey);
+      else writeStorageValue(nextKey, previous);
+      throw new Error("Storage unavailable");
+    }
+    account = { id: backup.accountId, persisted: true, created: false };
+    storageKey = nextKey;
+    render();
+    showToast("Backup restored in this browser.");
+  } catch {
+    showToast("That backup is invalid or could not be restored.");
+  } finally {
+    input.value = "";
+  }
+});
+
+$("#clear-local-data").addEventListener("click", () => {
+  if (!window.confirm("Clear this browser's Rigwise ID, saved builds and preferences? Download a backup first if you want to keep your builds.")) return;
+  if (!clearStorageWithPrefix("rigwise-")) return showToast("The browser could not clear all Rigwise data.");
+  location.reload();
+});
+
 $("#saved-builds-list").addEventListener("click", async event => {
   const button = event.target.closest("[data-saved-action]");
   if (!button) return;
@@ -195,4 +252,3 @@ $("#clear-saved-builds").addEventListener("click", () => {
 });
 
 render();
-

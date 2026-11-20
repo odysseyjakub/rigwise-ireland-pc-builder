@@ -1,6 +1,7 @@
 import { COUNTIES, COMPONENTS, PRODUCTS } from "./data.js";
 import { isValidLocalAccountId, MAX_LOCAL_BACKUP_BYTES } from "./local-account.js";
 import { MAX_SAVED_BUILDS } from "./saved-builds.js";
+import { ACCESSORY_OPTIONS, estimateAccessories, normalizeAccessories } from "./accessories.js";
 
 export const LOCAL_BACKUP_FORMAT = "rigwise-local-account-backup";
 export const LOCAL_BACKUP_VERSION = 1;
@@ -8,6 +9,9 @@ const WORKLOADS = new Set(["gaming", "creative", "everyday"]);
 const RESOLUTIONS = new Set(["1080p", "1440p", "4k"]);
 const FRAME_RATES = new Set([60, 120, 165]);
 const SIZE_PREFERENCES = new Set(["any", "compact"]);
+const STORAGE_PREFERENCES = new Set(["1tb", "2tb"]);
+const STRATEGIES = new Set(["lowest", "fewest"]);
+const ACCESSORY_IDS = new Set(ACCESSORY_OPTIONS.map(option => option.id));
 const byteLength = value => new TextEncoder().encode(value).length;
 
 function normalizeSavedBuild(item, accountId, index, exportedAt) {
@@ -28,12 +32,18 @@ function normalizeSavedBuild(item, accountId, index, exportedAt) {
     accountId,
     name: item.name.trim(),
     build: Object.fromEntries(COMPONENTS.map(component => [component.id, item.build[component.id]])),
-    budget: Number.isFinite(budget) && budget >= 700 && budget <= 5000 ? budget : 1000,
+    budget: Number.isFinite(budget) && budget >= 400 && budget <= 5500 ? budget : 1000,
     workload: WORKLOADS.has(item.workload) ? item.workload : "gaming",
     county: COUNTIES.includes(item.county) ? item.county : "Dublin",
     ...(RESOLUTIONS.has(item.targetResolution) ? { targetResolution: item.targetResolution } : {}),
     ...(FRAME_RATES.has(Number(item.targetFrameRate)) ? { targetFrameRate: Number(item.targetFrameRate) } : {}),
     ...(SIZE_PREFERENCES.has(item.sizePreference) ? { sizePreference: item.sizePreference } : {}),
+    storagePreference: STORAGE_PREFERENCES.has(item.storagePreference) ? item.storagePreference : "1tb",
+    strategy: STRATEGIES.has(item.strategy) ? item.strategy : "lowest",
+    accessories: Array.isArray(item.accessories) && item.accessories.every(id => ACCESSORY_IDS.has(id)) ? normalizeAccessories(item.accessories) : [],
+    accessoryTotal: Number.isFinite(Number(item.accessoryTotal)) && Number(item.accessoryTotal) >= 0
+      ? Number(item.accessoryTotal)
+      : estimateAccessories(Array.isArray(item.accessories) ? item.accessories : [], item.targetResolution),
     ...(Number.isFinite(Number(item.total)) && Number(item.total) >= 0 ? { total: Number(item.total) } : {}),
     createdAt,
     ...(typeof item.updatedAt === "string" && Number.isFinite(Date.parse(item.updatedAt)) ? { updatedAt: item.updatedAt } : {})
@@ -74,4 +84,3 @@ export function parseLocalAccountBackup(serialized) {
   if (new Set(savedBuilds.map(item => item.id)).size !== savedBuilds.length) throw new Error("The backup contains duplicate saved build IDs.");
   return { format: backup.format, version: backup.version, exportedAt: backup.exportedAt, accountId: backup.accountId, savedBuilds };
 }
-

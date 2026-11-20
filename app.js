@@ -1,17 +1,13 @@
 import { BUNDLES, COMPONENTS, COUNTIES, DEFAULT_BUILD, OFFERS, PRODUCTS, RETAILERS, SHIPPING_RULES } from "./data.js";
 import { checkCompatibility } from "./compatibility.js";
 import { generateAutoBuild } from "./auto-build.js";
-import { clearStorageWithPrefix, readStorageValue, removeStorageValue, writeStorageValue } from "./browser-storage.js";
-import { createLocalAccountBackup, parseLocalAccountBackup } from "./account-backup.js";
-import { getOrCreateLocalAccount, migrateLegacySavedBuilds, LOCAL_ACCOUNT_STORAGE_KEY, MAX_LOCAL_BACKUP_BYTES, savedBuildKeyForAccount } from "./local-account.js";
-import { MAX_AWIN_REVIEW_BYTES, reviewAwinFeedLocally } from "./feed-review.js";
-import { compareCatalogProducts, PRODUCT_CATEGORIES } from "./comparison.js";
+import { readStorageValue, removeStorageValue, writeStorageValue } from "./browser-storage.js";
+import { getOrCreateLocalAccount, migrateLegacySavedBuilds } from "./local-account.js";
 import { cheapestItemPlan, optimizeBasket } from "./optimizer.js";
-import { VERIFIED_CATALOGUE_PRODUCTS } from "./catalogue-data.js";
 import { decodeShareHash, encodeShareHash } from "./share-state.js";
 import { createSavedBuildSnapshot, duplicateSavedBuild, MAX_SAVED_BUILDS, prependSavedBuild, renameSavedBuild } from "./saved-builds.js";
-import { buildShopMapPreviewUrl } from "./shop-map.js";
 import { readQuizPreferences } from "./build-quiz-state.js";
+import { estimateAccessories, normalizeAccessories } from "./accessories.js";
 
 const $ = selector => document.querySelector(selector);
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(value);
@@ -19,6 +15,8 @@ const productById = id => PRODUCTS.find(product => product.id === id);
 const VALID_RESOLUTIONS = new Set(["1080p", "1440p", "4k"]);
 const VALID_FRAME_RATES = new Set([60, 120, 165]);
 const VALID_SIZE_PREFERENCES = new Set(["any", "compact"]);
+const VALID_STORAGE_PREFERENCES = new Set(["1tb", "2tb"]);
+const VALID_STRATEGIES = new Set(["lowest", "fewest"]);
 let localAccount = getOrCreateLocalAccount();
 let STORAGE_KEY = localAccount.persisted
   ? migrateLegacySavedBuilds(localAccount.id).key
@@ -55,6 +53,9 @@ let workload = shared?.workload || quizPreferences?.workload || "gaming";
 let targetResolution = VALID_RESOLUTIONS.has(shared?.targetResolution ?? quizPreferences?.targetResolution) ? (shared?.targetResolution ?? quizPreferences?.targetResolution) : "1080p";
 let targetFrameRate = VALID_FRAME_RATES.has(shared?.targetFrameRate ?? quizPreferences?.targetFrameRate) ? (shared?.targetFrameRate ?? quizPreferences?.targetFrameRate) : 60;
 let sizePreference = VALID_SIZE_PREFERENCES.has(shared?.sizePreference ?? quizPreferences?.sizePreference) ? (shared?.sizePreference ?? quizPreferences?.sizePreference) : "any";
+let storagePreference = VALID_STORAGE_PREFERENCES.has(shared?.storagePreference ?? quizPreferences?.storagePreference) ? (shared?.storagePreference ?? quizPreferences?.storagePreference) : "1tb";
+let strategyPreference = VALID_STRATEGIES.has(shared?.strategy ?? quizPreferences?.strategy) ? (shared?.strategy ?? quizPreferences?.strategy) : "lowest";
+let accessories = normalizeAccessories(shared?.accessories ?? quizPreferences?.accessories ?? []);
 const storedCounty = readStorageValue("rigwise-county");
 let county = COUNTIES.includes(shared?.county)
   ? shared.county
@@ -62,6 +63,7 @@ let county = COUNTIES.includes(shared?.county)
     ? storedCounty
     : "Dublin";
 let expanded = new Set();
+let partStepIndex = 0;
 let toastTimer;
 let localShopLookupSequence = 0;
 let localShopLookupController = null;
@@ -87,122 +89,8 @@ function currentPlan() {
     bundles: BUNDLES,
     catalogComponentIds: PRODUCTS.map(product => product.id),
     shippingRules: SHIPPING_RULES,
-    strategy: $("#strategy").value
+    strategy: strategyPreference
   });
-}
-
-function renderLocationNote() {
-  $("#location-note").textContent = county + " selected · demo shipping rules are county-neutral";
-}
-
-function appendExternalLink(container, label, href) {
-  const link = document.createElement("a");
-  link.textContent = label;
-  link.href = href;
-  link.target = "_blank";
-  link.rel = "noopener noreferrer";
-  container.append(link);
-}
-
-function closeShopMapPreview() {
-  $("#local-shop-map").hidden = true;
-  $("#local-shop-map-frame").removeAttribute("src");
-}
-
-function renderLocalShopResults(payload) {
-  const host = $("#local-shop-results");
-  const status = $("#local-shops-status");
-  closeShopMapPreview();
-  host.replaceChildren();
-  const results = Array.isArray(payload.results) ? payload.results : [];
-  const dataDate = payload.dataTimestamp && Number.isFinite(Date.parse(payload.dataTimestamp))
-    ? new Date(payload.dataTimestamp).toLocaleString("en-IE", { dateStyle: "medium", timeStyle: "short" })
-    : null;
-  if (results.length === 0) {
-    status.textContent = "No named computer or electronics shop records came back for " + county + ". This does not confirm that no such shops exist.";
-    const item = document.createElement("li");
-    item.className = "local-shop-fallback";
-    appendExternalLink(item, "Search OpenStreetMap for shops in " + county, "https://www.openstreetmap.org/search?query=" + encodeURIComponent("computer shop " + county + " Ireland"));
-    host.append(item);
-    return;
-  }
-
-  status.textContent = results.length + " mapped candidate" + (results.length === 1 ? "" : "s") + " in " + county +
-    (dataDate ? " · map extract dated " + dataDate : "") + (payload.capped ? " · list limited to the first 80 records" : "") +
-    ". Verify every detail with the business.";
-  for (const shop of results) {
-    if (!shop || typeof shop.name !== "string" || typeof shop.mapUrl !== "string") continue;
-    const item = document.createElement("li");
-    item.className = "local-shop-item";
-    const detail = document.createElement("div");
-    detail.className = "local-shop-detail";
-    const name = document.createElement("strong");
-    name.textContent = shop.name;
-    const kind = document.createElement("span");
-    kind.textContent = [shop.kind, shop.address || "Address not recorded"].filter(Boolean).join(" · ");
-    detail.append(name, kind);
-    const actions = document.createElement("div");
-    actions.className = "local-shop-actions";
-    try {
-      const mapUrl = new URL(shop.mapUrl);
-      if (mapUrl.protocol === "https:" && mapUrl.hostname === "www.openstreetmap.org") appendExternalLink(actions, "Map record", mapUrl.href);
-    } catch { /* ignore malformed external links */ }
-    try {
-      const website = shop.website ? new URL(shop.website) : null;
-      if (website && ["https:", "http:"].includes(website.protocol)) appendExternalLink(actions, "Website", website.href);
-    } catch { /* ignore malformed external links */ }
-    const previewUrl = buildShopMapPreviewUrl(shop.coordinates);
-    if (previewUrl) {
-      const preview = document.createElement("button");
-      preview.type = "button";
-      preview.textContent = "Preview map";
-      preview.dataset.shopMap = "";
-      preview.dataset.lat = String(shop.coordinates.lat);
-      preview.dataset.lon = String(shop.coordinates.lon);
-      preview.setAttribute("aria-controls", "local-shop-map");
-      preview.setAttribute("aria-label", "Show map preview for " + shop.name);
-      actions.append(preview);
-    }
-    item.append(detail, actions);
-    host.append(item);
-  }
-}
-
-async function findLocalShops() {
-  const button = $("#find-local-shops");
-  const status = $("#local-shops-status");
-  const countyAtRequest = county;
-  const requestId = ++localShopLookupSequence;
-  const controller = new AbortController();
-  localShopLookupController = controller;
-  button.disabled = true;
-  status.textContent = "Looking for mapped computer and electronics shops in " + countyAtRequest + "…";
-  $("#local-shop-results").replaceChildren();
-  closeShopMapPreview();
-  try {
-    const response = await fetch("/api/shops?county=" + encodeURIComponent(countyAtRequest), {
-      headers: { Accept: "application/json" },
-      signal: controller.signal
-    });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error || "The public map lookup is unavailable right now.");
-    if (requestId !== localShopLookupSequence || county !== countyAtRequest) return;
-    if (payload.county !== countyAtRequest || !Array.isArray(payload.results)) throw new Error("The map service returned an unexpected response.");
-    renderLocalShopResults(payload);
-  } catch (error) {
-    if (requestId === localShopLookupSequence && county === countyAtRequest) {
-      status.textContent = (error instanceof Error ? error.message : "The public map lookup failed.") + " You can retry later or search OpenStreetMap directly.";
-      const item = document.createElement("li");
-      item.className = "local-shop-fallback";
-      appendExternalLink(item, "Search OpenStreetMap for shops in " + countyAtRequest, "https://www.openstreetmap.org/search?query=" + encodeURIComponent("computer shop " + countyAtRequest + " Ireland"));
-      $("#local-shop-results").append(item);
-    }
-  } finally {
-    if (requestId === localShopLookupSequence) {
-      localShopLookupController = null;
-      button.disabled = false;
-    }
-  }
 }
 
 function offerFor(productId, retailerId) {
@@ -229,11 +117,17 @@ function renderOfferComparison(item, plan) {
 }
 
 function renderParts(plan) {
-  const query = $("#part-search").value.trim().toLocaleLowerCase("en-IE");
-  const filtered = buildItems().filter(item => {
-    const product = productById(item.productId);
-    return !query || item.label.toLocaleLowerCase("en-IE").includes(query) || product.name.toLocaleLowerCase("en-IE").includes(query);
-  });
+  const component = COMPONENTS[partStepIndex] || COMPONENTS[0];
+  const item = buildItems().find(part => part.id === component.id);
+  const filtered = item ? [item] : [];
+  const stepLabel = item ? item.label : "Component";
+  $("#parts-step-number").textContent = "STEP " + (partStepIndex + 1) + " OF " + COMPONENTS.length;
+  $("#parts-step-title").textContent = stepLabel;
+  const progress = Math.round((partStepIndex + 1) / COMPONENTS.length * 100);
+  $("#parts-step-progress").style.width = progress + "%";
+  $(".parts-step-track").setAttribute("aria-valuenow", String(progress));
+  $("#parts-step-back").disabled = partStepIndex === 0;
+  $("#parts-step-next").textContent = partStepIndex === COMPONENTS.length - 1 ? "Review your build →" : "Next part →";
   $("#parts-list").innerHTML = filtered.map(item => {
     const product = productById(item.productId);
     const assignment = plan.assignments[item.productId];
@@ -254,7 +148,7 @@ function renderParts(plan) {
       '</div>' + (expandedClass ? renderOfferComparison(item, plan) : "") + '</article>';
   }).join("");
   $("#parts-list").classList.toggle("empty-list", filtered.length === 0);
-  if (filtered.length === 0) $("#parts-list").innerHTML = '<div class="empty-search">No component matches “' + escapeHTML(query) + '”. Try “memory” or clear your search.</div>';
+  if (filtered.length === 0) $("#parts-list").innerHTML = '<div class="empty-search">No component is available for this step.</div>';
 }
 
 function escapeHTML(value) {
@@ -295,6 +189,17 @@ function renderPlan(plan) {
     ? "Exact demo search · " + plan.combinationsChecked + " combinations checked"
     : "Best-known demo plan · " + plan.combinationsChecked + " combinations checked (" + plan.maxCombinations + " limit)";
   $("#plan-status").innerHTML = "<span></span><span>" + (remainder < 0 ? "Illustrative total is over your budget · " : "") + searchStatus + "</span>";
+}
+
+function renderSetupSummary(plan) {
+  const host = $("#setup-summary");
+  if (!host) return;
+  const allowance = estimateAccessories(accessories, targetResolution);
+  const setup = plan.total + allowance;
+  host.innerHTML = '<div><span>PC tower · demo basket</span><strong>' + money(plan.total) + '</strong></div>' +
+    '<div><span>Accessories · sample allowance</span><strong>+' + money(allowance) + '</strong></div>' +
+    '<div class="setup-summary-total"><span>PC + accessories planning total</span><strong>' + money(setup) + '</strong></div>' +
+    '<p>Accessories are separate from your PC budget. Allowances are illustrative, not product offers or live prices.</p>';
 }
 
 function renderCompatibility() {
@@ -435,15 +340,18 @@ function render() {
   const plan = currentPlan();
   renderParts(plan);
   renderPlan(plan);
+  renderSetupSummary(plan);
   renderCompatibility();
   renderSavedBuilds();
   renderComparison();
   $("#budget").value = budget;
-  $("#budget-range").value = Math.max(700, Math.min(3000, budget));
+  $("#budget-range").value = Math.max(400, Math.min(5500, budget));
   $("#workload").value = workload;
   $("#target-resolution").value = targetResolution;
   $("#target-frame-rate").value = String(targetFrameRate);
   $("#size-preference").value = sizePreference;
+  $("#storage-preference").value = storagePreference;
+  $("#strategy").value = strategyPreference;
 }
 
 function showToast(message) {
@@ -517,6 +425,10 @@ function saveBuild(name) {
     targetResolution,
     targetFrameRate,
     sizePreference,
+    storagePreference,
+    strategy: strategyPreference,
+    accessories,
+    accessoryTotal: estimateAccessories(accessories, targetResolution),
     county,
     total: plan.total,
     createdAt: now
@@ -559,7 +471,7 @@ function workloadLabel(value) {
 }
 
 function shareBuild() {
-  const payload = { build, budget, workload, targetResolution, targetFrameRate, sizePreference, county };
+  const payload = { build, budget, workload, targetResolution, targetFrameRate, sizePreference, storagePreference, strategy: strategyPreference, accessories, county };
   const hash = encodeShareHash(payload);
   if (!hash) {
     showToast("This build could not be encoded for sharing.");
@@ -574,7 +486,7 @@ function shareBuild() {
 }
 
 function generateBuild() {
-  budget = Math.max(700, Math.min(5000, Number($("#budget").value) || 1000));
+  budget = Math.max(400, Math.min(5500, Number($("#budget").value) || 1000));
   $("#budget").value = budget;
   const result = generateAutoBuild({
     budget,
@@ -582,6 +494,8 @@ function generateBuild() {
     targetResolution,
     targetFrameRate,
     sizePreference,
+    storagePreference,
+    strategy: strategyPreference,
     components: COMPONENTS,
     products: PRODUCTS,
     offers: OFFERS,
@@ -589,9 +503,16 @@ function generateBuild() {
     shippingRules: SHIPPING_RULES
   });
   if (result.status !== "ready") {
-    const message = result.minimumCompatibleTotal === null
-      ? "No complete compatible example build could be made from this demo catalogue."
-      : "The lowest compatible example build is " + money(result.minimumCompatibleTotal) + ", above this budget.";
+    const message = result.minimumGoalTotal === null
+      ? "The current sample catalogue has no " + (workload === "gaming" ? targetResolution + " target" : "matching") + " build for this size and storage choice. Change one of those preferences."
+      : "The closest sample build for your preferences is " + money(result.minimumGoalTotal) + ", " + money(result.minimumGoalTotal - budget) + " above your PC budget. Increase the budget or choose a lower gaming target.";
+    if (result.minimumGoalBuild) {
+      build = result.minimumGoalBuild;
+      expanded.clear();
+      $("#build-status").textContent = workloadLabel(workload) + " · closest sample above budget";
+      render();
+    }
+    setBuildRecommendation(message, "warning");
     showToast(message);
     return;
   }
@@ -599,7 +520,16 @@ function generateBuild() {
   expanded.clear();
   $("#build-status").textContent = workloadLabel(workload) + " build · sample fit for preferences";
   render();
+  setBuildRecommendation("Your answers are matched to the current sample parts. The displayed PC total is separate from your accessory allowance; neither is a live retailer quote.", "info");
   showToast("A compatible sample build fits your budget. No benchmark data is connected.");
+}
+
+function setBuildRecommendation(message, kind) {
+  const notice = $("#build-recommendation");
+  if (!notice) return;
+  notice.textContent = message;
+  notice.dataset.kind = kind;
+  notice.hidden = false;
 }
 
 $("#parts-list").addEventListener("change", event => {
@@ -620,17 +550,36 @@ $("#parts-list").addEventListener("click", event => {
   $("#select-" + id)?.focus({ preventScroll: true });
 });
 
-$("#part-search").addEventListener("input", () => renderParts(currentPlan()));
-$("#compare-category").addEventListener("change", () => {
+$("#parts-step-back").addEventListener("click", () => {
+  partStepIndex = Math.max(0, partStepIndex - 1);
+  expanded.clear();
+  render();
+  $("#select-" + COMPONENTS[partStepIndex].id)?.focus({ preventScroll: true });
+});
+$("#parts-step-next").addEventListener("click", () => {
+  if (partStepIndex < COMPONENTS.length - 1) {
+    partStepIndex += 1;
+    expanded.clear();
+    render();
+    $("#select-" + COMPONENTS[partStepIndex].id)?.focus({ preventScroll: true });
+    return;
+  }
+  $("#plan-title").scrollIntoView({ behavior: "smooth", block: "center" });
+  $("#plan-title").focus({ preventScroll: true });
+});
+$("#compare-category")?.addEventListener("change", () => {
   syncComparisonSelectors();
   renderComparison();
 });
 for (const id of ["compare-one", "compare-two", "compare-three"]) {
-  $("#" + id).addEventListener("change", renderComparison);
+  $("#" + id)?.addEventListener("change", renderComparison);
 }
-$("#strategy").addEventListener("change", render);
+$("#strategy").addEventListener("change", event => {
+  strategyPreference = VALID_STRATEGIES.has(event.target.value) ? event.target.value : "lowest";
+  render();
+});
 $("#budget").addEventListener("change", () => {
-  budget = Math.max(700, Math.min(5000, Number($("#budget").value) || 1000));
+  budget = Math.max(400, Math.min(5500, Number($("#budget").value) || 1000));
   render();
 });
 $("#budget-range").addEventListener("input", event => {
@@ -655,31 +604,10 @@ $("#size-preference").addEventListener("change", event => {
   sizePreference = VALID_SIZE_PREFERENCES.has(event.target.value) ? event.target.value : "any";
   $("#build-status").textContent = workloadLabel(workload) + " build · preferences changed";
 });
-$("#county").addEventListener("change", event => {
-  county = COUNTIES.includes(event.target.value) ? event.target.value : "Dublin";
-  writeStorageValue("rigwise-county", county);
-  renderLocationNote();
-  localShopLookupSequence++;
-  localShopLookupController?.abort();
-  localShopLookupController = null;
-  $("#find-local-shops").disabled = false;
-  $("#local-shops-status").textContent = "No lookup yet. Results load only when you choose this button.";
-  $("#local-shop-results").replaceChildren();
-  closeShopMapPreview();
+$("#storage-preference").addEventListener("change", event => {
+  storagePreference = VALID_STORAGE_PREFERENCES.has(event.target.value) ? event.target.value : "1tb";
+  $("#build-status").textContent = workloadLabel(workload) + " build · storage preference changed";
 });
-$("#find-local-shops").addEventListener("click", findLocalShops);
-$("#local-shop-results").addEventListener("click", event => {
-  const button = event.target.closest("[data-shop-map]");
-  if (!button) return;
-  const src = buildShopMapPreviewUrl({ lat: Number(button.dataset.lat), lon: Number(button.dataset.lon) });
-  if (!src) return;
-  const frame = $("#local-shop-map-frame");
-  frame.title = button.getAttribute("aria-label").replace(/^Show map preview for /, "OpenStreetMap preview for ");
-  frame.src = src;
-  $("#local-shop-map").hidden = false;
-  $("#local-shop-map").scrollIntoView({ behavior: "smooth", block: "nearest" });
-});
-$("#local-shop-map-close").addEventListener("click", closeShopMapPreview);
 $("#generate-build").addEventListener("click", generateBuild);
 $("#save-build").addEventListener("click", () => openSavedBuildDialog("save"));
 $("#share-build").addEventListener("click", shareBuild);
@@ -694,173 +622,14 @@ $("#saved-build-form").addEventListener("submit", event => {
 });
 $("#saved-build-dialog-cancel").addEventListener("click", () => $("#saved-build-dialog").close());
 
-$("#saved-builds").addEventListener("click", event => {
-  const target = event.target.closest("[data-load-saved], [data-remove-saved], [data-clear-saved], [data-duplicate-saved], [data-rename-saved]");
-  if (!target) return;
-  const saved = readSavedBuilds();
-  if (target.hasAttribute("data-load-saved")) {
-    const item = saved.find(entry => entry.id === target.dataset.loadSaved);
-    if (item) {
-      build = { ...item.build };
-      budget = Number(item.budget) || 1000;
-      workload = item.workload || "gaming";
-      targetResolution = VALID_RESOLUTIONS.has(item.targetResolution) ? item.targetResolution : "1080p";
-      targetFrameRate = VALID_FRAME_RATES.has(item.targetFrameRate) ? item.targetFrameRate : 60;
-      sizePreference = VALID_SIZE_PREFERENCES.has(item.sizePreference) ? item.sizePreference : "any";
-      county = COUNTIES.includes(item.county) ? item.county : "Dublin";
-      $("#county").value = county;
-      writeStorageValue("rigwise-county", county);
-      $("#build-status").textContent = escapeHTML(item.name) + " · restored";
-      render();
-      showToast("Saved build loaded.");
-    }
-  } else if (target.hasAttribute("data-duplicate-saved")) {
-    duplicateBuild(target.dataset.duplicateSaved);
-  } else if (target.hasAttribute("data-rename-saved")) {
-    const item = saved.find(entry => entry.id === target.dataset.renameSaved);
-    if (item) openSavedBuildDialog("rename", item);
-  } else if (target.hasAttribute("data-remove-saved")) {
-    if (!writeStorageValue(STORAGE_KEY, JSON.stringify(saved.filter(item => item.id !== target.dataset.removeSaved)))) {
-      showToast("Your browser could not update saved builds.");
-    } else {
-      renderSavedBuilds();
-    }
-  } else {
-    if (!removeStorageValue(STORAGE_KEY)) showToast("Your browser could not clear saved builds.");
-    else renderSavedBuilds();
-  }
-});
-
 $(".theme-toggle").addEventListener("click", () => {
   const enabled = document.body.classList.toggle("dark-theme");
   writeStorageValue("rigwise-theme", enabled ? "dark" : "light");
   $(".theme-toggle").setAttribute("aria-label", enabled ? "Switch to light theme" : "Switch to dark theme");
 });
 
-$("#copy-account-id").addEventListener("click", async () => {
-  try {
-    if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
-    await navigator.clipboard.writeText(localAccount.id);
-    showToast("Local account ID copied.");
-  } catch {
-    showToast("Select the local ID and copy it from the account panel.");
-  }
-});
-
-$("#export-account-backup").addEventListener("click", () => {
-  try {
-    const serialized = createLocalAccountBackup(localAccount.id, readSavedBuilds());
-    const file = new Blob([serialized], { type: "application/json" });
-    const url = URL.createObjectURL(file);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "rigwise-backup-" + localAccount.id + ".json";
-    document.body.append(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    showToast("Your local ID and saved builds were backed up.");
-  } catch {
-    showToast("A backup could not be created from this browser's saved data.");
-  }
-});
-
-$("#choose-account-backup").addEventListener("click", () => $("#account-backup-file").click());
-$("#account-backup-file").addEventListener("change", async event => {
-  const input = event.currentTarget;
-  const file = input.files?.[0];
-  if (!file) return;
-  try {
-    if (file.size > MAX_LOCAL_BACKUP_BYTES) throw new Error("Backup exceeds the supported file size.");
-    const backup = parseLocalAccountBackup(await file.text());
-    const currentBuilds = readSavedBuilds();
-    if ((currentBuilds.length || backup.accountId !== localAccount.id) && !window.confirm("Restore this backup? It will replace this browser's current local ID and saved builds.")) return;
-
-    const nextKey = savedBuildKeyForAccount(backup.accountId);
-    const previousBuilds = readStorageValue(nextKey);
-    if (!writeStorageValue(nextKey, JSON.stringify(backup.savedBuilds))) {
-      showToast("Your browser could not write the restored builds.");
-      return;
-    }
-    if (!writeStorageValue(LOCAL_ACCOUNT_STORAGE_KEY, backup.accountId)) {
-      if (previousBuilds === null) removeStorageValue(nextKey);
-      else writeStorageValue(nextKey, previousBuilds);
-      showToast("Your browser could not restore the local ID.");
-      return;
-    }
-    localAccount = { id: backup.accountId, persisted: true, created: false };
-    STORAGE_KEY = nextKey;
-    renderLocalAccount();
-    renderSavedBuilds();
-    showToast("Backup restored in this browser.");
-  } catch {
-    showToast("That backup is invalid or not supported.");
-  } finally {
-    input.value = "";
-  }
-});
-
-$("#clear-local-data").addEventListener("click", () => {
-  const confirmed = window.confirm("Clear this browser's Rigwise ID, saved builds and preferences? Download a backup first if you want to keep your builds.");
-  if (!confirmed) return;
-  if (!clearStorageWithPrefix("rigwise-")) {
-    showToast("The browser could not clear all Rigwise data.");
-    return;
-  }
-  location.reload();
-});
-
-$("#awin-feed-review-form").addEventListener("submit", async event => {
-  event.preventDefault();
-  const form = event.currentTarget;
-  const report = $("#awin-feed-review-report");
-  const file = $("#awin-feed-file").files?.[0];
-  report.textContent = "";
-  if (!file) {
-    report.textContent = "Choose an Awin CSV or TSV export to review.";
-    return;
-  }
-  if (file.size > MAX_AWIN_REVIEW_BYTES) {
-    report.textContent = "This file is larger than the 10 MB local-review limit.";
-    return;
-  }
-  const button = form.querySelector("button[type=submit]");
-  button.disabled = true;
-  button.textContent = "Checking feed…";
-  try {
-    const result = reviewAwinFeedLocally(await file.text(), {
-      advertiserId: $("#awin-advertiser-id").value,
-      retailerName: $("#awin-retailer-name").value,
-      catalogProducts: [...PRODUCTS, ...VERIFIED_CATALOGUE_PRODUCTS]
-    });
-    const heading = document.createElement("strong");
-    heading.textContent = result.retailerName + " · Awin advertiser " + result.advertiserId;
-    const summary = document.createElement("p");
-    summary.textContent = result.summary.rowsRead + " rows read · " + result.summary.imported + " parsed · " + result.summary.rejected + " rejected · " + result.summary.matched + " exact matches · " + result.summary.ambiguous + " ambiguous · " + result.summary.unmatched + " unmatched · 0 eligible for recommendations";
-    const note = document.createElement("p");
-    note.textContent = result.summary.matched === 0
-      ? "No exact matches were found in the current demo catalogue. Its products do not yet contain verified GTIN or manufacturer-part-number identities."
-      : "Exact identifiers matched catalogue records; this local report still does not verify publisher rights or offer eligibility.";
-    report.append(heading, summary, note);
-    if (result.rejected.length) {
-      const rejected = document.createElement("p");
-      rejected.textContent = "Rejected rows: " + result.rejected.slice(0, 8).map(item => item.line + " (" + item.reason.replaceAll("_", " ") + ")").join("; ") + (result.rejected.length > 8 ? "; and " + (result.rejected.length - 8) + " more" : "");
-      report.append(rejected);
-    }
-  } catch (error) {
-    report.textContent = error instanceof Error ? error.message : "This feed could not be reviewed.";
-  } finally {
-    button.disabled = false;
-    button.innerHTML = 'Review file locally <span aria-hidden="true">↗</span>';
-  }
-});
-
 $("#year").textContent = new Date().getFullYear();
 if (readStorageValue("rigwise-theme") === "dark") document.body.classList.add("dark-theme");
-renderLocalAccount();
-$("#county").value = county;
-syncComparisonSelectors();
-renderLocationNote();
 if (shared) {
   $("#build-status").textContent = workloadLabel(workload) + " shared build";
   showToast("Shared example build loaded.");
@@ -870,4 +639,3 @@ if (!shared && quizPreferences) {
   $("#build-status").textContent = workloadLabel(workload) + " · questionnaire preferences";
   generateBuild();
 }
-

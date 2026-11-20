@@ -21,6 +21,10 @@ const build = {
   targetResolution: "1440p",
   targetFrameRate: 120,
   sizePreference: "compact",
+  storagePreference: "2tb",
+  strategy: "fewest",
+  accessories: ["keyboard", "monitor"],
+  accessoryTotal: 275,
   county: "Galway",
   total: 1580.75,
   createdAt,
@@ -77,4 +81,3 @@ test("saved build helpers reject invalid names, identities, and duplicate IDs", 
   assert.throws(() => renameSavedBuild([build], "missing", "A name", createdAt), /could not be found/);
   assert.throws(() => prependSavedBuild([build], build), /IDs must be unique/);
 });
-

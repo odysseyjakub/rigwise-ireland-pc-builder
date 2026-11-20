@@ -13,17 +13,18 @@ test("builder and catalogue navigation link to the deals and guide pages", async
 });
 
 test("primary navigation exposes saved builds and the browser-local account", async () => {
-  const pages = await Promise.all(["index.html", "build-quiz.html", "builder.html", "saved-builds.html", "components.html", "deals.html", "guides.html", "cost-check.html"].map(read));
+  const pages = await Promise.all(["index.html", "build-quiz.html", "builder.html", "saved-builds.html", "components.html", "deals.html", "guides.html", "cost-check.html", "local-shops.html"].map(read));
   for (const page of pages) {
     assert.match(page, /Saved builds/);
     assert.match(page, /href="saved-builds\.html"/);
-    assert.match(page, /href="builder\.html#account"/);
+    assert.match(page, /href="saved-builds\.html#local-account"/);
   }
   const [home, builder, savedPage, savedScript] = await Promise.all([read("index.html"), read("builder.html"), read("saved-builds.html"), read("saved-builds-page.js")]);
   const app = await read("app.js");
   assert.doesNotMatch(home, /id="builder"|id="saved-builds"/);
   assert.match(home, /href="build-quiz\.html"/);
-  assert.match(builder, /id="saved-builds"/);
+  assert.match(builder, /id="save-build"/);
+  assert.match(builder, /href="saved-builds\.html"/);
   assert.match(app, /Manage your builds/);
   assert.match(savedPage, /id="saved-builds-list"/);
   assert.match(savedPage, /saved-builds-page\.js/);
@@ -35,24 +36,31 @@ test("primary navigation exposes saved builds and the browser-local account", as
 
 test("questionnaire asks budget, workload and size before sending preferences to the builder", async () => {
   const [quiz, script, state, app] = await Promise.all([read("build-quiz.html"), read("build-quiz.js"), read("build-quiz-state.js"), read("app.js")]);
-  assert.match(quiz, /What’s your budget/);
-  assert.match(quiz, /What will you use it for most/);
-  assert.match(quiz, /Any preference for PC size/);
-  assert.match(quiz, /data-quiz-step="gaming"/);
+  assert.match(quiz, /What is your PC budget/);
+  assert.match(quiz, /What will you use the PC for most/);
+  assert.match(quiz, /How much room do you have/);
+  assert.match(quiz, /data-quiz-step="peripherals"/);
+  assert.match(quiz, /data-quiz-step="strategy"/);
+  assert.match(quiz, /min="400" max="5500"/);
   assert.match(quiz, /Build my PC/);
   assert.match(script, /window\.location\.href = "builder\.html\?"/);
+  assert.match(script, /visible\.every\(stepIsValid\)/);
+  assert.match(script, /stepIsValid\(current\)/);
+  assert.match(script, /minimumGoalBudget/);
+  assert.match(script, /option\.disabled = budget < minimum/);
   assert.match(state, /source/);
   assert.match(app, /readQuizPreferences\(location\.search\)/);
   assert.match(app, /generateBuild\(\)/);
 });
 
 test("mapped shop candidates offer an on-demand OpenStreetMap preview with a visible evidence boundary", async () => {
-  const [home, app, map] = await Promise.all([read("builder.html"), read("app.js"), read("shop-map.js")]);
-  assert.match(home, /id="local-shop-map" class="local-shop-map" hidden/);
-  assert.match(home, /id="local-shop-map-frame"[^>]*loading="lazy"/);
-  assert.match(home, /map preview connects to OpenStreetMap only when you choose it/);
-  assert.match(app, /data-shop-map/);
-  assert.match(app, /closeShopMapPreview\(\)/);
+  const [page, app, map] = await Promise.all([read("local-shops.html"), read("local-shops-page.js"), read("shop-map.js")]);
+  assert.match(page, /id="local-shop-map" class="local-shop-map" hidden/);
+  assert.match(page, /id="local-shop-map-frame"[^>]*loading="lazy"/);
+  assert.match(page, /only after you request a lookup/);
+  assert.match(app, /fetch\("\/api\/shops\?county="/);
+  assert.match(app, /dataset\.shopMap/);
+  assert.match(app, /function closeMap\(\)/);
   assert.match(map, /https:\/\/www\.openstreetmap\.org\/export\/embed\.html/);
   assert.match(map, /IRELAND_BOUNDS/);
 });
@@ -104,4 +112,3 @@ test("resource pages share the saved browser theme preference", async () => {
   assert.match(css, /@media \(max-width: 740px\)/);
   assert.match(css, /\.dark-theme\.resource-page/);
 });
-

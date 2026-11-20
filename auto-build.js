@@ -20,6 +20,13 @@ const GAMING_WEIGHTS = Object.freeze({
 const VALID_RESOLUTIONS = new Set(["1080p", "1440p", "4k"]);
 const VALID_FRAME_RATES = new Set([60, 120, 165]);
 const VALID_SIZE_PREFERENCES = new Set(["any", "compact"]);
+const VALID_STORAGE_PREFERENCES = new Set(["1tb", "2tb"]);
+const VALID_STRATEGIES = new Set(["lowest", "fewest"]);
+const MINIMUM_COMPONENT_TIERS = Object.freeze({
+  "1080p:60": { cpu: 1, graphics: 1 }, "1080p:120": { cpu: 2, graphics: 1 }, "1080p:165": { cpu: 2, graphics: 2 },
+  "1440p:60": { cpu: 1, graphics: 2 }, "1440p:120": { cpu: 2, graphics: 3 }, "1440p:165": { cpu: 2, graphics: 3 },
+  "4k:60": { cpu: 1, graphics: 3 }, "4k:120": { cpu: 2, graphics: 3 }, "4k:165": { cpu: 2, graphics: 3 }
+});
 
 function capacity(product, key) {
   return Number(product?.specs?.[key]) || 0;
@@ -73,6 +80,8 @@ export function generateAutoBuild({
   targetResolution = "1080p",
   targetFrameRate = 60,
   sizePreference = "any",
+  storagePreference = "1tb",
+  strategy = "lowest",
   maxCombinations = 10_000
 }) {
   if (!Number.isFinite(budget) || budget < 0) throw new Error("Budget must be a non-negative EUR amount");
@@ -80,6 +89,8 @@ export function generateAutoBuild({
   if (!VALID_RESOLUTIONS.has(targetResolution)) throw new Error("Choose a supported gaming resolution");
   if (!VALID_FRAME_RATES.has(targetFrameRate)) throw new Error("Choose a supported target frame rate");
   if (!VALID_SIZE_PREFERENCES.has(sizePreference)) throw new Error("Choose a supported size preference");
+  if (!VALID_STORAGE_PREFERENCES.has(storagePreference)) throw new Error("Choose a supported storage preference");
+  if (!VALID_STRATEGIES.has(strategy)) throw new Error("Choose a supported basket strategy");
   if (!Array.isArray(components) || !Array.isArray(products) || !Array.isArray(offers) || !Array.isArray(bundles)) {
     throw new Error("Components, products, offers, and bundles must be arrays");
   }
@@ -88,6 +99,7 @@ export function generateAutoBuild({
   for (const component of components) {
     const matches = products.filter(product => {
       if (product.category !== component.category) return false;
+      if (component.category === "storage" && Number(product.specs?.capacity) < Number.parseInt(storagePreference, 10)) return false;
       if (sizePreference === "compact" && ["motherboard", "case"].includes(component.category)) {
         return product.specs?.sizeClass === "compact";
       }
@@ -104,6 +116,7 @@ export function generateAutoBuild({
   let withinBudgetBuilds = 0;
   let best = null;
   let cheapestCompatible = null;
+  let cheapestGoalMatch = null;
 
   function inspectCandidate() {
     evaluatedBuilds += 1;
@@ -125,6 +138,7 @@ export function generateAutoBuild({
         bundles,
         catalogComponentIds: products.map(product => product.id),
         shippingRules,
+        strategy,
         maxCombinations
       });
     } catch {
@@ -138,6 +152,10 @@ export function generateAutoBuild({
       score: exampleScore(currentBuild, productById, workload, targetResolution, targetFrameRate)
     };
     if (!cheapestCompatible || plan.total < cheapestCompatible.plan.total) cheapestCompatible = candidate;
+    const minimumTiers = workload === "gaming" ? MINIMUM_COMPONENT_TIERS[targetResolution + ":" + targetFrameRate] : null;
+    if (minimumTiers && (capacity(productById.get(currentBuild.cpu), "tier") < minimumTiers.cpu ||
+        capacity(productById.get(currentBuild.graphics), "tier") < minimumTiers.graphics)) return;
+    if (!cheapestGoalMatch || plan.total < cheapestGoalMatch.plan.total) cheapestGoalMatch = candidate;
     if (plan.total > budget) return;
     withinBudgetBuilds += 1;
     if (candidateIsBetter(candidate, best)) best = candidate;
@@ -158,11 +176,15 @@ export function generateAutoBuild({
 
   search(0);
   const counts = { evaluatedBuilds, incompatibleBuilds, compatibleBuilds, withinBudgetBuilds };
-  if (best) return { status: "ready", ...best, ...counts };
+  if (best) return { status: "ready", ...best, minimumGoalTotal: cheapestGoalMatch?.plan.total ?? null, minimumGoalBuild: cheapestGoalMatch?.build ?? null, ...counts };
   return {
     status: "no-budget-fit",
-    minimumCompatibleTotal: cheapestCompatible?.plan.total ?? null,
-    minimumCompatibleBuild: cheapestCompatible?.build ?? null,
+    minimumCompatibleTotal: cheapestGoalMatch?.plan.total ?? null,
+    minimumCompatibleBuild: cheapestGoalMatch?.build ?? null,
+    minimumGoalTotal: cheapestGoalMatch?.plan.total ?? null,
+    minimumGoalBuild: cheapestGoalMatch?.build ?? null,
+    closestCompatibleTotal: cheapestCompatible?.plan.total ?? null,
+    closestCompatibleBuild: cheapestCompatible?.build ?? null,
     ...counts
   };
 }
