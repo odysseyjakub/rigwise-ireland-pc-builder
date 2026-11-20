@@ -13,21 +13,41 @@ test("builder and catalogue navigation link to the deals and guide pages", async
 });
 
 test("primary navigation exposes saved builds and the browser-local account", async () => {
-  const pages = await Promise.all(["index.html", "components.html", "deals.html", "guides.html", "cost-check.html"].map(read));
+  const pages = await Promise.all(["index.html", "build-quiz.html", "builder.html", "saved-builds.html", "components.html", "deals.html", "guides.html", "cost-check.html"].map(read));
   for (const page of pages) {
-    assert.match(page, /Saved Builds/);
-    assert.match(page, /href="(?:index\.html)?#saved-builds"/);
-    assert.match(page, /href="(?:index\.html)?#account"/);
+    assert.match(page, /Saved builds/);
+    assert.match(page, /href="saved-builds\.html"/);
+    assert.match(page, /href="builder\.html#account"/);
   }
-  const home = await read("index.html");
+  const [home, builder, savedPage, savedScript] = await Promise.all([read("index.html"), read("builder.html"), read("saved-builds.html"), read("saved-builds-page.js")]);
   const app = await read("app.js");
-  assert.match(home, /id="saved-builds" class="saved-builds"/);
-  assert.match(app, /No builds saved yet/);
-  assert.match(app, /escapeHTML\(item\.id\)/);
+  assert.doesNotMatch(home, /id="builder"|id="saved-builds"/);
+  assert.match(home, /href="build-quiz\.html"/);
+  assert.match(builder, /id="saved-builds"/);
+  assert.match(app, /Manage your builds/);
+  assert.match(savedPage, /id="saved-builds-list"/);
+  assert.match(savedPage, /saved-builds-page\.js/);
+  assert.match(app, /function saveBuild\(/);
+  assert.match(savedScript, /makeButton\("Copy link"/);
+  assert.match(savedScript, /makeButton\("Rename"/);
+  assert.match(savedScript, /makeButton\("Duplicate"/);
+});
+
+test("questionnaire asks budget, workload and size before sending preferences to the builder", async () => {
+  const [quiz, script, state, app] = await Promise.all([read("build-quiz.html"), read("build-quiz.js"), read("build-quiz-state.js"), read("app.js")]);
+  assert.match(quiz, /What’s your budget/);
+  assert.match(quiz, /What will you use it for most/);
+  assert.match(quiz, /Any preference for PC size/);
+  assert.match(quiz, /data-quiz-step="gaming"/);
+  assert.match(quiz, /Build my PC/);
+  assert.match(script, /window\.location\.href = "builder\.html\?"/);
+  assert.match(state, /source/);
+  assert.match(app, /readQuizPreferences\(location\.search\)/);
+  assert.match(app, /generateBuild\(\)/);
 });
 
 test("mapped shop candidates offer an on-demand OpenStreetMap preview with a visible evidence boundary", async () => {
-  const [home, app, map] = await Promise.all([read("index.html"), read("app.js"), read("shop-map.js")]);
+  const [home, app, map] = await Promise.all([read("builder.html"), read("app.js"), read("shop-map.js")]);
   assert.match(home, /id="local-shop-map" class="local-shop-map" hidden/);
   assert.match(home, /id="local-shop-map-frame"[^>]*loading="lazy"/);
   assert.match(home, /map preview connects to OpenStreetMap only when you choose it/);

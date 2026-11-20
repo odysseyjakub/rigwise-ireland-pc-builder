@@ -11,6 +11,7 @@ import { VERIFIED_CATALOGUE_PRODUCTS } from "./catalogue-data.js";
 import { decodeShareHash, encodeShareHash } from "./share-state.js";
 import { createSavedBuildSnapshot, duplicateSavedBuild, MAX_SAVED_BUILDS, prependSavedBuild, renameSavedBuild } from "./saved-builds.js";
 import { buildShopMapPreviewUrl } from "./shop-map.js";
+import { readQuizPreferences } from "./build-quiz-state.js";
 
 const $ = selector => document.querySelector(selector);
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(value);
@@ -47,12 +48,13 @@ function fromShareHash() {
 }
 
 const shared = fromShareHash();
+const quizPreferences = readQuizPreferences(location.search);
 let build = shared?.build ? { ...DEFAULT_BUILD, ...shared.build } : { ...DEFAULT_BUILD };
-let budget = Number(shared?.budget) || 1000;
-let workload = shared?.workload || "gaming";
-let targetResolution = VALID_RESOLUTIONS.has(shared?.targetResolution) ? shared.targetResolution : "1080p";
-let targetFrameRate = VALID_FRAME_RATES.has(shared?.targetFrameRate) ? shared.targetFrameRate : 60;
-let sizePreference = VALID_SIZE_PREFERENCES.has(shared?.sizePreference) ? shared.sizePreference : "any";
+let budget = Number(shared?.budget ?? quizPreferences?.budget) || 1000;
+let workload = shared?.workload || quizPreferences?.workload || "gaming";
+let targetResolution = VALID_RESOLUTIONS.has(shared?.targetResolution ?? quizPreferences?.targetResolution) ? (shared?.targetResolution ?? quizPreferences?.targetResolution) : "1080p";
+let targetFrameRate = VALID_FRAME_RATES.has(shared?.targetFrameRate ?? quizPreferences?.targetFrameRate) ? (shared?.targetFrameRate ?? quizPreferences?.targetFrameRate) : 60;
+let sizePreference = VALID_SIZE_PREFERENCES.has(shared?.sizePreference ?? quizPreferences?.sizePreference) ? (shared?.sizePreference ?? quizPreferences?.sizePreference) : "any";
 const storedCounty = readStorageValue("rigwise-county");
 let county = COUNTIES.includes(shared?.county)
   ? shared.county
@@ -318,15 +320,10 @@ function renderCompatibility() {
 
 function renderSavedBuilds() {
   const host = $("#saved-builds");
+  if (!host) return;
   const saved = readSavedBuilds();
-  host.hidden = false;
-  const clearButton = saved.length ? '<button type="button" data-clear-saved class="saved-clear">Clear all</button>' : '<span class="saved-device-label">Stored in this browser</span>';
-  const savedItems = saved.map(item => {
-    const safeId = escapeHTML(item.id);
-    return '<article class="saved-item"><button type="button" data-load-saved="' + safeId + '" class="saved-name">' + escapeHTML(item.name) + '<small>' + new Date(item.createdAt).toLocaleDateString("en-IE") + ' · illustrative total ' + money(Number(item.total) || 0) + '</small></button><div class="saved-actions"><button type="button" data-duplicate-saved="' + safeId + '">Duplicate</button><button type="button" data-rename-saved="' + safeId + '">Rename</button><button type="button" class="saved-remove" data-remove-saved="' + safeId + '" aria-label="Remove ' + escapeHTML(item.name) + '">Remove</button></div></article>';
-  }).join("");
-  host.innerHTML = '<div class="saved-heading"><span>SAVED BUILDS · ' + saved.length + '/' + MAX_SAVED_BUILDS + '</span>' + clearButton + '</div>' +
-    (saved.length ? '<div class="saved-list">' + savedItems + '</div>' : '<p class="saved-empty">No builds saved yet. Choose “Save build” to keep one on this device.</p>');
+  host.innerHTML = '<div class="saved-heading"><span>SAVED BUILDS · ' + saved.length + '/' + MAX_SAVED_BUILDS + '</span><a class="saved-manage-link" href="saved-builds.html">Manage your builds →</a></div>' +
+    '<p class="saved-empty">Your saved builds have their own home. Open the page to rename, duplicate, share or remove them.</p>';
 }
 
 function renderLocalAccount() {
@@ -869,4 +866,8 @@ if (shared) {
   showToast("Shared example build loaded.");
 }
 render();
+if (!shared && quizPreferences) {
+  $("#build-status").textContent = workloadLabel(workload) + " · questionnaire preferences";
+  generateBuild();
+}
 

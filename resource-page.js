@@ -23,3 +23,6 @@ for (const toggle of toggles) {
   });
 }
 
+const year = document.querySelector("#year");
+if (year) year.textContent = new Date().getFullYear();
+

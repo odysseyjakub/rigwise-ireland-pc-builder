@@ -4,7 +4,7 @@ An Ireland-first PC build and basket-optimisation demo. The site is a static, de
 
 ## Run it
 
-Open index.html in a modern browser, or serve this directory with any static web server. Run the built-in tests with Node.js:
+Open index.html in a modern browser, or serve this directory with any static web server. The homepage focuses on starting a PC build. `build-quiz.html` asks about budget, workload, gaming goals, and case size before creating a sample build. `builder.html` is the manual parts workspace, and `saved-builds.html` manages browser-local builds and share links. Run the built-in tests with Node.js:
 
     node --test
 

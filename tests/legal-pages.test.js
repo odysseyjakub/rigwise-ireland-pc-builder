@@ -5,11 +5,13 @@ import { readFile } from "node:fs/promises";
 const read = name => readFile(new URL("../" + name, import.meta.url), "utf8");
 const policyPages = ["privacy.html", "cookies.html", "terms.html", "affiliate.html", "contact.html"];
 
-test("the homepage links to a privacy and legal section without remote Google Font requests", async () => {
+test("the focused homepage links to finding a PC and legal information without remote Google Font requests", async () => {
   const html = await read("index.html");
   assert.match(html, /href="privacy\.html"/);
   assert.doesNotMatch(html, /fonts\.googleapis\.com|fonts\.gstatic\.com/);
-  assert.match(html, /id="clear-local-data"/);
+  assert.match(html, /href="build-quiz\.html"/);
+  assert.match(html, /href="saved-builds\.html"/);
+  assert.doesNotMatch(html, /id="builder"|id="clear-local-data"/);
 });
 
 test("all required policy pages exist and provide navigation between them", async () => {
@@ -35,8 +37,9 @@ test("privacy and storage pages state the browser-local data model and launch ga
 });
 
 test("mapped-shop lookup explains its source and limitations in the site UI", async () => {
-  const html = await read("index.html");
+  const html = await read("builder.html");
   assert.match(html, /id="find-local-shops"/);
   assert.match(html, /OpenStreetMap contributors/);
   assert.match(html, /stock and collection directly/);
 });
+
