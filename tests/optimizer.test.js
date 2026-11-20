@@ -137,9 +137,27 @@ test("bounded search reports when it stops before finding any verified complete 
   }), /Search limit reached before a feasible complete basket was found/);
 });
 
+test("search-node limit bounds partial exploration and labels the best plan as non-optimal", () => {
+  const limited = optimizeBasket({
+    components: [{ id: "cpu" }],
+    offers: [
+      { id: "first", componentId: "cpu", retailerId: "a", price: 10, available: true },
+      { id: "second", componentId: "cpu", retailerId: "b", price: 11, available: true }
+    ],
+    shippingRules: { a: { rate: 0 }, b: { rate: 0 } },
+    maxSearchNodes: 2
+  });
+  assert.equal(limited.total, 10);
+  assert.equal(limited.searchNodesVisited, 2);
+  assert.equal(limited.maxSearchNodes, 2);
+  assert.equal(limited.exact, false);
+  assert.equal(limited.searchStatus, "best-known");
+});
+
 test("optimizer requires a positive safe-integer search limit", () => {
   assert.throws(() => optimizeBasket({ components, offers, shippingRules: rules, maxCombinations: 0 }), /positive safe integer/);
   assert.throws(() => optimizeBasket({ components, offers, shippingRules: rules, maxCombinations: 1.5 }), /positive safe integer/);
+  assert.throws(() => optimizeBasket({ components, offers, shippingRules: rules, maxSearchNodes: 0 }), /maxSearchNodes.*positive safe integer/);
 });
 
 test("exact result matches an independent exhaustive reference", () => {

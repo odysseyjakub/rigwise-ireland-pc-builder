@@ -156,7 +156,8 @@ export function optimizeBasket({
   excludedRetailerIds = [],
   strategy = "lowest",
   orderCostEvaluator,
-  maxCombinations = 10_000
+  maxCombinations = 10_000,
+  maxSearchNodes = 100_000
 }) {
   if (!Array.isArray(components) || !Array.isArray(offers) || !Array.isArray(bundles)) {
     throw new Error("Components, offers, and bundles must be arrays");
@@ -164,6 +165,9 @@ export function optimizeBasket({
   if (strategy !== "lowest" && strategy !== "fewest") throw new Error("Unknown optimisation strategy: " + strategy);
   if (!Number.isSafeInteger(maxCombinations) || maxCombinations < 1) {
     throw new Error("maxCombinations must be a positive safe integer");
+  }
+  if (!Number.isSafeInteger(maxSearchNodes) || maxSearchNodes < 1) {
+    throw new Error("maxSearchNodes must be a positive safe integer");
   }
 
   const componentIds = components.map(component => component.id);
@@ -211,11 +215,17 @@ export function optimizeBasket({
 
   let best = null;
   let combinationsChecked = 0;
+  let searchNodesVisited = 0;
   let combinationsRejectedByCost = 0;
   let searchLimitReached = false;
   const costRejectionReasons = new Set();
   function visit(uncovered, selected, selectedBundles, assignments) {
     if (searchLimitReached) return;
+    if (searchNodesVisited >= maxSearchNodes) {
+      searchLimitReached = true;
+      return;
+    }
+    searchNodesVisited += 1;
     if (uncovered.size === 0) {
       if (combinationsChecked >= maxCombinations) {
         searchLimitReached = true;
@@ -289,7 +299,8 @@ export function optimizeBasket({
 
   visit(required, [], [], new Map());
   if (!best && searchLimitReached) {
-    throw new Error("Search limit reached before a feasible complete basket was found after " + combinationsChecked + " combinations");
+    throw new Error("Search limit reached before a feasible complete basket was found after " + combinationsChecked +
+      " combinations and " + searchNodesVisited + " search nodes");
   }
   if (!best && combinationsChecked > 0 && orderCostEvaluator) {
     throw new Error("No complete basket has verified retailer order costs (" + combinationsRejectedByCost +
@@ -297,10 +308,12 @@ export function optimizeBasket({
   }
   if (!best) throw new Error("No complete basket satisfies the selected locks and exclusions");
   best.combinationsChecked = combinationsChecked;
+  best.searchNodesVisited = searchNodesVisited;
   best.combinationsRejectedByCost = combinationsRejectedByCost;
   best.exact = !searchLimitReached;
   best.searchStatus = searchLimitReached ? "best-known" : "exact";
   best.maxCombinations = maxCombinations;
+  best.maxSearchNodes = maxSearchNodes;
   return best;
 }
 
