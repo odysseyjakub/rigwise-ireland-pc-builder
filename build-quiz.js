@@ -16,7 +16,6 @@ const submitButton = document.querySelector("#quiz-submit");
 const backButton = document.querySelector("#quiz-back");
 const goalCache = new Map();
 let stepIndex = 0;
-let budgetTouched = false;
 let storageTouched = false;
 
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(value);
@@ -47,7 +46,7 @@ function currentValues() {
 function stepIsValid(step) {
   switch (step.dataset.quizStep) {
     case "needs":
-      return budgetTouched && Boolean(currentWorkload());
+      return Boolean(currentWorkload());
     case "performance":
       return currentWorkload() !== "gaming" || Boolean(form.querySelector("#quiz-resolution").value && form.querySelector("#quiz-fps").value);
     case "fit":
@@ -86,7 +85,7 @@ function syncNavigation() {
   submitButton.disabled = !visible.every(stepIsValid);
   const step = current.dataset.quizStep;
   const hints = {
-    needs: budgetTouched && !currentWorkload() ? "Choose what you’ll use the PC for." : "Set your tower budget and main use.",
+    needs: !currentWorkload() ? "Choose what you’ll use the PC for." : "Your tower budget is separate from accessories.",
     performance: "Choose both targets, or go back to adjust your budget.",
     fit: !selected("size") ? "Choose a case size that suits your space." : "Enter a storage amount or pick a common size.",
     strategy: "Choose accessories, or confirm you need none."
@@ -183,7 +182,6 @@ function updateAccessoryTotal() {
 }
 
 budgetInput.addEventListener("input", () => {
-  budgetTouched = true;
   updateBudget();
   if (activeSteps()[stepIndex]?.dataset.quizStep === "performance") {
     void updateGoalOptions("resolution");
