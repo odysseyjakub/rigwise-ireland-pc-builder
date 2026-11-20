@@ -42,7 +42,10 @@ test("deals page explains public-source access and licensing boundaries", async 
   assert.match(deals, /has not imported or accepted that licence/);
   assert.match(deals, /prior written consent/);
   assert.match(deals, /not exhaustive/);
-  for (const source of ["help.awin.com", "icecat.com", "affiliate-program.amazon.com", "developer.ebay.com"]) {
+  assert.match(deals, /secret Publisher Center JWT/);
+  assert.match(deals, /does not provide a public search/);
+  assert.match(deals, /start at €99\/month/);
+  for (const source of ["help.awin.com", "docs.kelkoogroup.com", "icecat.com", "affiliate-program.amazon.com", "developer.ebay.com", "developers.google.com/merchant/api", "priceapi.com"]) {
     assert.ok(deals.includes(source), `Missing official source link for ${source}`);
   }
 });
@@ -70,3 +73,4 @@ test("resource pages share the saved browser theme preference", async () => {
   assert.match(css, /@media \(max-width: 740px\)/);
   assert.match(css, /\.dark-theme\.resource-page/);
 });
+
