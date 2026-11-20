@@ -331,7 +331,9 @@ export function checkCompatibility({ components, products, requirements = {} }) 
     if (!Array.isArray(requiredConnectors) || !Array.isArray(suppliedConnectors)) {
       unknown("gpu-power-connectors", "Graphics power connectors", "GPU connector requirements or PSU connector data is missing.");
     } else {
-      const missingConnectors = requiredConnectors.filter(connector => !suppliedConnectors.includes(connector));
+      const missingConnectors = requiredConnectors.filter(connector => !suppliedConnectors.some(supplied =>
+        supplied === connector || (connector === "16-pin" && ["12V-2x6", "12VHPWR"].includes(supplied))
+      ));
       if (missingConnectors.length) add("gpu-power-connectors", FAIL, "Graphics power connectors", "The PSU does not list " + missingConnectors.join(", ") + ".");
       else add("gpu-power-connectors", PASS, "Graphics power connectors", "The PSU lists the GPU's required power connectors.");
     }
@@ -376,3 +378,4 @@ export function checkCompatibility({ components, products, requirements = {} }) 
   const issues = checks.filter(check => ![PASS, NOT_APPLICABLE].includes(check.status));
   return { status, checks, issues, incompatibleCount, warningCount, unknownCount };
 }
+

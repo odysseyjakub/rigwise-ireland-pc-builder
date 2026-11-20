@@ -199,6 +199,25 @@ export const VERIFIED_CATALOGUE_PRODUCTS = [
     keySpecs: ["32 GB (2 × 16 GB)", "DDR5-4800 JEDEC default", "DDR5-6000 EXPO profile", "34.9 mm module height"]
   },
   {
+    id: "kingston-fury-beast-32gb-ddr5-5600",
+    category: "memory",
+    name: "FURY Beast 32 GB (2 × 16 GB) DDR5-5600 EXPO",
+    brand: "Kingston",
+    manufacturerPartNumber: "KF556C36BBEK2-32",
+    sourceUrl: "https://www.kingston.com/unitedkingdom/en/memory/search/?partid=KF556C36BBEK2-32",
+    sourceTitle: "Kingston FURY Beast KF556C36BBEK2-32",
+    sourceCheckedAt: "2026-11-20",
+    specs: {
+      memoryGen: "DDR5",
+      capacityGb: 32,
+      moduleCount: 2,
+      profileSpeedMts: 5600,
+      profileName: "AMD EXPO",
+      heightMm: 34.9
+    },
+    keySpecs: ["32 GB (2 × 16 GB)", "DDR5-5600 EXPO profile", "CL36", "34.9 mm module height"]
+  },
+  {
     id: "asus-dual-rtx4060-o8g",
     category: "graphics",
     name: "Dual GeForce RTX 4060 OC Edition 8 GB",
@@ -232,7 +251,7 @@ export const VERIFIED_CATALOGUE_PRODUCTS = [
       length: 249,
       thicknessSlots: 2.53,
       recommendedSystemPowerW: 750,
-      powerConnector: "16-pin"
+      powerConnectors: ["16-pin"]
     },
     keySpecs: ["12 GB GDDR7", "PCI Express 5.0", "249 × 126 × 50.6 mm", "2.53 slots", "16-pin power; ASUS recommends a 750 W system PSU"]
   },
@@ -256,6 +275,23 @@ export const VERIFIED_CATALOGUE_PRODUCTS = [
     keySpecs: ["1 TB", "M.2 2280", "PCIe Gen4 NVMe x4", "UPC-A 718037887302"]
   },
   {
+    id: "samsung-990-evo-plus-1tb",
+    category: "storage",
+    name: "990 EVO Plus NVMe SSD 1 TB",
+    brand: "Samsung",
+    manufacturerPartNumber: "MZ-V9S1T0BW",
+    sourceUrl: "https://www.samsung.com/uk/memory-storage/nvme-ssd/990-evo-plus-1tb-nvme-pcie-gen-4-mz-v9s1t0bw/?modelCode=MZ-V9S1T0BW",
+    sourceTitle: "Samsung 990 EVO Plus 1 TB specifications",
+    sourceCheckedAt: "2026-11-20",
+    specs: {
+      interface: "NVMe",
+      formFactor: "M.2 2280",
+      pcieGeneration: 4,
+      capacity: 1
+    },
+    keySpecs: ["1 TB", "M.2 2280", "PCIe 4.0 ×4 / PCIe 5.0 ×2", "NVMe 2.0"]
+  },
+  {
     id: "corsair-rm650e-2025-eu",
     category: "power",
     name: "RMe Series RM650e (2025, EU)",
@@ -271,6 +307,23 @@ export const VERIFIED_CATALOGUE_PRODUCTS = [
       connectors: ["24-pin", "CPU-8pin", "PCIe-8pin", "12V-2x6"]
     },
     keySpecs: ["650 W", "ATX 3.1", "140 × 150 × 86 mm", "24-pin, EPS 8-pin, PCIe 8-pin and 12V-2x6 cables"]
+  },
+  {
+    id: "msi-mag-a750gl-pcie5-ii",
+    category: "power",
+    name: "MAG A750GL PCIE5 II",
+    brand: "MSI",
+    manufacturerPartNumber: "MAG A750GL PCIE5 II",
+    sourceUrl: "https://www.msi.com/Power-Supply/MAG-A750GL-PCIE5-II/Specification",
+    sourceTitle: "MSI MAG A750GL PCIE5 II specifications",
+    sourceCheckedAt: "2026-11-20",
+    specs: {
+      watts: 750,
+      formFactor: "ATX",
+      lengthMm: 140,
+      connectors: ["24-pin", "CPU-8pin", "PCIe-8pin", "16-pin"]
+    },
+    keySpecs: ["750 W", "ATX 3.1", "140 × 150 × 86 mm", "Native PCIe 5.1 16-pin cable", "Up to 3 PCIe 6+2-pin connectors"]
   },
   {
     id: "fractal-pop-mini-air-rgb-black",
@@ -293,6 +346,28 @@ export const VERIFIED_CATALOGUE_PRODUCTS = [
       radiatorSupportMm: [120, 240]
     },
     keySpecs: ["Micro-ATX / Mini-ITX", "GPU clearance 365 mm", "CPU cooler height limit 170 mm", "ATX PSU length limit 150 mm", "GTIN-13 7340172703600"]
+  },
+  {
+    id: "fractal-pop-air-rgb-black",
+    category: "case",
+    name: "Pop Air RGB Black TG Clear Tint",
+    brand: "Fractal Design",
+    manufacturerPartNumber: "FD-C-POR1A-06",
+    gtin: "7340172703570",
+    gtinFormat: "GTIN-13",
+    sourceUrl: "https://www.fractal-design.com/products/cases/pop-series/pop-air/pop-air-rgb-black-tg-clear-tint/",
+    sourceTitle: "Fractal Design Pop Air specifications",
+    sourceCheckedAt: "2026-11-20",
+    specs: {
+      boardSizes: ["ATX", "mATX", "mini-ITX"],
+      psuFormats: ["ATX"],
+      maxPsuLengthMm: 170,
+      maxGpuLength: 405,
+      maxGpuSlots: 7,
+      maxCoolerHeightMm: 170,
+      radiatorSupportMm: [120, 240, 280]
+    },
+    keySpecs: ["ATX / Micro-ATX / Mini-ITX", "GPU clearance 405 mm", "CPU cooler height limit 170 mm", "ATX PSU length limit 170 mm", "GTIN-13 7340172703570"]
   },
   {
     id: "amd-wraith-stealth-included",
@@ -322,10 +397,11 @@ export const VERIFIED_CATALOGUE_PRODUCTS = [
     sourceTitle: "Noctua NH-U12S redux specifications",
     sourceCheckedAt: CATALOGUE_SPECS_CHECKED_AT,
     specs: {
-      sockets: ["AM5", "AM4"],
-      heightMm: 158
+      sockets: ["AM5", "AM4", "LGA1851", "LGA1700", "LGA1954", "LGA1200", "LGA115x"],
+      heightMm: 158,
+      radiatorSizeMm: 0
     },
-    keySpecs: ["AM5 and AM4 mounting support", "158 mm total height", "120 mm PWM fan", "GTIN-13 9010018000207"]
+    keySpecs: ["AM5, AM4, LGA1851 and LGA1700 mounting support (plus listed legacy sockets)", "158 mm total height", "120 mm PWM fan", "GTIN-13 9010018000207"]
   }
 ];
 
@@ -344,3 +420,4 @@ export const REFERENCE_BUILD_COMPONENTS = COMPONENTS.map(component => ({
   ...component,
   productId: REFERENCE_BUILD[component.id]
 }));
+

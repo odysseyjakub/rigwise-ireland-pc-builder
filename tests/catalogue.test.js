@@ -38,6 +38,15 @@ test("the catalogue includes source-checked AM5 alternatives with exact model id
   assert.deepEqual([gpu.specs.memoryGb, gpu.specs.length, gpu.specs.thicknessSlots, gpu.specs.recommendedSystemPowerW], [12, 249, 2.53, 750]);
 });
 
+test("alternate source-backed parts cover current memory, storage, case and 750 W PSU choices", () => {
+  const byId = Object.fromEntries(VERIFIED_CATALOGUE_PRODUCTS.map(product => [product.id, product]));
+  assert.deepEqual([byId["kingston-fury-beast-32gb-ddr5-5600"].manufacturerPartNumber, byId["kingston-fury-beast-32gb-ddr5-5600"].specs.profileSpeedMts], ["KF556C36BBEK2-32", 5600]);
+  assert.deepEqual([byId["samsung-990-evo-plus-1tb"].manufacturerPartNumber, byId["samsung-990-evo-plus-1tb"].specs.formFactor, byId["samsung-990-evo-plus-1tb"].specs.capacity], ["MZ-V9S1T0BW", "M.2 2280", 1]);
+  assert.deepEqual([byId["fractal-pop-air-rgb-black"].manufacturerPartNumber, byId["fractal-pop-air-rgb-black"].specs.maxGpuLength, byId["fractal-pop-air-rgb-black"].specs.maxPsuLengthMm], ["FD-C-POR1A-06", 405, 170]);
+  assert.deepEqual([byId["msi-mag-a750gl-pcie5-ii"].specs.watts, byId["msi-mag-a750gl-pcie5-ii"].specs.connectors.includes("16-pin")], [750, true]);
+  assert.ok(byId["noctua-nh-u12s-redux"].specs.sockets.includes("LGA1851"));
+});
+
 test("the source-linked catalogue page labels each part as lacking retailer offers", async () => {
   const html = await readFile(new URL("../components.html", import.meta.url), "utf8");
   const script = await readFile(new URL("../components-page.js", import.meta.url), "utf8");
@@ -80,7 +89,7 @@ test("the reference build uses every required slot and exposes unresolved checks
   assert.ok(result.checks.some(check => check.id === "psu-case-length" && check.status === "compatible"));
 });
 
-test("a newer source-linked AM5 build reports its 650 W supply warning and unresolved connector evidence", () => {
+test("a newer source-linked AM5 build reports its 650 W supply warning and matching 12V-2x6 cable", () => {
   const selected = {
     cpu: "amd-ryzen-5-7600-box",
     cooler: "amd-wraith-stealth-included",
@@ -99,7 +108,29 @@ test("a newer source-linked AM5 build reports its 650 W supply warning and unres
   assert.equal(result.incompatibleCount, 0);
   assert.equal(result.checks.find(check => check.id === "psu-capacity").status, "warning");
   assert.equal(result.checks.find(check => check.id === "gpu-board-interface").status, "warning");
-  assert.equal(result.checks.find(check => check.id === "gpu-power-connectors").status, "unknown");
+  assert.equal(result.checks.find(check => check.id === "gpu-power-connectors").status, "compatible");
+});
+
+test("documented RTX 5070 parts pass case, PSU capacity and native connector checks", () => {
+  const selected = {
+    cpu: "amd-ryzen-5-7600-box",
+    cooler: "noctua-nh-u12s-redux",
+    motherboard: "msi-pro-b650m-p",
+    memory: "kingston-fury-beast-32gb-ddr5-5600",
+    graphics: "asus-dual-rtx5070-o12g",
+    storage: "samsung-990-evo-plus-1tb",
+    power: "msi-mag-a750gl-pcie5-ii",
+    case: "fractal-pop-air-rgb-black"
+  };
+  const result = checkCompatibility({
+    components: COMPONENTS.map(component => ({ ...component, productId: selected[component.id] })),
+    products: VERIFIED_CATALOGUE_PRODUCTS,
+    requirements: { requiresDedicatedGpu: true }
+  });
+  assert.equal(result.incompatibleCount, 0);
+  for (const id of ["motherboard-case-form", "gpu-length", "gpu-thickness", "cooler-case-fit", "storage-interface", "psu-capacity", "gpu-power-connectors", "board-power-connectors", "psu-case-length"]) {
+    assert.equal(result.checks.find(check => check.id === id).status, "compatible", id);
+  }
 });
 
 test("the source-linked build exposes labelled model selectors that refresh checks", async () => {
@@ -131,3 +162,4 @@ test("source identifiers retain the manufacturer’s UPC or GTIN format", () => 
   assert.equal(caseProduct.gtinFormat, "GTIN-13");
   assert.ok(caseProduct.keySpecs.includes("GTIN-13 7340172703600"));
 });
+
