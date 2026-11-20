@@ -8,6 +8,7 @@ import { decodeShareHash, encodeShareHash } from "./share-state.js";
 import { createSavedBuildSnapshot, duplicateSavedBuild, MAX_SAVED_BUILDS, prependSavedBuild, renameSavedBuild } from "./saved-builds.js";
 import { isValidStoragePreference, readQuizPreferences, storageGigabytes } from "./build-quiz-state.js";
 import { estimateAccessories, normalizeAccessories } from "./accessories.js";
+import { fetchBuildFps, FPS_RESOLUTIONS } from "./fps-estimates.js";
 
 const $ = selector => document.querySelector(selector);
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(value);
@@ -67,6 +68,9 @@ let toastTimer;
 let localShopLookupSequence = 0;
 let localShopLookupController = null;
 let savedBuildDialogAction = null;
+let fpsRequestSequence = 0;
+let activeFpsKey = "";
+const fpsEstimateCache = new Map();
 
 function buildItems() {
   return COMPONENTS.map(component => ({ ...component, productId: build[component.id] }));
@@ -199,6 +203,129 @@ function renderSetupSummary(plan) {
     '<div><span>Accessories · sample allowance</span><strong>+' + money(allowance) + '</strong></div>' +
     '<div class="setup-summary-total"><span>PC + accessories planning total</span><strong>' + money(setup) + '</strong></div>' +
     '<p>Accessories are separate from your PC budget. Allowances are illustrative, not product offers or live prices.</p>';
+}
+
+function renderFpsPowerReference(gpu) {
+  const host = $("#fps-power-reference");
+  if (!host) return;
+  if (!gpu) {
+    host.textContent = "Whole-PC average power is not available for this example build.";
+    return;
+  }
+  const reference = Number.isFinite(gpu.averageGamingPowerW)
+    ? gpu.averageGamingPowerW + " W average GPU gaming power"
+    : Number.isFinite(gpu.specs?.watts)
+      ? gpu.specs.watts + " W typical GPU board power"
+      : "GPU power reference unavailable";
+  host.textContent = reference + " · whole-PC average power is not published for these exact parts.";
+}
+
+function renderFpsTable(rows) {
+  const host = $("#fps-results");
+  if (!host) return;
+  const table = document.createElement("table");
+  table.className = "fps-table";
+  const head = document.createElement("thead");
+  const headerRow = document.createElement("tr");
+  const gameHeader = document.createElement("th");
+  gameHeader.scope = "col";
+  gameHeader.textContent = "Game";
+  headerRow.append(gameHeader);
+  FPS_RESOLUTIONS.forEach(resolution => {
+    const cell = document.createElement("th");
+    cell.scope = "col";
+    cell.textContent = resolution;
+    headerRow.append(cell);
+  });
+  head.append(headerRow);
+  const body = document.createElement("tbody");
+  rows.forEach(game => {
+    const row = document.createElement("tr");
+    const title = document.createElement("th");
+    title.scope = "row";
+    const sourceUrl = game.resolutions.find(result => result.sourceUrl)?.sourceUrl || "https://fpshq.com/games/" + encodeURIComponent(game.slug) + "/";
+    const sourceLink = document.createElement("a");
+    sourceLink.href = sourceUrl;
+    sourceLink.target = "_blank";
+    sourceLink.rel = "noreferrer";
+    sourceLink.textContent = game.name;
+    title.append(sourceLink);
+    row.append(title);
+    game.resolutions.forEach(result => {
+      const cell = document.createElement("td");
+      if (result.status !== "available") {
+        cell.className = "fps-unavailable";
+        cell.textContent = "Unavailable";
+      } else {
+        const score = document.createElement("strong");
+        score.textContent = Math.round(result.fps) + " FPS";
+        const label = document.createElement("small");
+        label.textContent = result.source === "benchmark" ? "Measured" : "Estimate";
+        cell.append(score, label);
+        if (result.minimum !== null && result.maximum !== null && result.minimum !== result.maximum) {
+          const range = document.createElement("small");
+          range.textContent = Math.round(result.minimum) + "–" + Math.round(result.maximum) + " range";
+          cell.append(range);
+        }
+      }
+      row.append(cell);
+    });
+    body.append(row);
+  });
+  table.append(head, body);
+  host.replaceChildren(table);
+}
+
+async function loadFpsEstimates({ retry = false } = {}) {
+  const details = $("#fps-estimates");
+  if (!details?.open) return;
+  const requestId = ++fpsRequestSequence;
+  const cpu = productById(build.cpu);
+  const gpu = productById(build.graphics);
+  renderFpsPowerReference(gpu);
+  const status = $("#fps-status");
+  const retryButton = $("#fps-retry");
+  const resultHost = $("#fps-results");
+  if (workload !== "gaming") {
+    status.textContent = "FPS estimates are shown for gaming builds. Change the main use to gaming to load them.";
+    retryButton.hidden = true;
+    resultHost.replaceChildren();
+    return;
+  }
+  if (!cpu?.fpsCpuSlug || !gpu?.fpsGpuSlug) {
+    status.textContent = "There is no FPSHQ hardware match for this processor and graphics card yet.";
+    retryButton.hidden = true;
+    resultHost.replaceChildren();
+    return;
+  }
+  const key = cpu.fpsCpuSlug + "|" + gpu.fpsGpuSlug;
+  if (!retry && activeFpsKey === key && resultHost.childElementCount) return;
+  activeFpsKey = key;
+  if (retry) fpsEstimateCache.delete(key);
+  status.textContent = "Loading performance data for the selected parts…";
+  retryButton.hidden = true;
+  resultHost.replaceChildren();
+  try {
+    let estimate = fpsEstimateCache.get(key);
+    if (!estimate) {
+      estimate = fetchBuildFps({ cpu, gpu });
+      fpsEstimateCache.set(key, estimate);
+    }
+    const rows = await estimate;
+    if (requestId !== fpsRequestSequence || activeFpsKey !== key) return;
+    renderFpsTable(rows);
+    const availableCount = rows.flatMap(game => game.resolutions).filter(result => result.status === "available").length;
+    status.textContent = availableCount === rows.length * FPS_RESOLUTIONS.length
+      ? "Performance reference for " + cpu.name + " + " + gpu.name + "."
+      : availableCount
+        ? "Some combinations are unavailable in FPSHQ. Available results are shown below."
+        : "FPSHQ did not return a usable result for these parts. Check your connection or try again.";
+    retryButton.hidden = availableCount === rows.length * FPS_RESOLUTIONS.length;
+  } catch {
+    if (requestId !== fpsRequestSequence) return;
+    status.textContent = "Performance data could not be loaded. Check your connection and try again.";
+    retryButton.hidden = false;
+  }
 }
 
 function renderCompatibility() {
@@ -351,6 +478,7 @@ function render() {
   $("#size-preference").value = sizePreference;
   $("#storage-preference").value = String(storageGigabytes(storagePreference) || 1000);
   $("#strategy").value = strategyPreference;
+  if ($("#fps-estimates")?.open) loadFpsEstimates();
 }
 
 function showToast(message) {
@@ -539,6 +667,11 @@ $("#parts-list").addEventListener("change", event => {
   render();
 });
 
+$("#fps-estimates").addEventListener("toggle", () => {
+  if ($("#fps-estimates").open) loadFpsEstimates();
+});
+$("#fps-retry").addEventListener("click", () => loadFpsEstimates({ retry: true }));
+
 $("#parts-list").addEventListener("click", event => {
   const button = event.target.closest("[data-expand]");
   if (!button) return;
@@ -589,6 +722,7 @@ $("#budget-range").addEventListener("input", event => {
 $("#workload").addEventListener("change", event => {
   workload = event.target.value;
   $("#build-status").textContent = workloadLabel(workload) + " build · selection preserved";
+  if ($("#fps-estimates").open) loadFpsEstimates();
 });
 $("#target-resolution").addEventListener("change", event => {
   targetResolution = VALID_RESOLUTIONS.has(event.target.value) ? event.target.value : "1080p";
