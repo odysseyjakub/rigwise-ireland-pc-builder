@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { fetchBuildFps, FPS_GAMES, FPS_RESOLUTIONS, fpsRequestUrl, normalizeFpsResponse, requestFpsEstimate } from "../fps-estimates.js";
+import { handleFpsRequest } from "../api/fps.js";
 
 test("FPS panel covers the chosen five games and three resolutions", () => {
   assert.deepEqual(FPS_GAMES.map(game => game.name), [
@@ -45,17 +46,61 @@ test("build estimate failures are isolated per game and resolution", async () =>
   const rows = await fetchBuildFps({
     cpu: { fpsCpuSlug: "ryzen-5-7600" },
     gpu: { fpsGpuSlug: "rx-7600" },
-    fetcher: async url => {
-      requests.push(url);
-      const resolution = new URL(url).searchParams.get("res");
-      if (resolution === "1440p") return { ok: false };
-      return { ok: true, json: async () => ({ ok: true, fps: 88, source: "prediction", url: "https://fpshq.com/games/test/" }) };
+    fetcher: async (url, options) => {
+      requests.push({ url, options });
+      return { ok: true, json: async () => ({
+        ok: true,
+        rows: FPS_GAMES.map(game => ({
+          ...game,
+          resolutions: FPS_RESOLUTIONS.map(resolution => resolution === "1440p"
+            ? { resolution, status: "unavailable" }
+            : { resolution, status: "available", fps: 88, source: "prediction", sourceUrl: "https://fpshq.com/games/test/" })
+        }))
+      }) };
     }
   });
-  assert.equal(requests.length, 15);
+  assert.equal(requests.length, 1);
+  assert.match(requests[0].url, /^\/api\/fps\?/);
+  assert.equal(requests[0].options.referrerPolicy, "no-referrer");
   assert.equal(rows.length, 5);
   assert.equal(rows[0].resolutions[0].status, "available");
   assert.equal(rows[0].resolutions[1].status, "unavailable");
   assert.equal(rows[0].resolutions[2].status, "available");
+});
+
+test("Vercel FPS endpoint restricts input to catalogue parts and rejects other methods", async () => {
+  let calls = 0;
+  const method = await handleFpsRequest(new Request("https://rigwise.test/api/fps?cpu=ryzen-5-7600&gpu=rx-7600", { method: "POST" }), {
+    fetcher: async () => { calls += 1; return { ok: false }; }
+  });
+  assert.equal(method.status, 405);
+  const invalid = await handleFpsRequest(new Request("https://rigwise.test/api/fps?cpu=arbitrary&gpu=localhost"), {
+    fetcher: async () => { calls += 1; return { ok: false }; }
+  });
+  assert.equal(invalid.status, 400);
+  assert.equal(calls, 0);
+});
+
+test("Vercel FPS endpoint returns sourced results and safely isolates upstream failures", async () => {
+  const seen = [];
+  const response = await handleFpsRequest(new Request("https://rigwise.test/api/fps?cpu=ryzen-5-7600&gpu=rx-7600"), {
+    fetcher: async (url, options) => {
+      seen.push({ url, options });
+      const requested = new URL(url);
+      if (requested.searchParams.get("res") === "1440p") return { ok: false };
+      return {
+        ok: true,
+        json: async () => ({ ok: true, fps: 88, fps_min: 77, fps_max: 99, source: "benchmark", url: "https://fpshq.com/games/cyberpunk-2077/" })
+      };
+    }
+  });
+  const payload = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.equal(seen.length, 15);
+  assert.ok(seen.every(request => request.options.signal instanceof AbortSignal));
+  assert.equal(payload.rows.length, 5);
+  assert.equal(payload.rows[0].resolutions[0].source, "benchmark");
+  assert.equal(payload.rows[0].resolutions[1].status, "unavailable");
 });
 

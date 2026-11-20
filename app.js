@@ -319,7 +319,7 @@ async function loadFpsEstimates({ retry = false } = {}) {
       ? "Performance reference for " + cpu.name + " + " + gpu.name + "."
       : availableCount
         ? "Some combinations are unavailable in FPSHQ. Available results are shown below."
-        : "FPSHQ did not return a usable result for these parts. Check your connection or try again.";
+        : "No FPS results were returned. FPSHQ may be unavailable for this hardware combination.";
     retryButton.hidden = availableCount === rows.length * FPS_RESOLUTIONS.length;
   } catch {
     if (requestId !== fpsRequestSequence) return;

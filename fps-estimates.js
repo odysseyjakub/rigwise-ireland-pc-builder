@@ -58,7 +58,8 @@ export async function requestFpsEstimate({ gameSlug, gpuSlug, cpuSlug, resolutio
     headers: { Accept: "application/json" },
     mode: "cors",
     cache: "force-cache",
-    referrerPolicy: "no-referrer"
+    referrerPolicy: "no-referrer",
+    signal: AbortSignal.timeout(15_000)
   });
   if (!response?.ok) throw new Error("FPSHQ request failed.");
   return normalizeFpsResponse(await response.json());
@@ -66,22 +67,40 @@ export async function requestFpsEstimate({ gameSlug, gpuSlug, cpuSlug, resolutio
 
 export async function fetchBuildFps({ cpu, gpu, fetcher = globalThis.fetch }) {
   if (!cpu?.fpsCpuSlug || !gpu?.fpsGpuSlug) throw new TypeError("This build is missing an FPS hardware match.");
-  return Promise.all(FPS_GAMES.map(async game => {
-    const resolutions = await Promise.all(FPS_RESOLUTIONS.map(async resolution => {
+  const query = new URLSearchParams({ cpu: cpu.fpsCpuSlug, gpu: gpu.fpsGpuSlug });
+  const response = await fetcher("/api/fps?" + query, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+    cache: "force-cache",
+    referrerPolicy: "no-referrer"
+  });
+  if (!response?.ok) throw new Error("The Rigwise FPS endpoint could not be reached.");
+  const payload = await response.json();
+  if (!payload || payload.ok !== true || !Array.isArray(payload.rows)) {
+    throw new TypeError("The Rigwise FPS endpoint returned an invalid response.");
+  }
+  return FPS_GAMES.map(game => {
+    const row = payload.rows.find(candidate => candidate?.slug === game.slug);
+    const resolutions = FPS_RESOLUTIONS.map(resolution => {
+      const cell = row?.resolutions?.find(candidate => candidate?.resolution === resolution);
+      if (cell?.status !== "available") return { status: "unavailable" };
       try {
-        const result = await requestFpsEstimate({
-          gameSlug: game.slug,
-          gpuSlug: gpu.fpsGpuSlug,
-          cpuSlug: cpu.fpsCpuSlug,
-          resolution,
-          fetcher
-        });
-        return { status: "available", ...result };
+        return {
+          status: "available",
+          ...normalizeFpsResponse({
+            ok: true,
+            fps: cell.fps,
+            fps_min: cell.minimum,
+            fps_max: cell.maximum,
+            source: cell.source,
+            url: cell.sourceUrl
+          })
+        };
       } catch {
         return { status: "unavailable" };
       }
-    }));
+    });
     return { ...game, resolutions };
-  }));
+  });
 }
 
