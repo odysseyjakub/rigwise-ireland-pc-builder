@@ -12,12 +12,16 @@ const savedBuild = {
   build: { ...DEFAULT_BUILD },
   budget: 1400,
   workload: "gaming",
+  targetResolution: "1440p",
+  targetFrameRate: 120,
+  sizePreference: "compact",
   county: "Galway",
   total: 1395.25,
-  createdAt: exportedAt
+  createdAt: exportedAt,
+  updatedAt: "2026-11-19T12:00:00.000Z"
 };
 
-test("local backup round-trips the anonymous ID and supported saved builds", () => {
+test("local backup round-trips the anonymous ID and all saved builder settings", () => {
   const serialized = createLocalAccountBackup(accountId, [savedBuild], exportedAt);
   const restored = parseLocalAccountBackup(serialized);
 
