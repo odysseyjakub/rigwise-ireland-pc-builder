@@ -1,10 +1,13 @@
 import { COUNTIES, COMPONENTS, PRODUCTS } from "./data.js";
 import { isValidLocalAccountId, MAX_LOCAL_BACKUP_BYTES } from "./local-account.js";
+import { MAX_SAVED_BUILDS } from "./saved-builds.js";
 
 export const LOCAL_BACKUP_FORMAT = "rigwise-local-account-backup";
 export const LOCAL_BACKUP_VERSION = 1;
-const MAX_SAVED_BUILDS = 8;
 const WORKLOADS = new Set(["gaming", "creative", "everyday"]);
+const RESOLUTIONS = new Set(["1080p", "1440p", "4k"]);
+const FRAME_RATES = new Set([60, 120, 165]);
+const SIZE_PREFERENCES = new Set(["any", "compact"]);
 const byteLength = value => new TextEncoder().encode(value).length;
 
 function normalizeSavedBuild(item, accountId, index, exportedAt) {
@@ -28,8 +31,12 @@ function normalizeSavedBuild(item, accountId, index, exportedAt) {
     budget: Number.isFinite(budget) && budget >= 700 && budget <= 5000 ? budget : 1000,
     workload: WORKLOADS.has(item.workload) ? item.workload : "gaming",
     county: COUNTIES.includes(item.county) ? item.county : "Dublin",
+    ...(RESOLUTIONS.has(item.targetResolution) ? { targetResolution: item.targetResolution } : {}),
+    ...(FRAME_RATES.has(Number(item.targetFrameRate)) ? { targetFrameRate: Number(item.targetFrameRate) } : {}),
+    ...(SIZE_PREFERENCES.has(item.sizePreference) ? { sizePreference: item.sizePreference } : {}),
     ...(Number.isFinite(Number(item.total)) && Number(item.total) >= 0 ? { total: Number(item.total) } : {}),
-    createdAt
+    createdAt,
+    ...(typeof item.updatedAt === "string" && Number.isFinite(Date.parse(item.updatedAt)) ? { updatedAt: item.updatedAt } : {})
   };
 }
 

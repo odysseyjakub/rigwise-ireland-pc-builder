@@ -9,6 +9,7 @@ import { compareCatalogProducts, PRODUCT_CATEGORIES } from "./comparison.js";
 import { cheapestItemPlan, optimizeBasket } from "./optimizer.js";
 import { VERIFIED_CATALOGUE_PRODUCTS } from "./catalogue-data.js";
 import { decodeShareHash, encodeShareHash } from "./share-state.js";
+import { createSavedBuildSnapshot, duplicateSavedBuild, MAX_SAVED_BUILDS, prependSavedBuild, renameSavedBuild } from "./saved-builds.js";
 
 const $ = selector => document.querySelector(selector);
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(value);
@@ -61,6 +62,7 @@ let expanded = new Set();
 let toastTimer;
 let localShopLookupSequence = 0;
 let localShopLookupController = null;
+let savedBuildDialogAction = null;
 
 function buildItems() {
   return COMPONENTS.map(component => ({ ...component, productId: build[component.id] }));
@@ -301,9 +303,9 @@ function renderSavedBuilds() {
   const clearButton = saved.length ? '<button type="button" data-clear-saved class="saved-clear">Clear all</button>' : '<span class="saved-device-label">Stored in this browser</span>';
   const savedItems = saved.map(item => {
     const safeId = escapeHTML(item.id);
-    return '<div class="saved-item"><button type="button" data-load-saved="' + safeId + '" class="saved-name">' + escapeHTML(item.name) + '<small>' + new Date(item.createdAt).toLocaleDateString("en-IE") + ' · illustrative total ' + money(Number(item.total) || 0) + '</small></button><button type="button" class="saved-remove" data-remove-saved="' + safeId + '" aria-label="Remove ' + escapeHTML(item.name) + '">×</button></div>';
+    return '<article class="saved-item"><button type="button" data-load-saved="' + safeId + '" class="saved-name">' + escapeHTML(item.name) + '<small>' + new Date(item.createdAt).toLocaleDateString("en-IE") + ' · illustrative total ' + money(Number(item.total) || 0) + '</small></button><div class="saved-actions"><button type="button" data-duplicate-saved="' + safeId + '">Duplicate</button><button type="button" data-rename-saved="' + safeId + '">Rename</button><button type="button" class="saved-remove" data-remove-saved="' + safeId + '" aria-label="Remove ' + escapeHTML(item.name) + '">Remove</button></div></article>';
   }).join("");
-  host.innerHTML = '<div class="saved-heading"><span>SAVED BUILDS</span>' + clearButton + '</div>' +
+  host.innerHTML = '<div class="saved-heading"><span>SAVED BUILDS · ' + saved.length + '/' + MAX_SAVED_BUILDS + '</span>' + clearButton + '</div>' +
     (saved.length ? '<div class="saved-list">' + savedItems + '</div>' : '<p class="saved-empty">No builds saved yet. Choose “Save build” to keep one on this device.</p>');
 }
 
@@ -435,14 +437,64 @@ function showToast(message) {
   toastTimer = setTimeout(() => toast.classList.remove("toast-visible"), 2600);
 }
 
-function saveBuild() {
-  const plan = currentPlan();
+function newSavedBuildId() {
+  const randomUUID = globalThis.crypto?.randomUUID;
+  return typeof randomUUID === "function" ? randomUUID.call(globalThis.crypto) : "build-" + Date.now() + "-" + Math.random().toString(36).slice(2, 10);
+}
+
+function openSavedBuildDialog(action, item) {
+  if (action !== "rename" && readSavedBuilds().length >= MAX_SAVED_BUILDS) {
+    showToast("Saved-build limit reached. Remove a build first.");
+    return;
+  }
+  const dialog = $("#saved-build-dialog");
+  const input = $("#saved-build-name");
+  savedBuildDialogAction = action === "rename" && item ? { type: action, id: item.id } : { type: "save" };
+  $("#saved-build-dialog-title").textContent = action === "rename" ? "Rename saved build" : "Save this build";
+  $("#saved-build-dialog-submit").textContent = action === "rename" ? "Update name" : "Save build";
+  input.value = action === "rename" && item ? item.name : workloadLabel(workload) + " · " + new Date().toLocaleDateString("en-IE");
+  $("#saved-build-dialog-error").hidden = true;
+  if (typeof dialog.showModal === "function") {
+    dialog.showModal();
+    input.focus();
+    input.select();
+  } else {
+    showToast("Saved-build naming is unavailable in this browser.");
+  }
+}
+
+function persistSavedBuild(item) {
   const saved = readSavedBuilds();
-  const item = {
-    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+  const next = prependSavedBuild(saved, item);
+  if (!next) {
+    const message = "Saved-build limit reached. Remove a build first.";
+    if ($("#saved-build-dialog").open) {
+      $("#saved-build-dialog-error").textContent = message;
+      $("#saved-build-dialog-error").hidden = false;
+    }
+    showToast(message);
+    return false;
+  }
+  if (!writeStorageValue(STORAGE_KEY, JSON.stringify(next))) {
+    showToast("Your browser blocked local saving. Copy a share link to keep this build.");
+    return false;
+  }
+  renderSavedBuilds();
+  return true;
+}
+
+function saveBuild(name) {
+  if (readSavedBuilds().length >= MAX_SAVED_BUILDS) {
+    showToast("Saved-build limit reached. Remove a build first.");
+    return false;
+  }
+  const plan = currentPlan();
+  const now = new Date().toISOString();
+  const item = createSavedBuildSnapshot({
+    id: newSavedBuildId(),
     accountId: localAccount.id,
-    name: workloadLabel(workload) + " · " + new Date().toLocaleDateString("en-IE"),
-    build: { ...build },
+    name,
+    build,
     budget,
     workload,
     targetResolution,
@@ -450,14 +502,39 @@ function saveBuild() {
     sizePreference,
     county,
     total: plan.total,
-    createdAt: new Date().toISOString()
-  };
-  if (!writeStorageValue(STORAGE_KEY, JSON.stringify([item, ...saved].slice(0, 8)))) {
-    showToast("Your browser blocked local saving. Copy a share link to keep this build.");
-    return;
-  }
-  renderSavedBuilds();
+    createdAt: now
+  });
+  if (!persistSavedBuild(item)) return false;
   showToast("Build saved in this browser.");
+  return true;
+}
+
+function duplicateBuild(id) {
+  const source = readSavedBuilds().find(item => item.id === id);
+  if (!source) return;
+  try {
+    const item = duplicateSavedBuild(source, { id: newSavedBuildId(), accountId: localAccount.id, createdAt: new Date().toISOString() });
+    if (persistSavedBuild(item)) showToast("Build duplicated.");
+  } catch (error) {
+    showToast(error instanceof Error ? error.message : "This build could not be duplicated.");
+  }
+}
+
+function renameBuild(id, name) {
+  try {
+    const saved = renameSavedBuild(readSavedBuilds(), id, name, new Date().toISOString());
+    if (!writeStorageValue(STORAGE_KEY, JSON.stringify(saved))) {
+      showToast("Your browser could not update saved builds.");
+      return false;
+    }
+    renderSavedBuilds();
+    showToast("Build name updated.");
+    return true;
+  } catch (error) {
+    $("#saved-build-dialog-error").textContent = error instanceof Error ? error.message : "Enter a valid build name.";
+    $("#saved-build-dialog-error").hidden = false;
+    return false;
+  }
 }
 
 function workloadLabel(value) {
@@ -574,11 +651,21 @@ $("#county").addEventListener("change", event => {
 });
 $("#find-local-shops").addEventListener("click", findLocalShops);
 $("#generate-build").addEventListener("click", generateBuild);
-$("#save-build").addEventListener("click", saveBuild);
+$("#save-build").addEventListener("click", () => openSavedBuildDialog("save"));
 $("#share-build").addEventListener("click", shareBuild);
 
+$("#saved-build-form").addEventListener("submit", event => {
+  event.preventDefault();
+  const name = $("#saved-build-name").value;
+  const succeeded = savedBuildDialogAction?.type === "rename"
+    ? renameBuild(savedBuildDialogAction.id, name)
+    : saveBuild(name);
+  if (succeeded) $("#saved-build-dialog").close();
+});
+$("#saved-build-dialog-cancel").addEventListener("click", () => $("#saved-build-dialog").close());
+
 $("#saved-builds").addEventListener("click", event => {
-  const target = event.target.closest("[data-load-saved], [data-remove-saved], [data-clear-saved]");
+  const target = event.target.closest("[data-load-saved], [data-remove-saved], [data-clear-saved], [data-duplicate-saved], [data-rename-saved]");
   if (!target) return;
   const saved = readSavedBuilds();
   if (target.hasAttribute("data-load-saved")) {
@@ -597,14 +684,20 @@ $("#saved-builds").addEventListener("click", event => {
       render();
       showToast("Saved build loaded.");
     }
+  } else if (target.hasAttribute("data-duplicate-saved")) {
+    duplicateBuild(target.dataset.duplicateSaved);
+  } else if (target.hasAttribute("data-rename-saved")) {
+    const item = saved.find(entry => entry.id === target.dataset.renameSaved);
+    if (item) openSavedBuildDialog("rename", item);
   } else if (target.hasAttribute("data-remove-saved")) {
     if (!writeStorageValue(STORAGE_KEY, JSON.stringify(saved.filter(item => item.id !== target.dataset.removeSaved)))) {
       showToast("Your browser could not update saved builds.");
+    } else {
+      renderSavedBuilds();
     }
-    renderSavedBuilds();
   } else {
     if (!removeStorageValue(STORAGE_KEY)) showToast("Your browser could not clear saved builds.");
-    renderSavedBuilds();
+    else renderSavedBuilds();
   }
 });
 
@@ -743,3 +836,4 @@ if (shared) {
   showToast("Shared example build loaded.");
 }
 render();
+
