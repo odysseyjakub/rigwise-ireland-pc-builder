@@ -315,11 +315,14 @@ async function loadFpsEstimates({ retry = false } = {}) {
     if (requestId !== fpsRequestSequence || activeFpsKey !== key) return;
     renderFpsTable(rows);
     const availableCount = rows.flatMap(game => game.resolutions).filter(result => result.status === "available").length;
+    const unavailable = rows.flatMap(game => game.resolutions).filter(result => result.status !== "available");
     status.textContent = availableCount === rows.length * FPS_RESOLUTIONS.length
       ? "Performance reference for " + cpu.name + " + " + gpu.name + "."
       : availableCount
         ? "Some combinations are unavailable in FPSHQ. Available results are shown below."
-        : "No FPS results were returned. FPSHQ may be unavailable for this hardware combination.";
+        : unavailable.length && unavailable.every(result => result.reason === "network")
+          ? "FPSHQ could not be reached from Vercel over HTTPS. Estimates are unavailable right now."
+          : "No FPS results were returned for this hardware combination.";
     retryButton.hidden = availableCount === rows.length * FPS_RESOLUTIONS.length;
   } catch {
     if (requestId !== fpsRequestSequence) return;

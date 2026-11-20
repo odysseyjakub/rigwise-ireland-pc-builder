@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { fetchBuildFps, FPS_GAMES, FPS_RESOLUTIONS, fpsRequestUrl, normalizeFpsResponse, requestFpsEstimate } from "../fps-estimates.js";
+import { classifyFpsFailure, fetchBuildFps, FPS_GAMES, FPS_RESOLUTIONS, fpsRequestUrl, normalizeFpsResponse, requestFpsEstimate } from "../fps-estimates.js";
 import { handleFpsRequest } from "../api/fps.js";
 
 test("FPS panel covers the chosen five games and three resolutions", () => {
@@ -24,6 +24,12 @@ test("FPS response preserves measured versus modeled provenance and rejects unsa
     ok: true, fps: 91, fps_min: 75, fps_max: 110, source: "prediction", url: "https://example.com/fake"
   }), { fps: 91, minimum: 75, maximum: 110, source: "prediction", sourceUrl: null });
   assert.throws(() => normalizeFpsResponse({ ok: true, fps: 91, source: "unknown" }));
+});
+
+test("FPS failures distinguish an untrusted network path from unavailable provider data", () => {
+  assert.equal(classifyFpsFailure(new TypeError("fetch failed", { cause: { code: "CERT_AUTHORITY_INVALID" } })), "network");
+  assert.equal(classifyFpsFailure(new Error("FPSHQ request failed (HTTP 503).")), "provider");
+  assert.equal(classifyFpsFailure(new Error("Unknown source")), "unavailable");
 });
 
 test("FPS request sends no page referrer and validates the response", async () => {
@@ -87,7 +93,7 @@ test("Vercel FPS endpoint returns sourced results and safely isolates upstream f
     fetcher: async (url, options) => {
       seen.push({ url, options });
       const requested = new URL(url);
-      if (requested.searchParams.get("res") === "1440p") return { ok: false };
+      if (requested.searchParams.get("res") === "1440p") return { ok: false, status: 503 };
       return {
         ok: true,
         json: async () => ({ ok: true, fps: 88, fps_min: 77, fps_max: 99, source: "benchmark", url: "https://fpshq.com/games/cyberpunk-2077/" })
@@ -102,5 +108,6 @@ test("Vercel FPS endpoint returns sourced results and safely isolates upstream f
   assert.equal(payload.rows.length, 5);
   assert.equal(payload.rows[0].resolutions[0].source, "benchmark");
   assert.equal(payload.rows[0].resolutions[1].status, "unavailable");
+  assert.equal(payload.rows[0].resolutions[1].reason, "provider");
 });
 

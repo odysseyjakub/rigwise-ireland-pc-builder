@@ -9,6 +9,14 @@ export const FPS_GAMES = [
 export const FPS_RESOLUTIONS = ["1080p", "1440p", "4K"];
 const API_BASE = "https://fpshq.com/api/v1/fps";
 
+export function classifyFpsFailure(error) {
+  const message = String(error instanceof Error ? error.message : error || "");
+  const causeCode = String(error?.cause?.code || "");
+  if (/fetch failed|certificate|TLS/i.test(message) || /CERT|TLS|UNABLE_TO_VERIFY|EAI_AGAIN|ECONNREFUSED|ECONNRESET/.test(causeCode)) return "network";
+  if (/FPSHQ request failed \(HTTP (4|5)/.test(message)) return "provider";
+  return "unavailable";
+}
+
 export function fpsRequestUrl({ gameSlug, gpuSlug, cpuSlug, resolution, preset = "high" }) {
   if (!FPS_RESOLUTIONS.includes(resolution)) throw new TypeError("Unsupported FPS resolution.");
   if (![gameSlug, gpuSlug, cpuSlug].every(value => typeof value === "string" && /^[a-z0-9-]+$/i.test(value))) {
@@ -83,7 +91,7 @@ export async function fetchBuildFps({ cpu, gpu, fetcher = globalThis.fetch }) {
     const row = payload.rows.find(candidate => candidate?.slug === game.slug);
     const resolutions = FPS_RESOLUTIONS.map(resolution => {
       const cell = row?.resolutions?.find(candidate => candidate?.resolution === resolution);
-      if (cell?.status !== "available") return { status: "unavailable" };
+      if (cell?.status !== "available") return { status: "unavailable", reason: cell?.reason || "unavailable" };
       try {
         return {
           status: "available",
