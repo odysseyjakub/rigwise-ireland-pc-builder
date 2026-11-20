@@ -61,7 +61,7 @@ export async function requestFpsEstimate({ gameSlug, gpuSlug, cpuSlug, resolutio
     referrerPolicy: "no-referrer",
     signal: AbortSignal.timeout(15_000)
   });
-  if (!response?.ok) throw new Error("FPSHQ request failed.");
+  if (!response?.ok) throw new Error("FPSHQ request failed (HTTP " + (Number(response?.status) || 0) + ").");
   return normalizeFpsResponse(await response.json());
 }
 
