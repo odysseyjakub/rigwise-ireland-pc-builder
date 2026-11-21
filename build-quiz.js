@@ -1,6 +1,6 @@
 import { generateAutoBuild } from "./auto-build.js";
 import { estimateAccessories } from "./accessories.js";
-import { createQuizBuilderQuery, isValidStoragePreference, MAX_PC_BUDGET, readQuizPreferences } from "./build-quiz-state.js";
+import { createQuizBuilderQuery, isValidStoragePreference, MAX_PC_BUDGET, readQuizPreferences, storageGigabytes } from "./build-quiz-state.js";
 import { BUNDLES, COMPONENTS, OFFERS, PRODUCTS, SHIPPING_RULES } from "./data.js";
 
 const form = document.querySelector("#build-quiz");
@@ -359,7 +359,7 @@ if (previousAnswers) {
   form.querySelector('[name="workload"][value="' + previousAnswers.workload + '"]').checked = true;
   form.querySelector('[name="design"][value="' + previousAnswers.designPreference + '"]').checked = true;
   form.querySelector('[name="size"][value="' + previousAnswers.sizePreference + '"]').checked = true;
-  storageInput.value = String(Number(previousAnswers.storagePreference.replace(/tb$/i, "")) * (previousAnswers.storagePreference.toLowerCase().endsWith("tb") ? 1000 : 1));
+  storageInput.value = String(storageGigabytes(previousAnswers.storagePreference) || 1000);
   storageTouched = true;
   for (const slug of previousAnswers.gameSlugs) {
     const input = form.querySelector('[name="games"][value="' + slug + '"]');
