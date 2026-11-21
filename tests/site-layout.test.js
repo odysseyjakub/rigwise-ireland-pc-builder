@@ -39,6 +39,7 @@ test("mobile navigation stays on one row and image requests are disclosed", () =
   assert.match(resourceCss, /@media \(max-width: 740px\)[\s\S]*?\.resource-page \.main-nav[\s\S]*?flex-wrap: nowrap/);
   assert.match(resourceCss, /\.main-nav > a\[href="index\.html"\]/);
   assert.match(componentCss, /\.components-page \.component-header \.main-nav[\s\S]*?flex-wrap: nowrap/);
+  assert.match(resourceCss, /@media \(max-width: 640px\)[\s\S]*?\.quiz-review-parts li span \{\s*flex: none;/);
   assert.match(privacy, /AMD, Multitronic and TechPowerUp/);
   assert.match(privacy, /homepage photograph is stored locally/);
 });

@@ -260,6 +260,7 @@ function showRecommendation() {
     : '<p class="quiz-review-no-fit">The sample catalogue has no compatible combination for these answers. You can still adjust your targets or continue to the parts builder.</p>') +
     '<p class="quiz-review-style">' + escapeHTML(designNote) + '</p>' +
     (preferences.accessories.length ? '<p class="quiz-review-accessories">Accessories: ' + money(estimateAccessories(preferences.accessories, preferences.targetResolution)) + ' example allowance · separate from PC</p>' : "");
+  document.querySelector(".quiz-hero").hidden = true;
   form.hidden = true;
   review.hidden = false;
   review.querySelector("h2").focus();
@@ -344,6 +345,7 @@ form.addEventListener("submit", event => {
 document.querySelector("#quiz-adjust").addEventListener("click", () => {
   review.hidden = true;
   form.hidden = false;
+  document.querySelector(".quiz-hero").hidden = false;
   stepIndex = activeSteps().length - 1;
   renderStep(true);
 });

@@ -59,7 +59,7 @@ let storagePreference = isValidStoragePreference(shared?.storagePreference ?? qu
 let strategyPreference = VALID_STRATEGIES.has(shared?.strategy ?? quizPreferences?.strategy) ? (shared?.strategy ?? quizPreferences?.strategy) : "lowest";
 let designPreference = ["aesthetics", "performance"].includes(shared?.designPreference ?? quizPreferences?.designPreference) ? (shared?.designPreference ?? quizPreferences?.designPreference) : "performance";
 let gameSlugs = normalizeGameSlugs(shared?.gameSlugs ?? quizPreferences?.gameSlugs ?? FPS_GAMES.map(game => game.slug));
-if (!gameSlugs.length) gameSlugs = FPS_GAMES.map(game => game.slug);
+if (!gameSlugs.length && VALID_GAMING_WORKLOADS.has(workload)) gameSlugs = FPS_GAMES.map(game => game.slug);
 let creativeApps = normalizeCreativeApps(shared?.creativeApps ?? quizPreferences?.creativeApps ?? []);
 let accessories = normalizeAccessories(shared?.accessories ?? quizPreferences?.accessories ?? []);
 const storedCounty = readStorageValue("rigwise-county");
@@ -503,7 +503,9 @@ function render() {
   $("#storage-preference").value = String(storageGigabytes(storagePreference) || 1000);
   $("#strategy").value = strategyPreference;
   const fpsSummary = $("#fps-estimates > summary span:first-child");
-  if (fpsSummary) fpsSummary.textContent = "Performance in " + gameSlugs.length + " selected games";
+  if (fpsSummary) fpsSummary.textContent = VALID_GAMING_WORKLOADS.has(workload)
+    ? "Performance in " + gameSlugs.length + " selected games"
+    : "Game performance is for gaming builds";
   const editAnswers = $("#edit-questionnaire");
   if (editAnswers) {
     editAnswers.href = "build-quiz.html?" + createQuizBuilderQuery({

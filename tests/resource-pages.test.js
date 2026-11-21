@@ -63,6 +63,8 @@ test("questionnaire groups essentials, accepts exact storage targets and keeps a
   assert.match(script, /selectedValues\("games"\)\.length > 0/);
   assert.match(script, /selectedValues\("apps"\)\.length > 0/);
   assert.match(script, /function showRecommendation\(/);
+  assert.match(script, /document\.querySelector\("\.quiz-hero"\)\.hidden = true/);
+  assert.match(script, /document\.querySelector\("\.quiz-hero"\)\.hidden = false/);
   assert.match(state, /source/);
   assert.match(app, /readQuizPreferences\(location\.search\)/);
   assert.match(app, /generateBuild\(\)/);

@@ -487,6 +487,7 @@
 @media (max-width: 640px) {
   .quiz-game-grid,.quiz-app-grid { grid-template-columns: 1fr; }
   .quiz-review-parts li { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .quiz-review-parts li span { flex: none; }
   .quiz-review-parts li strong { text-align: left; }
   .quiz-review-actions .button { flex: 1; }
 }
