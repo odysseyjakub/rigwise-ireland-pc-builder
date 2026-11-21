@@ -23,6 +23,9 @@ const build = {
   sizePreference: "compact",
   storagePreference: "2tb",
   strategy: "fewest",
+  designPreference: "aesthetics",
+  gameSlugs: ["fortnite", "cs2"],
+  creativeApps: ["video"],
   accessories: ["keyboard", "monitor"],
   accessoryTotal: 275,
   county: "Galway",
@@ -81,3 +84,4 @@ test("saved build helpers reject invalid names, identities, and duplicate IDs", 
   assert.throws(() => renameSavedBuild([build], "missing", "A name", createdAt), /could not be found/);
   assert.throws(() => prependSavedBuild([build], build), /IDs must be unique/);
 });
+

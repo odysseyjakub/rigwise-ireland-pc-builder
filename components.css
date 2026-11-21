@@ -134,3 +134,17 @@
   .catalogue-card-brand, .catalogue-specs { font-size: 14px; }
   .catalogue-no-offer, .component-footer { font-size: 12px; }
 }
+
+@media (max-width: 740px) {
+  .components-page .component-header { height: 62px; min-height: 62px; flex-wrap: nowrap; gap: 8px; padding: 8px 12px; }
+  .components-page .component-header > .brand { flex: 0 0 auto; gap: 6px; font-size: 18px; }
+  .components-page .component-header .main-nav { order: 0; width: auto; min-width: 0; height: 100%; flex: 1 1 auto; flex-wrap: nowrap; justify-content: flex-end; gap: clamp(5px, 1.5vw, 10px); }
+  .components-page .component-header .main-nav > a[href="index.html"],
+  .components-page .component-header .main-nav > a[href^="builder.html"] { display: none; }
+  .components-page .component-header .nav-link { height: auto; padding-block: 5px; font-size: 11px; white-space: nowrap; }
+  .components-page .component-header .nav-link.active:after { bottom: -3px; }
+  .component-header-actions { flex: 0 0 auto; margin-left: 0; gap: 0; }
+  .component-header-actions .icon-button { width: 30px; height: 30px; }
+}
+.component-builder-link { display: none; }
+

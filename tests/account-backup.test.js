@@ -17,6 +17,9 @@ const savedBuild = {
   sizePreference: "compact",
   storagePreference: "2tb",
   strategy: "fewest",
+  designPreference: "performance",
+  gameSlugs: ["fortnite", "cs2"],
+  creativeApps: [],
   accessories: ["keyboard", "monitor"],
   accessoryTotal: 275,
   county: "Galway",
@@ -56,3 +59,4 @@ test("backup enforces the file-size and supported saved-build limits", () => {
   assert.throws(() => parseLocalAccountBackup(" ".repeat(500_001)), /too large/);
   assert.throws(() => createLocalAccountBackup(accountId, Array(9).fill(savedBuild), exportedAt), /saved build list is invalid/);
 });
+

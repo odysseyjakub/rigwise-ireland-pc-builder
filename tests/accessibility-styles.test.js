@@ -2,8 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [mainCss, catalogueCss, legalCss] = await Promise.all([
+const [mainCss, resourceCss, catalogueCss, legalCss] = await Promise.all([
   readFile(new URL("../styles.css", import.meta.url), "utf8"),
+  readFile(new URL("../resources.css", import.meta.url), "utf8"),
   readFile(new URL("../components.css", import.meta.url), "utf8"),
   readFile(new URL("../legal.css", import.meta.url), "utf8")
 ]);
@@ -11,14 +12,16 @@ const [mainCss, catalogueCss, legalCss] = await Promise.all([
 test("builder labels, selectors, prices, and comparison values keep readable type sizes", () => {
   assert.match(mainCss, /body\s*\{\s*font-size:\s*16px;/);
   assert.match(mainCss, /\.control-block>label\s*\{\s*font-size:\s*14px;/);
-  assert.match(mainCss, /\.part-info strong\s*\{\s*font-size:\s*14px;/);
-  assert.match(mainCss, /\.part-select\s*\{\s*font-size:\s*14px;/);
+  assert.match(resourceCss, /\.builder-workspace \.part-info strong\s*\{[^}]*font-size:\s*14px;/);
+  assert.match(resourceCss, /\.part-option-name\s*\{[^}]*font-size:\s*14px;/);
+  assert.match(resourceCss, /\.part-option-specs\s*\{[^}]*font-size:\s*12px;/);
+  assert.match(resourceCss, /\.part-option-compat\s*\{[^}]*font-size:\s*12px;/);
   assert.match(mainCss, /\.comparison-table td\s*\{\s*font-size:\s*14px;/);
 });
 
-test("mobile component rows give controls their own readable grid row", () => {
-  assert.match(mainCss, /@media\s*\(max-width:\s*740px\)[\s\S]*?grid-template-areas:\s*"icon info price"\s*"icon select compare"/);
-  assert.match(mainCss, /\.part-select\s*\{\s*grid-area:\s*select;\s*height:\s*40px;/);
+test("mobile component choices stack into readable cards with a visible focus state", () => {
+  assert.match(resourceCss, /@media\s*\(max-width:\s*520px\)[\s\S]*?\.part-options\s*\{\s*grid-template-columns:\s*1fr;/);
+  assert.match(resourceCss, /\.part-option:focus-within\s*\{\s*outline:\s*2px solid/);
 });
 
 test("manufacturer specifications and legal copy keep readable type sizes", () => {
@@ -37,3 +40,4 @@ test("source-linked build selectors reflow for tablet and mobile", () => {
   assert.match(catalogueCss, /@media\s*\(max-width:\s*900px\)[\s\S]*?\.reference-build-controls\s*\{[^}]*grid-template-columns:\s*repeat\(2/);
   assert.match(catalogueCss, /@media\s*\(max-width:\s*640px\)[\s\S]*?\.reference-build-controls\s*\{[^}]*grid-template-columns:\s*1fr/);
 });
+

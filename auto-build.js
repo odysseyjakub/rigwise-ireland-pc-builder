@@ -4,7 +4,9 @@ import { storageGigabytes } from "./build-quiz-state.js";
 
 const WORKLOAD_WEIGHTS = Object.freeze({
   gaming: { cpu: 20, graphics: 65, memory: 0.25, storage: 2 },
+  streaming: { cpu: 36, graphics: 54, memory: 0.7, storage: 2 },
   creative: { cpu: 42, graphics: 23, memory: 0.65, storage: 4 },
+  "3d": { cpu: 34, graphics: 42, memory: 0.8, storage: 4 },
   everyday: { cpu: 28, graphics: 6, memory: 0.8, storage: 4 }
 });
 const GAMING_WEIGHTS = Object.freeze({

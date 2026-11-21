@@ -2,11 +2,11 @@ import { COUNTIES, COMPONENTS, PRODUCTS } from "./data.js";
 import { isValidLocalAccountId, MAX_LOCAL_BACKUP_BYTES } from "./local-account.js";
 import { MAX_SAVED_BUILDS } from "./saved-builds.js";
 import { ACCESSORY_OPTIONS, estimateAccessories, normalizeAccessories } from "./accessories.js";
-import { isValidStoragePreference } from "./build-quiz-state.js";
+import { isValidStoragePreference, normalizeCreativeApps, normalizeGameSlugs } from "./build-quiz-state.js";
 
 export const LOCAL_BACKUP_FORMAT = "rigwise-local-account-backup";
 export const LOCAL_BACKUP_VERSION = 1;
-const WORKLOADS = new Set(["gaming", "creative", "everyday"]);
+const WORKLOADS = new Set(["gaming", "streaming", "creative", "3d", "everyday"]);
 const RESOLUTIONS = new Set(["1080p", "1440p", "4k"]);
 const FRAME_RATES = new Set([60, 120, 165]);
 const SIZE_PREFERENCES = new Set(["any", "compact"]);
@@ -40,6 +40,9 @@ function normalizeSavedBuild(item, accountId, index, exportedAt) {
     ...(SIZE_PREFERENCES.has(item.sizePreference) ? { sizePreference: item.sizePreference } : {}),
     storagePreference: isValidStoragePreference(item.storagePreference) ? item.storagePreference : "1tb",
     strategy: STRATEGIES.has(item.strategy) ? item.strategy : "lowest",
+    designPreference: ["aesthetics", "performance"].includes(item.designPreference) ? item.designPreference : "performance",
+    gameSlugs: normalizeGameSlugs(item.gameSlugs),
+    creativeApps: normalizeCreativeApps(item.creativeApps),
     accessories: Array.isArray(item.accessories) && item.accessories.every(id => ACCESSORY_IDS.has(id)) ? normalizeAccessories(item.accessories) : [],
     accessoryTotal: Number.isFinite(Number(item.accessoryTotal)) && Number(item.accessoryTotal) >= 0
       ? Number(item.accessoryTotal)

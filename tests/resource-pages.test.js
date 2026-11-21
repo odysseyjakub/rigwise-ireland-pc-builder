@@ -40,6 +40,17 @@ test("questionnaire groups essentials, accepts exact storage targets and keeps a
   assert.match(quiz, /data-quiz-step="performance"/);
   assert.match(quiz, /data-quiz-step="fit"/);
   assert.match(quiz, /data-quiz-step="strategy"/);
+  assert.match(quiz, /data-quiz-step="creative-apps"/);
+  for (const workload of ["gaming", "streaming", "creative", "3d", "everyday"]) {
+    assert.match(quiz, new RegExp('name="workload" value="' + workload + '"'));
+  }
+  assert.match(quiz, /name="games" value="cyberpunk-2077"/);
+  assert.match(quiz, /name="games" value="fortnite"/);
+  assert.match(quiz, /name="apps" value="video"/);
+  assert.match(quiz, /name="design" value="aesthetics"/);
+  assert.match(quiz, /id="quiz-review"/);
+  assert.match(quiz, /Adjust my answers/);
+  assert.match(quiz, /Choose my parts/);
   assert.match(quiz, /name="storageGb" type="number" min="256" max="8000"/);
   assert.match(quiz, /data-storage-gb="512"/);
   assert.match(quiz, /min="400" max="5500"/);
@@ -49,6 +60,9 @@ test("questionnaire groups essentials, accepts exact storage targets and keeps a
   assert.match(script, /stepIsValid\(current\)/);
   assert.match(script, /minimumGoalBudget/);
   assert.match(script, /option\.disabled = budget < minimum/);
+  assert.match(script, /selectedValues\("games"\)\.length > 0/);
+  assert.match(script, /selectedValues\("apps"\)\.length > 0/);
+  assert.match(script, /function showRecommendation\(/);
   assert.match(state, /source/);
   assert.match(app, /readQuizPreferences\(location\.search\)/);
   assert.match(app, /generateBuild\(\)/);

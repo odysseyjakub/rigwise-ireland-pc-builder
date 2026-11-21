@@ -11,7 +11,10 @@ test("questionnaire preferences round-trip into builder-safe settings", () => {
     sizePreference: "compact",
     storagePreference: "2tb",
     strategy: "fewest",
-    accessories: ["monitor", "keyboard"]
+    accessories: ["monitor", "keyboard"],
+    designPreference: "aesthetics",
+    gameSlugs: ["fortnite", "cs2"],
+    creativeApps: ["video", "3d"]
   });
   assert.deepEqual(readQuizPreferences("?" + query), {
     budget: 2450,
@@ -21,6 +24,9 @@ test("questionnaire preferences round-trip into builder-safe settings", () => {
     sizePreference: "compact",
     storagePreference: "2tb",
     strategy: "fewest",
+    designPreference: "aesthetics",
+    gameSlugs: ["fortnite", "cs2"],
+    creativeApps: ["video", "3d"],
     accessories: ["keyboard", "monitor"]
   });
 });
@@ -34,4 +40,6 @@ test("questionnaire preferences reject malformed or out-of-range query strings",
   assert.equal(readQuizPreferences("?source=quiz&budget=1000&workload=gaming&resolution=8k&fps=60&size=any"), null);
   assert.equal(readQuizPreferences("?source=quiz&budget=1000&workload=gaming&resolution=1080p&fps=90&size=any"), null);
   assert.equal(readQuizPreferences("?source=quiz&budget=1000&workload=gaming&resolution=1080p&fps=60&size=any&storage=1tb&strategy=lowest&peripherals=keyboard,unknown"), null);
+  assert.equal(readQuizPreferences("?source=quiz&budget=1000&workload=gaming&resolution=1080p&fps=60&size=any&storage=1tb&strategy=lowest&games=obscure-game"), null);
 });
+

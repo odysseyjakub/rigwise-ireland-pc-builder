@@ -37,6 +37,9 @@ function makeShareUrl(item) {
     sizePreference: item.sizePreference,
     storagePreference: item.storagePreference,
     strategy: item.strategy,
+    designPreference: item.designPreference,
+    gameSlugs: item.gameSlugs,
+    creativeApps: item.creativeApps,
     accessories: item.accessories,
     county: item.county
   });
@@ -252,3 +255,4 @@ $("#clear-saved-builds").addEventListener("click", () => {
 });
 
 render();
+

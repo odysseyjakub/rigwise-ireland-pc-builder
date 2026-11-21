@@ -88,8 +88,10 @@ export async function requestFpsEstimate({ gameSlug, gpuSlug, cpuSlug, resolutio
   return normalizeFpsResponse(await response.json());
 }
 
-export async function fetchBuildFps({ cpu, gpu, fetcher = globalThis.fetch }) {
+export async function fetchBuildFps({ cpu, gpu, gameSlugs = FPS_GAMES.map(game => game.slug), fetcher = globalThis.fetch }) {
   if (!cpu?.fpsCpuSlug || !gpu?.fpsGpuSlug) throw new TypeError("This build is missing an FPS hardware match.");
+  const selectedGames = new Set(Array.isArray(gameSlugs) ? gameSlugs : []);
+  const games = FPS_GAMES.filter(game => selectedGames.has(game.slug));
   const query = new URLSearchParams({ cpu: cpu.fpsCpuSlug, gpu: gpu.fpsGpuSlug });
   const response = await fetcher("/api/fps?" + query, {
     method: "GET",
@@ -102,7 +104,7 @@ export async function fetchBuildFps({ cpu, gpu, fetcher = globalThis.fetch }) {
   if (!payload || payload.ok !== true || !Array.isArray(payload.rows)) {
     throw new TypeError("The Rigwise FPS endpoint returned an invalid response.");
   }
-  return FPS_GAMES.map(game => {
+  return games.map(game => {
     const row = payload.rows.find(candidate => candidate?.slug === game.slug);
     const resolutions = FPS_RESOLUTIONS.map(resolution => {
       const cell = row?.resolutions?.find(candidate => candidate?.resolution === resolution);

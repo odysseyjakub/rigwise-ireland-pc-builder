@@ -1,7 +1,7 @@
 import { normalizeAccessories } from "./accessories.js";
-import { isValidStoragePreference } from "./build-quiz-state.js";
+import { isValidStoragePreference, normalizeCreativeApps, normalizeGameSlugs } from "./build-quiz-state.js";
 
-const VALID_WORKLOADS = new Set(["gaming", "creative", "everyday"]);
+const VALID_WORKLOADS = new Set(["gaming", "streaming", "creative", "3d", "everyday"]);
 const VALID_RESOLUTIONS = new Set(["1080p", "1440p", "4k"]);
 const VALID_FRAME_RATES = new Set([60, 120, 165]);
 const VALID_SIZE_PREFERENCES = new Set(["any", "compact"]);
@@ -58,8 +58,14 @@ export function decodeShareHash(hash, { components, products, counties = [] } = 
     const storagePreference = decoded.storagePreference ?? "1tb";
     const strategy = decoded.strategy ?? "lowest";
     const accessories = Array.isArray(decoded.accessories) ? decoded.accessories : [];
+    const gameSlugs = normalizeGameSlugs(decoded.gameSlugs);
+    const creativeApps = normalizeCreativeApps(decoded.creativeApps);
+    const designPreference = decoded.designPreference ?? "performance";
     if (!VALID_RESOLUTIONS.has(targetResolution) || !VALID_FRAME_RATES.has(targetFrameRate) ||
         !VALID_SIZE_PREFERENCES.has(sizePreference) || !isValidStoragePreference(storagePreference) ||
+        !["aesthetics", "performance"].includes(designPreference) ||
+        gameSlugs.length !== (Array.isArray(decoded.gameSlugs) ? decoded.gameSlugs.length : 0) ||
+        creativeApps.length !== (Array.isArray(decoded.creativeApps) ? decoded.creativeApps.length : 0) ||
         !VALID_STRATEGIES.has(strategy) || (decoded.accessories !== undefined && !Array.isArray(decoded.accessories))) return null;
 
     return {
@@ -71,6 +77,9 @@ export function decodeShareHash(hash, { components, products, counties = [] } = 
       sizePreference,
       storagePreference,
       strategy,
+      designPreference,
+      gameSlugs,
+      creativeApps,
       accessories: normalizeAccessories(accessories),
       county: counties.includes(decoded.county) ? decoded.county : undefined
     };

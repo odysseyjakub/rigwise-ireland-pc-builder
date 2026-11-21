@@ -6,13 +6,15 @@ import { getOrCreateLocalAccount, migrateLegacySavedBuilds } from "./local-accou
 import { cheapestItemPlan, optimizeBasket } from "./optimizer.js";
 import { decodeShareHash, encodeShareHash } from "./share-state.js";
 import { createSavedBuildSnapshot, duplicateSavedBuild, MAX_SAVED_BUILDS, prependSavedBuild, renameSavedBuild } from "./saved-builds.js";
-import { isValidStoragePreference, readQuizPreferences, storageGigabytes } from "./build-quiz-state.js";
+import { createQuizBuilderQuery, isValidStoragePreference, normalizeCreativeApps, normalizeGameSlugs, readQuizPreferences, storageGigabytes } from "./build-quiz-state.js";
 import { estimateAccessories, normalizeAccessories } from "./accessories.js";
-import { fetchBuildFps, FPS_RESOLUTIONS } from "./fps-estimates.js";
+import { fetchBuildFps, FPS_GAMES, FPS_RESOLUTIONS } from "./fps-estimates.js";
 
 const $ = selector => document.querySelector(selector);
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(value);
 const productById = id => PRODUCTS.find(product => product.id === id);
+const VALID_WORKLOADS = new Set(["gaming", "streaming", "creative", "3d", "everyday"]);
+const VALID_GAMING_WORKLOADS = new Set(["gaming", "streaming"]);
 const VALID_RESOLUTIONS = new Set(["1080p", "1440p", "4k"]);
 const VALID_FRAME_RATES = new Set([60, 120, 165]);
 const VALID_SIZE_PREFERENCES = new Set(["any", "compact"]);
@@ -49,12 +51,16 @@ const shared = fromShareHash();
 const quizPreferences = readQuizPreferences(location.search);
 let build = shared?.build ? { ...DEFAULT_BUILD, ...shared.build } : { ...DEFAULT_BUILD };
 let budget = Number(shared?.budget ?? quizPreferences?.budget) || 1000;
-let workload = shared?.workload || quizPreferences?.workload || "gaming";
+let workload = VALID_WORKLOADS.has(shared?.workload ?? quizPreferences?.workload) ? (shared?.workload ?? quizPreferences?.workload) : "gaming";
 let targetResolution = VALID_RESOLUTIONS.has(shared?.targetResolution ?? quizPreferences?.targetResolution) ? (shared?.targetResolution ?? quizPreferences?.targetResolution) : "1080p";
 let targetFrameRate = VALID_FRAME_RATES.has(shared?.targetFrameRate ?? quizPreferences?.targetFrameRate) ? (shared?.targetFrameRate ?? quizPreferences?.targetFrameRate) : 60;
 let sizePreference = VALID_SIZE_PREFERENCES.has(shared?.sizePreference ?? quizPreferences?.sizePreference) ? (shared?.sizePreference ?? quizPreferences?.sizePreference) : "any";
 let storagePreference = isValidStoragePreference(shared?.storagePreference ?? quizPreferences?.storagePreference) ? (shared?.storagePreference ?? quizPreferences?.storagePreference) : "1tb";
 let strategyPreference = VALID_STRATEGIES.has(shared?.strategy ?? quizPreferences?.strategy) ? (shared?.strategy ?? quizPreferences?.strategy) : "lowest";
+let designPreference = ["aesthetics", "performance"].includes(shared?.designPreference ?? quizPreferences?.designPreference) ? (shared?.designPreference ?? quizPreferences?.designPreference) : "performance";
+let gameSlugs = normalizeGameSlugs(shared?.gameSlugs ?? quizPreferences?.gameSlugs ?? FPS_GAMES.map(game => game.slug));
+if (!gameSlugs.length) gameSlugs = FPS_GAMES.map(game => game.slug);
+let creativeApps = normalizeCreativeApps(shared?.creativeApps ?? quizPreferences?.creativeApps ?? []);
 let accessories = normalizeAccessories(shared?.accessories ?? quizPreferences?.accessories ?? []);
 const storedCounty = readStorageValue("rigwise-county");
 let county = COUNTIES.includes(shared?.county)
@@ -138,18 +144,30 @@ function renderParts(plan) {
     const bundle = assignment?.type === "bundle" ? BUNDLES.find(candidate => candidate.id === assignment.bundleId) : null;
     const lowest = OFFERS.filter(offer => offer.componentId === item.productId).sort((a, b) => a.price - b.price)[0];
     const expandedClass = expanded.has(item.id);
-    const options = PRODUCTS.filter(option => option.category === item.category).map(option =>
-      '<option value="' + option.id + '"' + (option.id === product.id ? " selected" : "") + '>' + option.name + '</option>'
-    ).join("");
+    const options = PRODUCTS.filter(option => option.category === item.category).map(option => {
+      const optionPrice = OFFERS.filter(offer => offer.componentId === option.id).sort((a, b) => a.price - b.price)[0];
+      const compatibility = compatibilitySummaryForProduct(option);
+      const descriptor = [option.brand, option.series].filter(Boolean).join(" · ") || "Example component";
+      const imageUrl = typeof option.imageUrl === "string" && option.imageUrl.startsWith("https://") ? option.imageUrl : "";
+      const media = '<span class="part-option-media"><span class="part-option-placeholder" aria-hidden="true">' + ICONS[item.icon] + '</span>' +
+        (imageUrl ? '<img class="part-option-photo" src="' + escapeHTML(imageUrl) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : "") + '</span>';
+      return '<label class="part-option' + (option.id === product.id ? " part-option-selected" : "") + '">' +
+        '<input class="part-option-radio" type="radio" id="option-' + escapeHTML(item.id) + '-' + escapeHTML(option.id) + '" name="component-choice-' + escapeHTML(item.id) + '" data-component="' + escapeHTML(item.id) + '" value="' + escapeHTML(option.id) + '"' + (option.id === product.id ? " checked" : "") + '>' +
+        media +
+        '<span class="part-option-copy"><span class="part-option-meta">' + escapeHTML(descriptor) + '</span><strong class="part-option-name">' + escapeHTML(option.name) + '</strong><span class="part-option-specs">' + escapeHTML(option.detail || "Specifications not recorded") + '</span><span class="part-option-compat part-option-compat-' + escapeHTML(compatibility.status) + '">' + escapeHTML(compatibility.label) + '</span></span>' +
+        '<span class="part-option-price">' + (optionPrice ? money(optionPrice.price) : "—") + '<small>' + (optionPrice ? "sample" : "unpriced") + '</small></span>' +
+      '</label>';
+    }).join("");
     return '<article class="part-row' + (expandedClass ? " part-expanded" : "") + '">' +
       '<div class="part-main">' +
       '<span class="part-icon icon-' + item.icon + '">' + ICONS[item.icon] + '</span>' +
-      '<div class="part-info"><span class="part-category">' + item.label.toUpperCase() + '</span><strong>' + product.name + '</strong><span class="part-detail">' + product.detail + '</span></div>' +
-      '<label class="visually-hidden" for="select-' + item.id + '">Choose ' + item.label + '</label><select class="part-select" id="select-' + item.id + '" data-component="' + item.id + '">' + options + '</select>' +
+      '<div class="part-info"><span class="part-category">SELECTED FOR THIS BUILD</span><strong>' + escapeHTML(product.name) + '</strong><span class="part-detail">' + escapeHTML(product.detail || "Specifications not recorded") + '</span></div>' +
       '<div class="part-price"><strong>' + (bundle ? "Bundled" : money(chosen?.price ?? 0)) + '</strong><span>' + (bundle ? money(bundle.price) + " kit total" : "in this plan") + '</span></div>' +
-      '<button class="offer-toggle" type="button" data-expand="' + item.id + '" aria-expanded="' + expandedClass + '" aria-label="' + (expandedClass ? "Hide" : "Compare") + ' sample offers for ' + item.label + '"><span>' + (expandedClass ? "Close" : "Compare") + '</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7 5 5 5-5"/></svg><small>' + money(lowest.price) + ' lowest item</small></button>' +
-      '</div>' + (expandedClass ? renderOfferComparison(item, plan) : "") + '</article>';
+      '<button class="offer-toggle" id="compare-part-' + escapeHTML(item.id) + '" type="button" data-expand="' + escapeHTML(item.id) + '" aria-expanded="' + expandedClass + '" aria-label="' + (expandedClass ? "Hide" : "Compare") + ' sample offers for ' + escapeHTML(item.label) + '"><span>' + (expandedClass ? "Close" : "Compare") + '</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7 5 5 5-5"/></svg><small>' + (lowest ? money(lowest.price) : "No sample offer") + ' lowest item</small></button>' +
+      '</div><fieldset class="part-options"><legend class="visually-hidden">Choose ' + escapeHTML(item.label) + '</legend>' + options + '</fieldset>' +
+      (expandedClass ? renderOfferComparison(item, plan) : "") + '</article>';
   }).join("");
+  $("#parts-list").querySelectorAll(".part-option-photo").forEach(photo => photo.addEventListener("error", () => photo.remove(), { once: true }));
   $("#parts-list").classList.toggle("empty-list", filtered.length === 0);
   if (filtered.length === 0) $("#parts-list").innerHTML = '<div class="empty-search">No component is available for this step.</div>';
 }
@@ -189,9 +207,9 @@ function renderPlan(plan) {
   $("#optimiser-reason").textContent = reason + bundleReason;
   $("#plan-status").classList.toggle("plan-over-budget", remainder < 0);
   const searchStatus = plan.exact
-    ? "Exact demo search · " + plan.combinationsChecked + " combinations checked"
-    : "Best-known demo plan · " + plan.combinationsChecked + " combinations checked (" + plan.maxCombinations + " limit)";
-  $("#plan-status").innerHTML = "<span></span><span>" + (remainder < 0 ? "Illustrative total is over your budget · " : "") + searchStatus + "</span>";
+    ? "Lowest example basket for these parts"
+    : "Best example basket found within the search limit";
+  $("#plan-status").innerHTML = "<span></span><span>" + (remainder < 0 ? "Example total is over your budget · " : "") + searchStatus + "</span>";
 }
 
 function renderSetupSummary(plan) {
@@ -286,8 +304,8 @@ async function loadFpsEstimates({ retry = false } = {}) {
   const status = $("#fps-status");
   const retryButton = $("#fps-retry");
   const resultHost = $("#fps-results");
-  if (workload !== "gaming") {
-    status.textContent = "FPS estimates are shown for gaming builds. Change the main use to gaming to load them.";
+  if (!VALID_GAMING_WORKLOADS.has(workload)) {
+    status.textContent = "Performance estimates are shown for gaming and streaming builds.";
     retryButton.hidden = true;
     resultHost.replaceChildren();
     return;
@@ -298,7 +316,7 @@ async function loadFpsEstimates({ retry = false } = {}) {
     resultHost.replaceChildren();
     return;
   }
-  const key = cpu.fpsCpuSlug + "|" + gpu.fpsGpuSlug;
+  const key = cpu.fpsCpuSlug + "|" + gpu.fpsGpuSlug + "|" + gameSlugs.join(",");
   if (!retry && activeFpsKey === key && resultHost.childElementCount) return;
   activeFpsKey = key;
   if (retry) fpsEstimateCache.delete(key);
@@ -308,7 +326,7 @@ async function loadFpsEstimates({ retry = false } = {}) {
   try {
     let estimate = fpsEstimateCache.get(key);
     if (!estimate) {
-      estimate = fetchBuildFps({ cpu, gpu });
+      estimate = fetchBuildFps({ cpu, gpu, gameSlugs });
       fpsEstimateCache.set(key, estimate);
     }
     const rows = await estimate;
@@ -350,8 +368,9 @@ function renderCompatibility() {
     panel.innerHTML = '<div class="compat-good"><span class="compat-mark">✓</span><div><strong>All recorded demo rules pass</strong><span>' + summary + ' for these example parts. This does not verify real hardware revisions or manufacturer QVL data.</span></div><span class="compat-label">COMPATIBLE</span></div>';
     return;
   }
+  const issues = result.issues.map(issue => '<div class="compat-issue severity-' + escapeHTML(issue.status) + '"><strong>' + escapeHTML(issue.title) + '</strong><span>' + escapeHTML(issue.detail) + '</span></div>').join("");
   panel.innerHTML = '<div class="compat-heading"><span class="compat-mark">!</span><div><strong>' + statusText[result.status] + '</strong><span>' + summary + ' · simplified demo specifications only</span></div></div>' +
-    result.issues.map(issue => '<div class="compat-issue severity-' + issue.status + '"><strong>' + issue.title + '</strong><span>' + issue.detail + '</span></div>').join("");
+    (issues ? '<details class="compatibility-details"><summary>Review ' + result.issues.length + ' compatibility checks</summary><div class="compatibility-issues">' + issues + '</div></details>' : "");
 }
 
 function renderSavedBuilds() {
@@ -483,6 +502,24 @@ function render() {
   $("#size-preference").value = sizePreference;
   $("#storage-preference").value = String(storageGigabytes(storagePreference) || 1000);
   $("#strategy").value = strategyPreference;
+  const fpsSummary = $("#fps-estimates > summary span:first-child");
+  if (fpsSummary) fpsSummary.textContent = "Performance in " + gameSlugs.length + " selected games";
+  const editAnswers = $("#edit-questionnaire");
+  if (editAnswers) {
+    editAnswers.href = "build-quiz.html?" + createQuizBuilderQuery({
+      budget,
+      workload,
+      targetResolution,
+      targetFrameRate,
+      sizePreference,
+      storagePreference,
+      strategy: strategyPreference,
+      designPreference,
+      gameSlugs,
+      creativeApps,
+      accessories
+    });
+  }
   if ($("#fps-estimates")?.open) loadFpsEstimates();
 }
 
@@ -559,6 +596,9 @@ function saveBuild(name) {
     sizePreference,
     storagePreference,
     strategy: strategyPreference,
+    designPreference,
+    gameSlugs,
+    creativeApps,
     accessories,
     accessoryTotal: estimateAccessories(accessories, targetResolution),
     county,
@@ -599,11 +639,17 @@ function renameBuild(id, name) {
 }
 
 function workloadLabel(value) {
-  return value === "creative" ? "Creative" : value === "everyday" ? "Everyday" : "Gaming";
+  return ({
+    gaming: "Gaming & esports",
+    streaming: "Gaming, streaming & multitasking",
+    creative: "Video, photo & design",
+    "3d": "3D, CAD & development",
+    everyday: "Work, study & everyday"
+  })[value] || "Gaming";
 }
 
 function shareBuild() {
-  const payload = { build, budget, workload, targetResolution, targetFrameRate, sizePreference, storagePreference, strategy: strategyPreference, accessories, county };
+  const payload = { build, budget, workload, targetResolution, targetFrameRate, sizePreference, storagePreference, strategy: strategyPreference, designPreference, gameSlugs, creativeApps, accessories, county };
   const hash = encodeShareHash(payload);
   if (!hash) {
     showToast("This build could not be encoded for sharing.");
@@ -667,9 +713,11 @@ function setBuildRecommendation(message, kind) {
 $("#parts-list").addEventListener("change", event => {
   const component = event.target.dataset.component;
   if (!component) return;
+  const focusedOption = event.target.id;
   build[component] = event.target.value;
   $("#build-status").textContent = workloadLabel(workload) + " build · manually configured";
   render();
+  document.getElementById(focusedOption)?.focus({ preventScroll: true });
 });
 
 $("#fps-estimates").addEventListener("toggle", () => {
@@ -684,7 +732,7 @@ $("#parts-list").addEventListener("click", event => {
   if (expanded.has(id)) expanded.delete(id);
   else expanded.add(id);
   render();
-  $("#select-" + id)?.focus({ preventScroll: true });
+  document.getElementById("compare-part-" + id)?.focus({ preventScroll: true });
 });
 
 $("#parts-step-back").addEventListener("click", () => {

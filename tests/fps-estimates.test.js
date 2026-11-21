@@ -75,6 +75,24 @@ test("build estimate failures are isolated per game and resolution", async () =>
   assert.equal(rows[0].resolutions[2].status, "available");
 });
 
+test("build FPS requests only the games selected in the questionnaire", async () => {
+  const rows = await fetchBuildFps({
+    cpu: { fpsCpuSlug: "ryzen-5-7600" },
+    gpu: { fpsGpuSlug: "rx-7600" },
+    gameSlugs: ["cs2", "fortnite"],
+    fetcher: async () => ({ ok: true, json: async () => ({
+      ok: true,
+      rows: FPS_GAMES.map(game => ({
+        ...game,
+        resolutions: FPS_RESOLUTIONS.map(resolution => ({
+          resolution, status: "available", fps: 88, source: "prediction", sourceUrl: "https://fpshq.com/games/test/"
+        }))
+      }))
+    }) })
+  });
+  assert.deepEqual(rows.map(game => game.slug), ["fortnite", "cs2"]);
+});
+
 test("Vercel FPS endpoint restricts input to catalogue parts and rejects other methods", async () => {
   let calls = 0;
   const method = await handleFpsRequest(new Request("https://rigwise.test/api/fps?cpu=ryzen-5-7600&gpu=rx-7600", { method: "POST" }), {

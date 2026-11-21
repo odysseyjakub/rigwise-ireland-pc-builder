@@ -61,9 +61,10 @@ test("auto build reports when the compatible sample catalogue exceeds the budget
 
 test("auto build validates its budget, workload, and source collections", () => {
   assert.throws(() => generate(-1), /non-negative EUR amount/);
-  assert.throws(() => generate(1000, "streaming"), /supported workload/);
+  assert.throws(() => generate(1000, "mining"), /supported workload/);
   assert.throws(() => generate(1000, "gaming", { targetResolution: "8k" }), /gaming resolution/);
   assert.throws(() => generate(1000, "gaming", { targetFrameRate: 90 }), /target frame rate/);
   assert.throws(() => generate(1000, "gaming", { sizePreference: "tiny" }), /size preference/);
   assert.throws(() => generateAutoBuild({ budget: 1000, workload: "gaming" }), /must be arrays/);
 });
+

@@ -1,5 +1,6 @@
 import { isValidLocalAccountId } from "./local-account.js";
 import { estimateAccessories, normalizeAccessories } from "./accessories.js";
+import { normalizeCreativeApps, normalizeGameSlugs } from "./build-quiz-state.js";
 
 export const MAX_SAVED_BUILDS = 8;
 export const MAX_SAVED_BUILD_NAME_LENGTH = 120;
@@ -29,6 +30,9 @@ export function createSavedBuildSnapshot({
   sizePreference,
   storagePreference = "1tb",
   strategy = "lowest",
+  designPreference = "performance",
+  gameSlugs = [],
+  creativeApps = [],
   accessories = [],
   accessoryTotal,
   county,
@@ -49,6 +53,9 @@ export function createSavedBuildSnapshot({
     sizePreference,
     storagePreference,
     strategy,
+    designPreference: ["aesthetics", "performance"].includes(designPreference) ? designPreference : "performance",
+    gameSlugs: normalizeGameSlugs(gameSlugs),
+    creativeApps: normalizeCreativeApps(creativeApps),
     accessories: normalizeAccessories(accessories),
     accessoryTotal: Number.isFinite(accessoryTotal) && accessoryTotal >= 0 ? accessoryTotal : estimateAccessories(accessories, targetResolution),
     county,
@@ -93,3 +100,4 @@ export function prependSavedBuild(savedBuilds, item) {
   if (savedBuilds.some(saved => saved.id === item?.id)) throw new Error("Saved build IDs must be unique.");
   return [item, ...savedBuilds];
 }
+
