@@ -253,6 +253,32 @@ body.resource-page [hidden],body.legal-page [hidden] { display: none !important;
 .part-finder-result-price small { display: block; margin-top: 4px; color: #777; font-size: 11px; font-weight: 400; }
 .part-finder-empty { padding: 18px; border: 1px solid #e8e8e8; border-radius: 7px; color: #555; background: #fafafa; line-height: 1.5; }
 .part-finder-results-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.live-part-card { grid-template-columns: 58px minmax(0,1fr) auto; align-items: start; }
+.part-result-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.part-match-badge { width: fit-content; padding: 3px 7px; border-radius: 999px; background: #eef5ef; color: #315b3b; font-size: 10px; font-weight: 700; }
+.part-match-badge.is-caution,.part-offer-warning { background: #fff3db; color: #78540e; }
+.part-result-offers { grid-column: 2 / -1; min-width: 0; }
+.part-offer-details { border-top: 1px solid #eee; padding-top: 10px; }
+.part-offer-details summary { width: fit-content; color: #242424; font-size: 13px; font-weight: 650; cursor: pointer; }
+.part-offer-list { display: grid; gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; }
+.part-offer-row { display: grid; grid-template-columns: minmax(130px,.8fr) minmax(170px,1fr) minmax(120px,.7fr); align-items: start; gap: 8px 14px; padding: 12px; border: 1px solid #ededed; border-radius: 6px; background: #fcfcfc; }
+.part-offer-main,.part-offer-cost { display: grid; gap: 4px; }
+.part-offer-main strong,.part-offer-cost strong { color: #171717; font-size: 13px; }
+.part-offer-main small,.part-offer-cost span { color: #666; font-size: 12px; }
+.part-offer-warning { width: fit-content; padding: 3px 6px; border-radius: 4px; font-size: 10px; }
+.part-offer-cost strong { margin-top: 2px; }
+.part-offer-cost .is-estimate { color: #78540e; }
+.part-offer-links { display: flex; flex-wrap: wrap; gap: 6px 10px; font-size: 12px; }
+.part-offer-links a { color: #444; text-decoration: underline; text-underline-offset: 2px; }
+.part-offer-buy { font-weight: 700; }
+.part-offer-disclaimer { grid-column: 1 / -1; margin: 0; color: #777; font-size: 11px; line-height: 1.45; }
+@media (max-width: 740px) {
+  .live-part-card { grid-template-columns: 48px minmax(0,1fr); }
+  .live-part-card .part-finder-result-price { grid-column: 2; }
+  .part-result-offers { grid-column: 1 / -1; }
+  .part-offer-row { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  .part-offer-links { grid-column: 1 / -1; }
+}
 .part-finder-help-trigger { min-height: 34px; padding: 7px 10px; font-size: 13px; }
 .part-finder-help-dialog { width: min(560px, calc(100vw - 32px)); max-height: min(82vh, 720px); padding: clamp(20px, 4vw, 28px); overflow: auto; border: 1px solid #e5e5e5; border-radius: 9px; background: #fff; color: #171717; box-shadow: 0 18px 70px rgba(0,0,0,.18); }
 .part-finder-help-dialog::backdrop { background: rgba(0,0,0,.34); }

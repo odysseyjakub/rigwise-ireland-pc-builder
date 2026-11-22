@@ -1,4 +1,5 @@
-import { COMPONENTS, PRODUCTS } from "./data.js";
+import { COMPONENTS } from "./data.js";
+import { fetchLiveParts, MARKET_SOURCE } from "./live-market-data.js";
 
 const form = document.querySelector("#part-finder-form");
 const steps = [...form.querySelectorAll("[data-part-step]")];
@@ -14,18 +15,19 @@ const needsFields = document.querySelector("#part-needs-fields");
 const helpDialog = document.querySelector("#part-finder-help");
 const helpContext = document.querySelector("#part-finder-help-context");
 const flexibleButton = document.querySelector("#part-finder-flexible");
-const budgetEuroControls = document.querySelector("#part-budget-euro-controls");
-const budgetUkNote = document.querySelector("#part-budget-uk-note");
 const budgetTitle = document.querySelector("#part-budget-title");
 const marketNote = document.querySelector("#part-market-note");
 const marketButtons = [...document.querySelectorAll("[data-part-market]")];
+const refreshButton = document.querySelector("#part-finder-refresh");
 let stepIndex = 0;
 let budgetTouched = false;
 let activeMarket = "IE";
+let searchSequence = 0;
 
 const categories = new Map(COMPONENTS.map(component => [component.category, component]));
-const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(value);
+const money = value => new Intl.NumberFormat(activeMarket === "UK" ? "en-GB" : "en-IE", { style: "currency", currency: activeMarket === "UK" ? "GBP" : "EUR", maximumFractionDigits: 2 }).format(value);
 const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+const timeLabel = value => new Intl.DateTimeFormat(activeMarket === "UK" ? "en-GB" : "en-IE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 
 function selectedCategory() {
   return form.querySelector('[name="category"]:checked')?.value || "";
@@ -40,22 +42,16 @@ function setMarket(value, persist = true) {
   document.documentElement.lang = activeMarket === "UK" ? "en-GB" : "en-IE";
   marketButtons.forEach(button => button.setAttribute("aria-pressed", String(button.dataset.partMarket === activeMarket)));
   const isUk = activeMarket === "UK";
-  budgetEuroControls.hidden = isUk;
-  budgetUkNote.hidden = !isUk;
-  budgetTitle.textContent = isUk ? "UK price filtering is not connected yet" : "What is your budget for this part?";
+  budgetTitle.textContent = "What is your budget for this part?";
+  document.querySelector("#part-budget-min-label").textContent = money(Number(budgetRange.min));
+  document.querySelector("#part-budget-max-label").textContent = money(Number(budgetRange.max));
+  if (budgetNumber.value) updateBudget(budgetNumber.value, false, "number");
   marketNote.textContent = isUk
-    ? "UK destination selected. This example catalogue has no UK prices or stock. European sellers remain eligible once delivery, tax, tariffs and final cost can be verified."
-    : "Example data only: euro prices are not verified Ireland offers. European sellers can qualify when delivery and final cost are confirmed.";
+    ? "VantaSpec's UK catalogue is fetched when you search. Its price-check dates are not provided; confirm price and stock before buying. Delivery is a published seller rule where linked, or a labeled estimate."
+    : "Ireland mode checks UK listings against Republic of Ireland delivery rules. GBP prices use a dated ECB rate and an Irish VAT estimate. The current product source does not list EU-only retailers.";
   syncNavigation();
   if (resultsWereOpen) {
-    if (activeMarket === "IE" && !(budgetTouched && budgetNumber.checkValidity())) {
-      resultsSection.hidden = true;
-      form.hidden = false;
-      stepIndex = 1;
-      renderStep(true);
-    } else {
-      showResults();
-    }
+    void showResults({ forceRefresh: true });
   }
 }
 
@@ -92,9 +88,9 @@ function updateBudget(value, touched = true, source = "number") {
   }
 
   const amount = Number(raw);
-  const inRange = Number.isFinite(amount) && amount >= 20 && amount <= 2000 && Number.isInteger(amount);
+  const inRange = Number.isFinite(amount) && amount >= 20 && amount <= 3000 && Number.isInteger(amount);
   if (!inRange) {
-    budgetDisplay.textContent = "Enter €20–€2,000";
+    budgetDisplay.textContent = "Enter " + money(20) + "–" + money(3000);
     syncNavigation();
     return;
   }
@@ -106,7 +102,7 @@ function updateBudget(value, touched = true, source = "number") {
 
 function stepIsValid(step) {
   if (step.dataset.partStep === "category") return Boolean(selectedCategory());
-  if (step.dataset.partStep === "budget") return activeMarket === "UK" || (budgetTouched && budgetNumber.checkValidity());
+  if (step.dataset.partStep === "budget") return budgetTouched && budgetNumber.checkValidity();
   if (step.dataset.partStep === "needs") return [...needsFields.querySelectorAll("[required]")].every(field => String(field.value).trim() !== "");
   return false;
 }
@@ -115,12 +111,12 @@ function syncNavigation() {
   const current = steps[stepIndex];
   const lastStep = stepIndex === steps.length - 1;
   nextButton.hidden = lastStep;
-  nextButton.textContent = current.dataset.partStep === "budget" && activeMarket === "UK" ? "Continue without price filter" : "Next";
+  nextButton.textContent = "Next";
   submitButton.hidden = !lastStep;
   backButton.hidden = stepIndex === 0;
   nextButton.disabled = !stepIsValid(current);
   submitButton.disabled = !steps.every(stepIsValid);
-  const hints = ["Pick the part you want.", activeMarket === "UK" ? "UK price data is not connected, so this flow will compare specifications only." : "Set the maximum you want to spend on this part.", "Answer the questions for this part."];
+  const hints = ["Pick the part you want.", "Set the maximum you want to spend on this part and its estimated delivery.", "Answer the questions for this part."];
   document.querySelector("#part-finder-hint").textContent = stepIsValid(current) ? "Ready for the next step." : hints[stepIndex];
 }
 
@@ -135,96 +131,123 @@ function renderStep(focus = false) {
   if (focus) steps[stepIndex].querySelector("legend")?.focus();
 }
 
-function partPrice(product) {
-  return Array.isArray(product.offers) && product.offers.length ? Math.min(...product.offers) : null;
+function safeImage(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" ? url.href : "";
+  } catch { return ""; }
 }
 
-function capacityGb(product) {
-  return (Number(product.specs?.capacity) || 0) * 1000;
+function chooseOffer(product, maxBudget) {
+  return product.offers.find(offer => offer.inStock && offer.deliveredPrice !== null && offer.deliveredPrice <= maxBudget)
+    || product.offers.find(offer => offer.inStock && offer.deliveredPrice !== null)
+    || product.offers.find(offer => offer.deliveredPrice !== null)
+    || product.offers[0];
 }
 
-function meetsNeed(product, category, values) {
-  if (category === "cpu") {
-    const minimumTier = ["creative", "3d"].includes(values.get("workload")) ? 2 : 1;
-    const socketMatches = values.get("socket") === "any" || product.specs?.socket === values.get("socket");
-    return socketMatches && Number(product.specs?.tier) >= minimumTier;
+function deliveryLinks(offer) {
+  const links = [];
+  if (offer.deliverySourceUrl) links.push('<a href="' + escapeHTML(offer.deliverySourceUrl) + '" target="_blank" rel="noopener noreferrer">Delivery policy ↗</a>');
+  if (offer.deliveryReferenceUrls?.length) {
+    offer.deliveryReferenceUrls.forEach((url, index) => links.push('<a href="' + escapeHTML(url) + '" target="_blank" rel="noopener noreferrer">Estimate source ' + (index + 1) + ' ↗</a>'));
   }
-  if (category === "graphics") {
-    const minimumTier = { any: 1, "1080p": 1, "1440p": 2, "4k": 3 }[values.get("resolution")];
-    const seriesMatches = values.get("series") === "any" || product.series === values.get("series");
-    return seriesMatches && Number(product.specs?.tier) >= minimumTier;
-  }
-  if (category === "memory") {
-    const capacityMatches = values.get("capacity") === "any" || Number(product.specs?.capacity) >= Number(values.get("capacity"));
-    const generationMatches = values.get("memoryGen") === "any" || product.specs?.memoryGen === values.get("memoryGen");
-    return capacityMatches && generationMatches;
-  }
-  if (category === "storage") return capacityGb(product) >= Number(values.get("capacityGb"));
-  if (category === "motherboard") {
-    const socketMatches = values.get("socket") === "any" || product.specs?.socket === values.get("socket");
-    const boardSize = product.specs?.sizeClass || (product.specs?.form === "mATX" ? "compact" : product.specs?.form === "ATX" ? "standard" : null);
-    const sizeMatches = values.get("size") === "any" || boardSize === values.get("size");
-    return socketMatches && sizeMatches;
-  }
-  if (category === "case") return values.get("size") === "any" || product.specs?.sizeClass === values.get("size");
-  if (category === "power") return values.get("watts") === "any" || Number(product.specs?.watts) >= Number(values.get("watts"));
-  if (category === "cooler") {
-    const socketMatches = values.get("socket") === "any" || product.specs?.sockets?.includes(values.get("socket"));
-    const capacityMatches = values.get("maxTdp") === "any" || Number(product.specs?.maxTdp) >= Number(values.get("maxTdp"));
-    return socketMatches && capacityMatches;
-  }
-  return false;
+  return links.join(" ");
 }
 
-function matchScore(product, category, values) {
-  if (category === "cpu" || category === "graphics") return Number(product.specs?.tier) || 0;
-  if (category === "memory") return -Math.abs(Number(product.specs?.capacity) - Number(values.get("capacity") === "any" ? 32 : values.get("capacity")));
-  if (category === "storage") return -((capacityGb(product) - Number(values.get("capacityGb"))) / 1000);
-  if (category === "power") return -Math.abs((Number(product.specs?.watts) || 0) - Number(values.get("watts") === "any" ? 650 : values.get("watts")));
-  if (category === "cooler") return -Math.abs((Number(product.specs?.maxTdp) || 0) - Number(values.get("maxTdp") === "any" ? 120 : values.get("maxTdp")));
-  return 0;
+function offerMarkup(offer) {
+  const stock = offer.inStock ? "In stock per source" : offer.stockKnown ? "Source marks out of stock" : "Stock not confirmed";
+  const item = offer.itemPrice === null ? "Item price unavailable" : "Item " + money(offer.itemPrice);
+  const delivery = offer.shippingPrice === null ? "Delivery unavailable" : (offer.deliveryType === "estimate" ? "Est. delivery " : "Delivery ") + money(offer.shippingPrice);
+  const total = offer.deliveredPrice === null ? "Delivered total unavailable" : (offer.deliveryType === "estimate" || activeMarket === "IE" ? "Est. total " : "Total ") + money(offer.deliveredPrice);
+  const destinationNote = activeMarket === "IE" && !offer.destinationConfirmed ? '<span class="part-offer-warning">ROI delivery not confirmed</span>' : "";
+  const deliveryLabel = offer.deliveryType === "published" ? "Published fee" : offer.deliveryType === "estimate" ? "Estimated fee" : "Fee unavailable";
+  const policyLinks = deliveryLinks(offer);
+  const buy = offer.buyUrl ? '<a class="part-offer-buy" href="' + escapeHTML(offer.buyUrl) + '" target="_blank" rel="noopener noreferrer">Check retailer ↗</a>' : "";
+  return '<li class="part-offer-row"><div class="part-offer-main"><strong>' + escapeHTML(offer.retailer) + '</strong><small>' + escapeHTML(stock) + '</small>' + destinationNote + '</div><div class="part-offer-cost"><span>' + escapeHTML(item) + '</span><span class="' + (offer.deliveryType === "estimate" ? "is-estimate" : "") + '">' + escapeHTML(delivery) + ' · ' + deliveryLabel + '</span><strong>' + escapeHTML(total) + '</strong></div><div class="part-offer-links">' + policyLinks + buy + '</div><p class="part-offer-disclaimer">' + escapeHTML(offer.deliveryDetails) + '</p></li>';
 }
 
-function resultCard(product, index, price, categoryLabel) {
-  const image = product.imageUrl
-    ? '<div class="part-finder-result-image"><img src="' + escapeHTML(product.imageUrl) + '" alt="" loading="lazy"></div>'
-    : '<div class="part-finder-result-image" aria-hidden="true">' + escapeHTML(product.brand?.slice(0, 2) || categoryLabel.slice(0, 2)) + '</div>';
-  const source = product.sourceUrl
-    ? '<a href="' + escapeHTML(product.sourceUrl) + '" target="_blank" rel="noreferrer">Product specifications ↗</a>'
-    : "";
-  const brand = [product.brand, product.series].filter(Boolean).join(" · ") || "Example part";
-  const priceMarkup = price === null
-    ? '<div class="part-finder-result-price">No UK price<small>not connected</small></div>'
-    : '<div class="part-finder-result-price">' + money(price) + '<small>example price</small></div>';
-  return '<article class="part-finder-result-card">' + image + '<div class="part-finder-result-copy"><small>' + (index === 0 ? "BEST MATCH · " : "") + escapeHTML(brand) + '</small><strong>' + escapeHTML(product.name) + '</strong><small>' + escapeHTML(product.detail || "Specifications not recorded") + '</small>' + source + '</div>' + priceMarkup + '</article>';
+function resultCard(product, index, maxBudget) {
+  const best = chooseOffer(product, maxBudget);
+  const imageUrl = safeImage(product.imageUrl);
+  const image = imageUrl
+    ? '<div class="part-finder-result-image"><img src="' + escapeHTML(imageUrl) + '" alt="" loading="lazy"></div>'
+    : '<div class="part-finder-result-image" aria-hidden="true">' + escapeHTML(product.brand?.slice(0, 2) || "PC") + '</div>';
+  const total = best?.deliveredPrice === null || !best ? "Check price" : money(best.deliveredPrice);
+  const totalLabel = !best ? "No price" : best.deliveryType === "published" && activeMarket === "UK" ? "item + published delivery" : "estimated delivered";
+  const sourceLink = '<a href="' + escapeHTML(MARKET_SOURCE.api) + '" target="_blank" rel="noopener noreferrer">Price data: VantaSpec ↗</a>';
+  const status = product.needStatus === "check" ? '<span class="part-match-badge is-caution">Check compatibility</span>' : '<span class="part-match-badge">' + (index === 0 ? "Closest match" : "Matches your settings") + '</span>';
+  const overBudget = best?.deliveredPrice !== null && best?.deliveredPrice > maxBudget ? '<span class="part-match-badge is-caution">Above budget</span>' : "";
+  const offers = product.offers.slice(0, 8);
+  const offerSummary = offers.length + " seller " + (offers.length === 1 ? "offer" : "offers");
+  const compare = offers.length
+    ? '<details class="part-offer-details"><summary>Compare ' + escapeHTML(offerSummary) + '</summary><ul class="part-offer-list">' + offers.map(offerMarkup).join("") + '</ul></details>'
+    : '<p class="part-offer-disclaimer">No seller price was returned for this listing.</p>';
+  return '<article class="part-finder-result-card live-part-card">' + image + '<div class="part-finder-result-copy"><div class="part-result-badges">' + status + overBudget + '</div><small>' + escapeHTML(product.brand || "PC component") + ' · ' + (product.needStatus === "check" ? "Source specs need checking" : "Sourced catalogue result") + '</small><strong>' + escapeHTML(product.name) + '</strong><small>' + escapeHTML(product.specs) + '</small>' + sourceLink + '</div><div class="part-finder-result-price">' + escapeHTML(total) + '<small>' + escapeHTML(totalLabel) + '</small>' + (best ? '<small>' + escapeHTML(best.retailer) + '</small>' : "") + '</div><div class="part-result-offers">' + compare + '</div></article>';
 }
 
-function showResults() {
+function loadingResults(categoryLabel) {
+  document.querySelector("#part-finder-results-title").textContent = categoryLabel + " matches";
+  document.querySelector("#part-finder-results-note").textContent = "Fetching catalogue results and delivery estimates…";
+  resultsList.innerHTML = '<div class="part-finder-empty" role="status">Searching VantaSpec. This can take a few seconds.</div>';
+}
+
+async function showResults({ forceRefresh = false } = {}) {
+  const sequence = ++searchSequence;
   const values = new FormData(form);
   const category = values.get("category");
   const categoryInfo = categories.get(category);
-  const maxBudget = activeMarket === "UK" ? null : Number(budgetNumber.value);
-  const matches = PRODUCTS
-    .filter(product => product.category === category)
-    .map(product => ({ product, price: activeMarket === "UK" ? null : partPrice(product) }))
-    .filter(item => meetsNeed(item.product, category, values) && (activeMarket === "UK" || (item.price !== null && item.price <= maxBudget)))
-    .sort((a,b) => matchScore(b.product, category, values) - matchScore(a.product, category, values) || a.price - b.price);
-  const belowBudget = activeMarket === "UK" ? [] : PRODUCTS.filter(product => product.category === category && partPrice(product) !== null && partPrice(product) <= maxBudget);
-  document.querySelector("#part-finder-results-title").textContent = categoryInfo.label + (matches.length ? " matches" : "");
-  document.querySelector("#part-finder-results-note").textContent = activeMarket === "UK"
-    ? matches.length
-      ? matches.length + " example " + (matches.length === 1 ? "spec match" : "spec matches") + ". UK prices, stock and final delivery costs are not connected."
-      : "No example parts match every requirement. Choose flexible settings or check the requested generation and compatibility."
-    : matches.length
-    ? matches.length + " example " + (matches.length === 1 ? "option" : "options") + " within " + money(maxBudget) + ". Prices are estimates, not live offers."
-    : belowBudget.length
-      ? "No example part under " + money(maxBudget) + " meets every requirement. Raise the budget or relax one requirement."
-      : "No example " + categoryInfo.label.toLowerCase() + " is listed under " + money(maxBudget) + ". Raise your budget to see the current sample options.";
-  resultsList.innerHTML = matches.map((item,index) => resultCard(item.product,index,item.price,categoryInfo.label)).join("");
-  if (!matches.length) resultsList.innerHTML = '<div class="part-finder-empty">Try a different requirement or budget. The catalogue contains example parts only.</div>';
+  const maxBudget = Number(budgetNumber.value);
   form.hidden = true;
   resultsSection.hidden = false;
-  resultsSection.querySelector("h2").focus();
+  refreshButton.disabled = true;
+  refreshButton.textContent = "Refreshing…";
+  loadingResults(categoryInfo.label);
+  try {
+    const data = await fetchLiveParts(category, values, activeMarket, { force: forceRefresh });
+    if (sequence !== searchSequence) return;
+    const budgetMatches = data.products.filter(product => product.offers.some(offer => offer.deliveredPrice !== null && offer.deliveredPrice <= maxBudget));
+    const matches = (budgetMatches.length ? budgetMatches : data.products)
+      .sort((a, b) => {
+        const offerA = chooseOffer(a, maxBudget);
+        const offerB = chooseOffer(b, maxBudget);
+        const aInBudget = offerA?.deliveredPrice !== null && offerA?.deliveredPrice <= maxBudget;
+        const bInBudget = offerB?.deliveredPrice !== null && offerB?.deliveredPrice <= maxBudget;
+        if (aInBudget !== bInBudget) return aInBudget ? -1 : 1;
+        if (offerA?.deliveryVerified !== offerB?.deliveryVerified) return offerA?.deliveryVerified ? -1 : 1;
+        if (offerA?.inStock !== offerB?.inStock) return offerA?.inStock ? -1 : 1;
+        return (offerA?.deliveredPrice ?? Infinity) - (offerB?.deliveredPrice ?? Infinity);
+      }).slice(0, 12);
+
+    document.querySelector("#part-finder-results-title").textContent = categoryInfo.label + (budgetMatches.length ? " matches" : " options");
+    const fetched = timeLabel(data.fetchedAt);
+    const sourceAttribution = '<a href="' + escapeHTML(MARKET_SOURCE.api) + '" target="_blank" rel="noopener noreferrer">VantaSpec UK catalogue</a>';
+    const fxNote = activeMarket === "IE" && data.exchangeRate
+      ? ' GBP converted at the ECB reference rate (' + escapeHTML(data.exchangeRate.rate.toFixed(4)) + ' EUR/GBP, ' + escapeHTML(data.exchangeRate.date) + '). Irish item prices assume UK gross prices include 20% VAT and are recalculated at Ireland’s 23% standard rate.'
+      : "";
+    const coverageNote = activeMarket === "IE"
+      ? " This source currently provides UK shops only; it does not yet supply EU-only retailer offers."
+      : "";
+    const budgetNote = budgetMatches.length
+      ? budgetMatches.length + " option" + (budgetMatches.length === 1 ? "" : "s") + " at or below " + money(maxBudget) + " including delivery."
+      : "No returned offer fits " + money(maxBudget) + " including the delivery estimate; showing the closest listings. ";
+    document.querySelector("#part-finder-results-note").innerHTML = budgetNote + " Fetched " + escapeHTML(fetched) + " from " + sourceAttribution + ". The source does not provide each retailer price’s original check time; verify price and stock at checkout. Published delivery rules are linked; estimates are marked and may be wrong." + escapeHTML(fxNote + coverageNote);
+    resultsList.innerHTML = matches.map((product, index) => resultCard(product, index, maxBudget)).join("");
+    if (!matches.length) {
+      resultsList.innerHTML = '<div class="part-finder-empty">No current listings matched that search. Try “Not sure” settings or refresh the offers. No sample prices have been substituted.</div>';
+      document.querySelector("#part-finder-results-note").innerHTML = "No products were returned by the " + sourceAttribution + ". This search is not filled with sample products." + escapeHTML(coverageNote);
+    }
+    resultsSection.querySelector("h2").focus();
+  } catch (error) {
+    if (sequence !== searchSequence) return;
+    document.querySelector("#part-finder-results-title").textContent = "Couldn’t load current listings";
+    document.querySelector("#part-finder-results-note").textContent = error instanceof Error ? error.message : "The product source is unavailable.";
+    resultsList.innerHTML = '<div class="part-finder-empty">Try refreshing. Rigwise will not replace unavailable live data with sample prices.</div>';
+  } finally {
+    if (sequence === searchSequence) {
+      refreshButton.disabled = false;
+      refreshButton.textContent = "Refresh offers";
+    }
+  }
 }
 
 const helpByCategory = {
@@ -244,9 +267,7 @@ function openHelp() {
   helpContext.textContent = step === "category"
     ? "Choose the part you want to add or replace. If you need a complete computer, start in Build instead."
     : step === "budget"
-      ? activeMarket === "UK"
-        ? "UK price and delivered-cost data are not connected yet, so continue without price filtering. Your selected delivery market stays set to the UK."
-        : "This budget is for one component only. Your whole PC and accessories have separate budgets."
+      ? "This budget covers one component and its estimated delivery only. The final checkout amount may differ."
       : helpByCategory[category] || "Choose the details you know. Any field marked “Not sure” will show a wider set of options.";
   flexibleButton.disabled = step !== "needs";
   flexibleButton.textContent = step === "needs" ? "Show flexible matches" : "Choose a part and budget first";
@@ -264,13 +285,14 @@ function useFlexibleAnswers() {
   if (storageCapacity) storageCapacity.value = "1000";
   helpDialog.close();
   syncNavigation();
-  if (resultsWereOpen) showResults();
+  if (resultsWereOpen) void showResults();
   else needsFields.querySelector("[required]")?.focus();
 }
 
 document.querySelectorAll("[data-part-help-open]").forEach(button => button.addEventListener("click", openHelp));
 document.querySelector("#part-finder-help-close").addEventListener("click", () => helpDialog.close());
 flexibleButton.addEventListener("click", useFlexibleAnswers);
+refreshButton.addEventListener("click", () => { void showResults({ forceRefresh: true }); });
 
 function startOver() {
   form.reset();
