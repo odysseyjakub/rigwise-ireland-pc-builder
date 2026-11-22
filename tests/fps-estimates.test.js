@@ -80,6 +80,7 @@ test("build estimate failures are isolated per game and resolution", async () =>
   assert.match(requests[0].url, /^\/api\/fps\?/);
   assert.equal(requests[0].options.referrerPolicy, "no-referrer");
   assert.equal(rows.length, 5);
+  assert.deepEqual(rows[0].resolutions.map(result => result.resolution), FPS_RESOLUTIONS);
   assert.equal(rows[0].resolutions[0].status, "available");
   assert.equal(rows[0].resolutions[1].status, "unavailable");
   assert.equal(rows[0].resolutions[2].status, "available");

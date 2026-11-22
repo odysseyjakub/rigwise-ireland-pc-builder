@@ -1,6 +1,6 @@
 .resource-page { min-height: 100vh; background: #f5f5f0; color: #19251d; }
 .resource-header { gap: 20px; }
-.resource-header .main-nav { gap: clamp(14px, 2.2vw, 30px); }
+.resource-header .main-nav { gap: clamp(12px, 1.5vw, 20px); }
 .resource-header .nav-menu { height: 100%; }
 .resource-header-actions { display: flex; align-items: center; gap: 10px; }
 .resource-builder-link { min-height: 38px; padding: 10px 14px; white-space: nowrap; }
@@ -39,6 +39,12 @@
 .quiz-manual-link { margin-top: 20px; color: #647166; text-align: center; }
 .quiz-manual-link a { color: #315c3a; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .saved-account-strip,.saved-builds-panel { margin-top: 38px; padding: 22px; border: 1px solid #dfe4db; border-radius: 10px; background: #fff; }
+.saved-account-details { margin-top: 0; }
+.saved-account-details > summary { width: fit-content; padding: 10px 0; color: #526156; cursor: pointer; font-size: 14px; font-weight: 700; }
+.saved-account-details > summary::-webkit-details-marker { display: none; }
+.saved-account-details > summary::after { content: "＋"; margin-left: 8px; color: #829080; }
+.saved-account-details[open] > summary::after { content: "−"; }
+.saved-account-details .saved-account-strip { margin-top: 8px; }
 .saved-account-strip { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .saved-account-strip code { display: block; margin-top: 9px; color: #304b35; font: 700 16px "DM Mono", monospace; overflow-wrap: anywhere; }
 .saved-account-strip p { margin: 7px 0 0; color: #657166; font-size: 13px; line-height: 1.5; }
@@ -80,6 +86,7 @@
 .dark-theme.resource-page .quiz-manual-link a { color: #c2d9bd; }
 .dark-theme.resource-page .saved-builds-panel-heading h2 span { color: #aab8aa; }
 .dark-theme.resource-page .saved-build-dialog { color: #e9eee7; background: #1b2420; border-color: #344038; }
+.dark-theme.resource-page .saved-account-details > summary { color: #d5dfd4; }
 .dark-theme.resource-page .saved-build-form input { color: #e9eee7; background: #202b25; border-color: #465149; }
 .resource-hero { max-width: 790px; }
 .resource-hero h1 { margin: 15px 0 20px; font: 700 clamp(44px, 6.5vw, 78px)/.98 "Manrope", Arial, sans-serif; letter-spacing: -.065em; }
@@ -361,6 +368,9 @@
 }
 .hero-photo figcaption a { color: inherit; text-underline-offset: 2px; }
 .resource-page .resource-builder-link { display: none; }
+.site-footer-minimal { margin-top: 56px; }
+.site-footer-minimal .footer-bottom { width: min(1180px, calc(100% - 48px)); min-height: 52px; margin: 0 auto; font: 12px "DM Mono", monospace; letter-spacing: 0; }
+.site-footer-minimal .footer-bottom a { text-decoration: underline; text-underline-offset: 3px; }
 
 @media (max-width: 740px) {
   .resource-page .resource-header {
@@ -381,9 +391,7 @@
     justify-content: flex-end;
     gap: clamp(5px, 1.5vw, 10px);
   }
-  .resource-page .main-nav > a[href="index.html"],
-  .resource-page .main-nav > a[href^="builder.html"] { display: none; }
-  .resource-page .nav-link { height: auto; padding-block: 5px; font-size: 11px; white-space: nowrap; }
+  .resource-page .nav-link { height: auto; padding-block: 5px; font-size: 13px; white-space: nowrap; }
   .resource-page .nav-link.active:after { bottom: -3px; }
   .resource-header .nav-menu { height: auto; flex: 0 0 auto; }
   .resource-header-actions { flex: 0 0 auto; margin-left: 0; gap: 0; }
@@ -499,4 +507,3 @@
   .builder-workspace .offer-toggle { grid-column: 3; grid-row: 1 / span 2; }
   .part-options { grid-template-columns: 1fr; padding: 11px; }
 }
-

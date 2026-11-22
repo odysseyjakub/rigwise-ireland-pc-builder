@@ -78,14 +78,12 @@ function render() {
     const empty = document.createElement("div");
     empty.className = "saved-builds-empty";
     const title = document.createElement("h3");
-    title.textContent = "Nothing saved here yet.";
-    const copy = document.createElement("p");
-    copy.textContent = "Make a build, then choose Save build. It will appear here on this device.";
+    title.textContent = "No saved builds yet.";
     const link = document.createElement("a");
     link.className = "button button-dark";
-    link.href = "builder.html#builder";
-    link.textContent = "Open the PC builder →";
-    empty.append(title, copy, link);
+    link.href = "build-quiz.html";
+    link.textContent = "Build a PC";
+    empty.append(title, link);
     host.append(empty);
     $("#saved-builds-status").textContent = "No saved builds on this browser.";
     return;
@@ -255,4 +253,3 @@ $("#clear-saved-builds").addEventListener("click", () => {
 });
 
 render();
-

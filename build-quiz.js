@@ -204,7 +204,7 @@ function updateAccessoryTotal() {
   const accessories = selectedValues("peripherals");
   const resolution = form.querySelector("#quiz-resolution").value || "1080p";
   const total = estimateAccessories(accessories, resolution);
-  document.querySelector("#quiz-accessory-total").textContent = "Accessories: " + money(total) + " example allowance, separate from the PC";
+  document.querySelector("#quiz-accessory-total").textContent = "Accessories: " + money(total) + " example · separate from PC";
 }
 
 function escapeHTML(value) {
@@ -309,7 +309,7 @@ function showRecommendation() {
       '<ul class="quiz-review-parts">' + parts + '</ul>'
     : '<p class="quiz-review-no-fit">The sample catalogue has no compatible combination for these answers. You can still adjust your targets or continue to the parts builder.</p>') +
     '<p class="quiz-review-style">' + escapeHTML(designNote) + '</p>' +
-    (preferences.accessories.length ? '<p class="quiz-review-accessories">Accessories: ' + money(estimateAccessories(preferences.accessories, preferences.targetResolution)) + ' example allowance · separate from PC</p>' : "");
+    (preferences.accessories.length ? '<p class="quiz-review-accessories">Accessories: ' + money(estimateAccessories(preferences.accessories, preferences.targetResolution)) + ' example · separate from PC</p>' : "");
   quizFpsContext = { build: recommendedBuild, preferences };
   document.querySelector(".quiz-hero").hidden = true;
   form.hidden = true;

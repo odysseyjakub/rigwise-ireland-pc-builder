@@ -110,9 +110,10 @@ export async function fetchBuildFps({ cpu, gpu, gameSlugs = FPS_GAMES.map(game =
     const row = payload.rows.find(candidate => candidate?.slug === game.slug);
     const resolutions = FPS_RESOLUTIONS.map(resolution => {
       const cell = row?.resolutions?.find(candidate => candidate?.resolution === resolution);
-      if (cell?.status !== "available") return { status: "unavailable", reason: cell?.reason || "unavailable" };
+      if (cell?.status !== "available") return { resolution, status: "unavailable", reason: cell?.reason || "unavailable" };
       try {
         return {
+          resolution,
           status: "available",
           ...normalizeFpsResponse({
             ok: true,
