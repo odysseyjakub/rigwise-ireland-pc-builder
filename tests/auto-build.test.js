@@ -43,6 +43,15 @@ test("auto build applies compact case and motherboard constraints", () => {
   assert.equal(result.build.case, "case-air");
 });
 
+test("auto build picks the nearest available drive that meets the exact storage target", () => {
+  const halfTb = generate(1550, "gaming", { storagePreference: "512gb" });
+  const custom = generate(1550, "gaming", { storagePreference: "2500gb" });
+  assert.equal(halfTb.status, "ready");
+  assert.equal(halfTb.build.storage, "storage-512gb");
+  assert.equal(custom.status, "ready");
+  assert.equal(custom.build.storage, "storage-4tb");
+});
+
 test("gaming resolution and frame-rate preferences alter demo rankings", () => {
   const highRefresh = generate(1000, "gaming", { targetResolution: "1080p", targetFrameRate: 165 });
   const highResolution = generate(1000, "gaming", { targetResolution: "4k", targetFrameRate: 60 });
@@ -67,4 +76,3 @@ test("auto build validates its budget, workload, and source collections", () => 
   assert.throws(() => generate(1000, "gaming", { sizePreference: "tiny" }), /size preference/);
   assert.throws(() => generateAutoBuild({ budget: 1000, workload: "gaming" }), /must be arrays/);
 });
-

@@ -3,11 +3,11 @@ import { optimizeBasket } from "./optimizer.js";
 import { storageGigabytes } from "./build-quiz-state.js";
 
 const WORKLOAD_WEIGHTS = Object.freeze({
-  gaming: { cpu: 20, graphics: 65, memory: 0.25, storage: 2 },
-  streaming: { cpu: 36, graphics: 54, memory: 0.7, storage: 2 },
-  creative: { cpu: 42, graphics: 23, memory: 0.65, storage: 4 },
-  "3d": { cpu: 34, graphics: 42, memory: 0.8, storage: 4 },
-  everyday: { cpu: 28, graphics: 6, memory: 0.8, storage: 4 }
+  gaming: { cpu: 20, graphics: 65, memory: 0.25 },
+  streaming: { cpu: 36, graphics: 54, memory: 0.7 },
+  creative: { cpu: 42, graphics: 23, memory: 0.65 },
+  "3d": { cpu: 34, graphics: 42, memory: 0.8 },
+  everyday: { cpu: 28, graphics: 6, memory: 0.8 }
 });
 const GAMING_WEIGHTS = Object.freeze({
   "1080p:60": { cpu: 20, graphics: 65 },
@@ -32,6 +32,10 @@ const MINIMUM_COMPONENT_TIERS = Object.freeze({
 
 function capacity(product, key) {
   return Number(product?.specs?.[key]) || 0;
+}
+
+function storageCapacityGb(product) {
+  return capacity(product, "capacityGb") || (capacity(product, "capacityTb") || capacity(product, "capacity")) * 1000;
 }
 
 function exampleScore(build, productById, workload, targetResolution, targetFrameRate) {
@@ -59,6 +63,7 @@ function candidateIsBetter(candidate, current) {
   if (candidate.compatibility.unknownCount !== current.compatibility.unknownCount) {
     return candidate.compatibility.unknownCount < current.compatibility.unknownCount;
   }
+  if (candidate.storageExcessGb !== current.storageExcessGb) return candidate.storageExcessGb < current.storageExcessGb;
   if (candidate.plan.total !== current.plan.total) return candidate.plan.total < current.plan.total;
   if (candidate.plan.orders.length !== current.plan.orders.length) {
     return candidate.plan.orders.length < current.plan.orders.length;
@@ -152,6 +157,7 @@ export function generateAutoBuild({
       build: { ...currentBuild },
       plan,
       compatibility,
+      storageExcessGb: storageCapacityGb(productById.get(currentBuild.storage)) - minimumStorageGb,
       score: exampleScore(currentBuild, productById, workload, targetResolution, targetFrameRate)
     };
     if (!cheapestCompatible || plan.total < cheapestCompatible.plan.total) cheapestCompatible = candidate;
@@ -191,4 +197,3 @@ export function generateAutoBuild({
     ...counts
   };
 }
-
