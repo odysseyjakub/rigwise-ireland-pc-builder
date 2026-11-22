@@ -29,7 +29,7 @@ function showInvalidAnswers() {
   intro.textContent = "Your answers are missing or out of date. Complete the short build questions to get a recommendation.";
   summary.replaceChildren();
   fpsDetails.hidden = true;
-  document.querySelector("#recommendation-adjust").hidden = true;
+  document.querySelector("#recommendation-adjust").textContent = "Start questionnaire";
   document.querySelector("#recommendation-choose").hidden = true;
   document.querySelector(".quiz-review-note").hidden = true;
 }
