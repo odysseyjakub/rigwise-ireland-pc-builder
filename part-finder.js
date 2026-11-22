@@ -14,8 +14,14 @@ const needsFields = document.querySelector("#part-needs-fields");
 const helpDialog = document.querySelector("#part-finder-help");
 const helpContext = document.querySelector("#part-finder-help-context");
 const flexibleButton = document.querySelector("#part-finder-flexible");
+const budgetEuroControls = document.querySelector("#part-budget-euro-controls");
+const budgetUkNote = document.querySelector("#part-budget-uk-note");
+const budgetTitle = document.querySelector("#part-budget-title");
+const marketNote = document.querySelector("#part-market-note");
+const marketButtons = [...document.querySelectorAll("[data-part-market]")];
 let stepIndex = 0;
 let budgetTouched = false;
+let activeMarket = "IE";
 
 const categories = new Map(COMPONENTS.map(component => [component.category, component]));
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(value);
@@ -24,6 +30,37 @@ const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "
 function selectedCategory() {
   return form.querySelector('[name="category"]:checked')?.value || "";
 }
+
+function setMarket(value, persist = true) {
+  const resultsWereOpen = !resultsSection.hidden;
+  activeMarket = value === "UK" ? "UK" : "IE";
+  if (persist) {
+    try { localStorage.setItem("rigwise-market", activeMarket); } catch { /* keep this choice for this page only */ }
+  }
+  document.documentElement.lang = activeMarket === "UK" ? "en-GB" : "en-IE";
+  marketButtons.forEach(button => button.setAttribute("aria-pressed", String(button.dataset.partMarket === activeMarket)));
+  const isUk = activeMarket === "UK";
+  budgetEuroControls.hidden = isUk;
+  budgetUkNote.hidden = !isUk;
+  budgetTitle.textContent = isUk ? "UK price filtering is not connected yet" : "What is your budget for this part?";
+  marketNote.textContent = isUk
+    ? "UK destination selected. This example catalogue has no UK prices or stock. European sellers remain eligible once delivery, tax, tariffs and final cost can be verified."
+    : "Example data only: euro prices are not verified Ireland offers. European sellers can qualify when delivery and final cost are confirmed.";
+  syncNavigation();
+  if (resultsWereOpen) {
+    if (activeMarket === "IE" && !(budgetTouched && budgetNumber.checkValidity())) {
+      resultsSection.hidden = true;
+      form.hidden = false;
+      stepIndex = 1;
+      renderStep(true);
+    } else {
+      showResults();
+    }
+  }
+}
+
+marketButtons.forEach(button => button.addEventListener("click", () => setMarket(button.dataset.partMarket)));
+try { setMarket(localStorage.getItem("rigwise-market") || "IE", false); } catch { setMarket("IE", false); }
 
 function renderNeedsFields(category) {
   const fields = {
@@ -69,7 +106,7 @@ function updateBudget(value, touched = true, source = "number") {
 
 function stepIsValid(step) {
   if (step.dataset.partStep === "category") return Boolean(selectedCategory());
-  if (step.dataset.partStep === "budget") return budgetTouched && budgetNumber.checkValidity();
+  if (step.dataset.partStep === "budget") return activeMarket === "UK" || (budgetTouched && budgetNumber.checkValidity());
   if (step.dataset.partStep === "needs") return [...needsFields.querySelectorAll("[required]")].every(field => String(field.value).trim() !== "");
   return false;
 }
@@ -78,11 +115,12 @@ function syncNavigation() {
   const current = steps[stepIndex];
   const lastStep = stepIndex === steps.length - 1;
   nextButton.hidden = lastStep;
+  nextButton.textContent = current.dataset.partStep === "budget" && activeMarket === "UK" ? "Continue without price filter" : "Next";
   submitButton.hidden = !lastStep;
   backButton.hidden = stepIndex === 0;
   nextButton.disabled = !stepIsValid(current);
   submitButton.disabled = !steps.every(stepIsValid);
-  const hints = ["Pick the part you want.", "Set the maximum you want to spend on this part.", "Answer the questions for this part."];
+  const hints = ["Pick the part you want.", activeMarket === "UK" ? "UK price data is not connected, so this flow will compare specifications only." : "Set the maximum you want to spend on this part.", "Answer the questions for this part."];
   document.querySelector("#part-finder-hint").textContent = stepIsValid(current) ? "Ready for the next step." : hints[stepIndex];
 }
 
@@ -155,22 +193,29 @@ function resultCard(product, index, price, categoryLabel) {
     ? '<a href="' + escapeHTML(product.sourceUrl) + '" target="_blank" rel="noreferrer">Product specifications ↗</a>'
     : "";
   const brand = [product.brand, product.series].filter(Boolean).join(" · ") || "Example part";
-  return '<article class="part-finder-result-card">' + image + '<div class="part-finder-result-copy"><small>' + (index === 0 ? "BEST MATCH · " : "") + escapeHTML(brand) + '</small><strong>' + escapeHTML(product.name) + '</strong><small>' + escapeHTML(product.detail || "Specifications not recorded") + '</small>' + source + '</div><div class="part-finder-result-price">' + money(price) + '<small>example price</small></div></article>';
+  const priceMarkup = price === null
+    ? '<div class="part-finder-result-price">No UK price<small>not connected</small></div>'
+    : '<div class="part-finder-result-price">' + money(price) + '<small>example price</small></div>';
+  return '<article class="part-finder-result-card">' + image + '<div class="part-finder-result-copy"><small>' + (index === 0 ? "BEST MATCH · " : "") + escapeHTML(brand) + '</small><strong>' + escapeHTML(product.name) + '</strong><small>' + escapeHTML(product.detail || "Specifications not recorded") + '</small>' + source + '</div>' + priceMarkup + '</article>';
 }
 
 function showResults() {
   const values = new FormData(form);
   const category = values.get("category");
   const categoryInfo = categories.get(category);
-  const maxBudget = Number(budgetNumber.value);
+  const maxBudget = activeMarket === "UK" ? null : Number(budgetNumber.value);
   const matches = PRODUCTS
     .filter(product => product.category === category)
-    .map(product => ({ product, price: partPrice(product) }))
-    .filter(item => item.price !== null && item.price <= maxBudget && meetsNeed(item.product, category, values))
+    .map(product => ({ product, price: activeMarket === "UK" ? null : partPrice(product) }))
+    .filter(item => meetsNeed(item.product, category, values) && (activeMarket === "UK" || (item.price !== null && item.price <= maxBudget)))
     .sort((a,b) => matchScore(b.product, category, values) - matchScore(a.product, category, values) || a.price - b.price);
-  const belowBudget = PRODUCTS.filter(product => product.category === category && partPrice(product) !== null && partPrice(product) <= maxBudget);
+  const belowBudget = activeMarket === "UK" ? [] : PRODUCTS.filter(product => product.category === category && partPrice(product) !== null && partPrice(product) <= maxBudget);
   document.querySelector("#part-finder-results-title").textContent = categoryInfo.label + (matches.length ? " matches" : "");
-  document.querySelector("#part-finder-results-note").textContent = matches.length
+  document.querySelector("#part-finder-results-note").textContent = activeMarket === "UK"
+    ? matches.length
+      ? matches.length + " example " + (matches.length === 1 ? "spec match" : "spec matches") + ". UK prices, stock and final delivery costs are not connected."
+      : "No example parts match every requirement. Choose flexible settings or check the requested generation and compatibility."
+    : matches.length
     ? matches.length + " example " + (matches.length === 1 ? "option" : "options") + " within " + money(maxBudget) + ". Prices are estimates, not live offers."
     : belowBudget.length
       ? "No example part under " + money(maxBudget) + " meets every requirement. Raise the budget or relax one requirement."
@@ -199,7 +244,9 @@ function openHelp() {
   helpContext.textContent = step === "category"
     ? "Choose the part you want to add or replace. If you need a complete computer, start in Build instead."
     : step === "budget"
-      ? "This budget is for one component only. Your whole PC and accessories have separate budgets."
+      ? activeMarket === "UK"
+        ? "UK price and delivered-cost data are not connected yet, so continue without price filtering. Your selected delivery market stays set to the UK."
+        : "This budget is for one component only. Your whole PC and accessories have separate budgets."
       : helpByCategory[category] || "Choose the details you know. Any field marked “Not sure” will show a wider set of options.";
   flexibleButton.disabled = step !== "needs";
   flexibleButton.textContent = step === "needs" ? "Show flexible matches" : "Choose a part and budget first";

@@ -220,11 +220,19 @@ body.resource-page [hidden],body.legal-page [hidden] { display: none !important;
 .part-finder-main .resource-hero { margin-bottom: 25px; }
 .part-finder-main .resource-hero h1 { margin: 0 0 10px; font-size: clamp(36px,5vw,52px); }
 .part-finder-main .resource-hero > p { max-width: 620px; font-size: 15px; }
+.part-finder-page .resource-header { gap: 18px; }
+.part-market-switch { display: flex; align-items: center; gap: 8px; margin-left: auto; white-space: nowrap; }
+.part-market-label { color: #6b6b6b; font-size: 12px; }
+.part-market-options { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid #e3e3e3; border-radius: 7px; background: #f7f7f7; }
+.part-market-options button { min-width: 34px; min-height: 30px; padding: 5px 8px; border: 0; border-radius: 5px; background: transparent; color: #555; font: 600 12px Arial,sans-serif; cursor: pointer; }
+.part-market-options button[aria-pressed="true"] { background: #171717; color: #fff; }
+.part-market-options button:focus-visible { outline: 2px solid #171717; outline-offset: 2px; }
 .part-finder-category-grid { grid-template-columns: repeat(2,minmax(0,1fr)); margin-top: 18px; }
 .part-finder-category-grid .quiz-choice { min-height: 72px; align-items: center; padding: 14px; }
 .part-finder-budget-display { margin: 12px 0 20px; color: #171717; font: 700 clamp(32px,6vw,46px)/1 Arial,sans-serif; letter-spacing: -.04em; }
 .part-finder-budget-range { width: 100%; accent-color: #171717; }
 .part-finder-budget-labels { display: flex; justify-content: space-between; margin-top: 5px; color: #777; font-size: 12px; }
+.part-finder-market-note { margin: 12px 0 0; padding: 14px; border: 1px solid #e8e8e8; border-radius: 6px; background: #fafafa; color: #555; font-size: 14px; line-height: 1.55; }
 .part-finder-number-label { display: block; margin-top: 16px; }
 .part-finder-needs-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin-top: 20px; }
 .part-finder-needs-grid label { display: grid; gap: 7px; color: #333; font-size: 14px; font-weight: 600; }
@@ -260,6 +268,12 @@ body.resource-page [hidden],body.legal-page [hidden] { display: none !important;
 .part-finder-help-actions button:disabled { cursor: not-allowed; opacity: .55; }
 @media (max-width: 740px) {
   .part-finder-main { width: calc(100% - 32px); }
+  .part-finder-page .site-header { gap: 8px; padding-inline: 10px; }
+  .part-finder-page .brand { gap: 5px; font-size: 17px; }
+  .part-finder-page .main-nav { gap: 10px; }
+  .part-finder-page .nav-link { font-size: 12px; }
+  .part-market-label { display: none; }
+  .part-market-options button { min-width: 29px; padding-inline: 6px; }
   .part-finder-needs-grid { grid-template-columns: 1fr; }
   .part-finder-result-card { grid-template-columns: 48px minmax(0,1fr); gap: 11px; }
   .part-finder-result-image { width: 48px; height: 48px; }
