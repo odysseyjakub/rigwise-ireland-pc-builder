@@ -278,7 +278,13 @@ function renderFpsTable(rows) {
         const score = document.createElement("strong");
         score.textContent = Math.round(result.fps) + " FPS";
         const label = document.createElement("small");
-        label.textContent = result.source === "benchmark" ? "Measured" : "Estimate";
+        label.textContent = result.source === "benchmark"
+          ? "Measured benchmark"
+          : result.basis === "aggregate"
+            ? "Estimate · review data"
+            : result.basis === "model"
+              ? "Estimate · model"
+              : "Estimate";
         cell.append(score, label);
         if (result.minimum !== null && result.maximum !== null && result.minimum !== result.maximum) {
           const range = document.createElement("small");
@@ -829,4 +835,3 @@ if (!shared && quizPreferences) {
   $("#build-status").textContent = workloadLabel(workload) + " · questionnaire preferences";
   generateBuild();
 }
-

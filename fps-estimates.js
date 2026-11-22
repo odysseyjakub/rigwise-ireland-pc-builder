@@ -13,7 +13,7 @@ export function classifyFpsFailure(error) {
   const message = String(error instanceof Error ? error.message : error || "");
   const causeCode = String(error?.cause?.code || "");
   if (/fetch failed|certificate|TLS/i.test(message) || /CERT|TLS|UNABLE_TO_VERIFY|EAI_AGAIN|ECONNREFUSED|ECONNRESET/.test(causeCode)) return "network";
-  if (/unknown (game|gpu|cpu)|no (game|gpu|cpu) match/i.test(message)) return "model-not-found";
+  if (/unknown (game|gpu|cpu)|no (game|gpu|cpu) match|\b(game|gpu|cpu) not found\b/i.test(message)) return "model-not-found";
   if (/no benchmark|no data|no prediction/i.test(message)) return "no-data";
   const status = message.match(/FPSHQ request failed \(HTTP ([45]\d{2})\)/);
   if (status) return "http-" + status[1];
@@ -52,11 +52,13 @@ export function normalizeFpsResponse(data) {
   }
   const minimum = Number.isFinite(data.fps_min) && data.fps_min >= 0 ? data.fps_min : null;
   const maximum = Number.isFinite(data.fps_max) && data.fps_max >= 0 ? data.fps_max : null;
+  const basis = ["measured", "aggregate", "model"].includes(data.basis) ? data.basis : null;
   return {
     fps: data.fps,
     minimum,
     maximum,
     source: data.source,
+    ...(basis ? { basis } : {}),
     sourceUrl: safeFpshqUrl(data.url)
   };
 }
@@ -118,6 +120,7 @@ export async function fetchBuildFps({ cpu, gpu, gameSlugs = FPS_GAMES.map(game =
             fps_min: cell.minimum,
             fps_max: cell.maximum,
             source: cell.source,
+            basis: cell.basis,
             url: cell.sourceUrl
           })
         };
@@ -128,4 +131,3 @@ export async function fetchBuildFps({ cpu, gpu, gameSlugs = FPS_GAMES.map(game =
     return { ...game, resolutions };
   });
 }
-
