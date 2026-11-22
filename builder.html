@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#f5f5f0">
+<meta name="theme-color" content="#ffffff">
 <meta name="description" content="Refine a compatible example PC build one component at a time, with accessories shown separately from the tower budget.">
 <title>Build your PC — Rigwise</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="resources.css">
+<link rel="stylesheet" href="resources.css"><link rel="stylesheet" href="minimal.css">
 </head>
 <body class="resource-page builder-page">
 
 <header class="site-header resource-header">
   <a class="brand" href="index.html" aria-label="Rigwise home"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M4 5h8v8H4zM16 5h8v8h-8zM4 17h8v7H4zM16 17h8v7h-8z"/></svg></span><span>rigwise<span class="brand-period">.</span></span></a>
   <nav class="main-nav" aria-label="Main navigation"><a class="nav-link active" href="build-quiz.html" aria-current="page">Build</a><a class="nav-link" href="saved-builds.html">Saved</a></nav>
-  <div class="resource-header-actions"><button class="icon-button theme-toggle" type="button" aria-label="Switch to dark theme" title="Switch theme"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.5"/><path d="M10 1.5v2M10 16.5v2M18.5 10h-2M3.5 10h-2M16 4l-1.4 1.4M5.4 14.6 4 16M16 16l-1.4-1.4M5.4 5.4 4 4"/></svg></button></div>
+  
 </header>
 <main id="top">
   <div class="resource-main builder-main">
@@ -36,7 +36,6 @@
   <h2 id="plan-title" tabindex="-1">Your complete setup.</h2>
   <p class="plan-subtitle">PC tower and accessories are shown separately.</p>
   <div id="setup-summary" class="setup-summary"></div>
-  <p class="plan-short-disclaimer">Example prices only · not a retailer quote.</p>
   <div class="plan-actions"><button class="button button-lime" id="share-build" type="button">Share this build <span aria-hidden="true">↗</span></button></div>
   <details class="plan-breakdown">
     <summary><span>Cost and shop details</span><span class="plan-breakdown-mark" aria-hidden="true">＋</span></summary>
@@ -49,13 +48,12 @@
       <div class="shops-heading"><span>EXAMPLE CHECKOUTS</span><span id="shop-count">0 shops</span></div>
       <div id="shop-orders" class="shop-orders"></div>
       <div class="why-card"><span class="why-icon" aria-hidden="true">↳</span><p id="optimiser-reason">Checking the complete basket…</p></div>
-      <p class="plan-disclaimer">Example parts, shops and prices only.</p>
     </div>
   </details>
   <details id="fps-estimates" class="fps-details"><summary><span>Game performance reference</span><span class="fps-summary-mark" aria-hidden="true">＋</span></summary><div class="fps-panel"><p id="fps-status" class="fps-status" role="status">Open to request game performance estimates for this CPU and graphics card.</p><div id="fps-power-reference" class="fps-power-reference"></div><div id="fps-results" class="fps-results"></div><p class="fps-disclosure">High preset where available. Actual performance changes with game settings, drivers, and the rest of the system. Each result is labelled as a measured benchmark or a model estimate. FPS data by <a href="https://fpshq.com/en/api-docs/" target="_blank" rel="noreferrer">FPSHQ</a>.</p><button id="fps-retry" class="fps-retry" type="button" hidden>Try again</button></div></details>
 </aside>
     </section>
-    <section class="builder-compatibility" aria-labelledby="compatibility-title"><div><div class="resource-kicker">CHECK THE COMBINATION</div><h2 id="compatibility-title">Compatibility overview</h2></div><div class="compatibility-panel" id="compatibility" aria-live="polite"></div></section>
+    <details class="builder-compatibility-details"><summary>Compatibility details</summary><section class="builder-compatibility" aria-labelledby="compatibility-title"><div><h2 id="compatibility-title">Part compatibility</h2></div><div class="compatibility-panel" id="compatibility" aria-live="polite"></div></section></details>
   </div>
 </main>
 <footer class="site-footer site-footer-minimal"><div class="shell footer-bottom"><span>© <span id="year"></span> RIGWISE · Sample prices only</span><a href="privacy.html">Privacy &amp; legal</a></div></footer>
@@ -64,3 +62,4 @@
 <script type="module" src="app.js"></script>
 </body>
 </html>
+

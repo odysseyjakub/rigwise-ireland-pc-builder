@@ -116,9 +116,6 @@ function renderRecommendation() {
   summary.innerHTML = build
     ? '<div class="quiz-review-total"><span>' + totalLabel + '</span><strong>' + money(total || 0) + '</strong><small>' + money(preferences.budget) + ' PC budget · accessories priced separately</small></div><ul class="quiz-review-parts">' + parts + '</ul>'
     : '<p class="quiz-review-no-fit">The sample catalogue has no compatible combination for these answers. Adjust your targets or choose parts manually.</p>';
-  summary.insertAdjacentHTML("beforeend", preferences.designPreference === "aesthetics"
-    ? '<p class="quiz-review-style">Style preference: case, cooling and lighting. Review those choices in the parts builder.</p>'
-    : '<p class="quiz-review-style">Performance preference: parts are balanced around your use, screen and budget.</p>');
   if (preferences.accessories.length) {
     summary.insertAdjacentHTML("beforeend", '<p class="quiz-review-accessories">Accessories: ' + money(estimateAccessories(preferences.accessories, preferences.targetResolution)) + ' example · separate from PC</p>');
   }
