@@ -28,6 +28,7 @@ body.legal-page {
   font-family: Arial, "Helvetica Neue", sans-serif;
   font-size: 15px;
 }
+body.resource-page [hidden],body.legal-page [hidden] { display: none !important; }
 
 .resource-page h1,.resource-page h2,.resource-page h3,
 .legal-page h1,.legal-page h2,.brand {
@@ -204,3 +205,51 @@ body.legal-page {
   .resource-page .site-footer-minimal .footer-bottom { width: calc(100% - 32px); }
 }
 
+.hero-carousel-image { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.hero-carousel-image img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.hero-carousel-image:focus-visible { outline-offset: -5px; }
+.hero-carousel-control { position: absolute; z-index: 2; top: 50%; display: grid; width: 38px; height: 38px; place-items: center; transform: translateY(-50%); border: 1px solid rgba(255,255,255,.6); border-radius: 50%; background: rgba(255,255,255,.92); color: #171717; font: 22px/1 Arial,sans-serif; cursor: pointer; }
+.hero-carousel-control:hover { background: #fff; }
+.hero-carousel-control-prev { left: 14px; }
+.hero-carousel-control-next { right: 14px; }
+.hero-carousel-dots { position: absolute; z-index: 2; bottom: 16px; left: 50%; display: flex; gap: 7px; transform: translateX(-50%); padding: 7px 9px; border: 1px solid rgba(255,255,255,.5); border-radius: 999px; background: rgba(255,255,255,.9); }
+.hero-carousel-dot { width: 7px; height: 7px; padding: 0; border: 0; border-radius: 50%; background: #c4c4c4; cursor: pointer; }
+.hero-carousel-dot[aria-current="true"] { background: #171717; }
+
+.part-finder-main { width: min(780px, calc(100% - 40px)); }
+.part-finder-main .resource-hero { margin-bottom: 25px; }
+.part-finder-main .resource-hero h1 { margin: 0 0 10px; font-size: clamp(36px,5vw,52px); }
+.part-finder-main .resource-hero > p { max-width: 620px; font-size: 15px; }
+.part-finder-category-grid { grid-template-columns: repeat(2,minmax(0,1fr)); margin-top: 18px; }
+.part-finder-category-grid .quiz-choice { min-height: 72px; align-items: center; padding: 14px; }
+.part-finder-budget-display { margin: 12px 0 20px; color: #171717; font: 700 clamp(32px,6vw,46px)/1 Arial,sans-serif; letter-spacing: -.04em; }
+.part-finder-budget-range { width: 100%; accent-color: #171717; }
+.part-finder-budget-labels { display: flex; justify-content: space-between; margin-top: 5px; color: #777; font-size: 12px; }
+.part-finder-number-label { display: block; margin-top: 16px; }
+.part-finder-needs-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin-top: 20px; }
+.part-finder-needs-grid label { display: grid; gap: 7px; color: #333; font-size: 14px; font-weight: 600; }
+.part-finder-needs-grid .select-control,.part-finder-needs-grid input { min-height: 44px; width: 100%; padding: 9px 11px; border: 1px solid #ddd; border-radius: 6px; background: #fff; color: #171717; }
+.part-finder-results { margin-top: 24px; }
+.part-finder-results-heading { display: flex; justify-content: space-between; align-items: end; gap: 15px; margin-bottom: 12px; }
+.part-finder-results-heading h2 { margin: 0; font-size: 24px; }
+.part-finder-results-note { margin: 0; color: #666; font-size: 13px; line-height: 1.5; }
+.part-finder-result-list { display: grid; gap: 10px; }
+.part-finder-result-card { display: grid; grid-template-columns: 58px minmax(0,1fr) auto; align-items: center; gap: 14px; padding: 14px; border: 1px solid #e8e8e8; border-radius: 7px; background: #fff; }
+.part-finder-result-image { display: grid; width: 58px; height: 58px; place-items: center; overflow: hidden; border: 1px solid #eee; border-radius: 5px; background: #fafafa; color: #777; font-size: 12px; }
+.part-finder-result-image img { width: 100%; height: 100%; object-fit: contain; }
+.part-finder-result-copy { display: grid; gap: 4px; min-width: 0; }
+.part-finder-result-copy small { color: #6b6b6b; font-size: 12px; }
+.part-finder-result-copy strong { color: #171717; font-size: 15px; }
+.part-finder-result-copy a { width: fit-content; color: #555; font-size: 12px; text-decoration: underline; text-underline-offset: 2px; }
+.part-finder-result-price { color: #171717; font-size: 15px; font-weight: 700; white-space: nowrap; text-align: right; }
+.part-finder-result-price small { display: block; margin-top: 4px; color: #777; font-size: 11px; font-weight: 400; }
+.part-finder-empty { padding: 18px; border: 1px solid #e8e8e8; border-radius: 7px; color: #555; background: #fafafa; line-height: 1.5; }
+.part-finder-results-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+@media (max-width: 740px) {
+  .part-finder-main { width: calc(100% - 32px); }
+  .part-finder-needs-grid { grid-template-columns: 1fr; }
+  .part-finder-result-card { grid-template-columns: 48px minmax(0,1fr); gap: 11px; }
+  .part-finder-result-image { width: 48px; height: 48px; }
+  .part-finder-result-price { grid-column: 2; text-align: left; }
+  .part-finder-results-heading { align-items: start; flex-direction: column; }
+}

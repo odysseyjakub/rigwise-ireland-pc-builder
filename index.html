@@ -8,23 +8,28 @@
 <title>Rigwise — a PC that fits the way you use it</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="resources.css"><link rel="stylesheet" href="minimal.css">
+<link rel="stylesheet" href="resources.css">
+<link rel="stylesheet" href="minimal.css">
 </head>
 <body class="resource-page home-page">
-
 <header class="site-header resource-header">
   <a class="brand" href="index.html" aria-label="Rigwise home"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M4 5h8v8H4zM16 5h8v8h-8zM4 17h8v7H4zM16 17h8v7h-8z"/></svg></span><span>rigwise<span class="brand-period">.</span></span></a>
-  <nav class="main-nav" aria-label="Main navigation"><a class="nav-link" href="build-quiz.html">Build</a><a class="nav-link" href="saved-builds.html">Saved</a></nav>
-  
+  <nav class="main-nav" aria-label="Main navigation"><a class="nav-link" href="build-quiz.html">Build</a><a class="nav-link" href="part-finder.html">Parts</a><a class="nav-link" href="saved-builds.html">Saved</a></nav>
 </header>
 <main id="top">
   <section class="hero shell" aria-labelledby="hero-title">
-    <div class="hero-copy"><h1 id="hero-title">A PC that fits<br><span>the way you use it.</span></h1><p>Choose your budget and what matters to you.</p><div class="hero-actions"><a class="button button-lime" href="build-quiz.html">Start building <span aria-hidden="true">↘</span></a></div></div>
-    <figure class="hero-photo"><img src="assets/rigwise-home-pc.jpg" alt="A custom-built desktop PC with blue-lit components" width="1200" height="1440" fetchpriority="high"><figcaption>Photo by <a href="https://unsplash.com/photos/a-computer-tower-sitting-on-top-of-a-desk-4gbbKX63V5I" target="_blank" rel="noreferrer">sdl sanjaya on Unsplash</a></figcaption></figure>
+    <div class="hero-copy"><h1 id="hero-title">A PC that fits<br><span>the way you use it.</span></h1><p>Choose your budget and what matters to you.</p><div class="hero-actions"><a class="button button-lime" href="build-quiz.html">Start building</a></div></div>
+    <figure class="hero-photo" aria-roledescription="carousel" aria-label="PC build photos">
+      <button id="hero-carousel-image" class="hero-carousel-image" type="button" aria-label="Show the next PC photo"><img id="hero-carousel-current" src="assets/rigwise-home-pc.jpg" alt="A custom-built desktop PC with blue-lit components" width="1200" height="1440" fetchpriority="high"></button>
+      <button id="hero-carousel-prev" class="hero-carousel-control hero-carousel-control-prev" type="button" aria-label="Previous photo">‹</button>
+      <button id="hero-carousel-next" class="hero-carousel-control hero-carousel-control-next" type="button" aria-label="Next photo">›</button>
+      <div id="hero-carousel-dots" class="hero-carousel-dots" aria-label="Choose a PC photo"></div>
+      <span id="hero-carousel-status" class="visually-hidden" aria-live="polite"></span>
+    </figure>
   </section>
 </main>
 <footer class="site-footer site-footer-minimal"><div class="shell footer-bottom"><span>© <span id="year"></span> RIGWISE · Sample prices only</span><a href="privacy.html">Privacy &amp; legal</a></div></footer>
 <script type="module" src="resource-page.js"></script>
+<script type="module" src="home-carousel.js"></script>
 </body>
 </html>
-
