@@ -1,0 +1,23 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    { "source": "/components.html", "destination": "/", "permanent": false },
+    { "source": "/components", "destination": "/", "permanent": false },
+    { "source": "/cost-check.html", "destination": "/", "permanent": false },
+    { "source": "/cost-check", "destination": "/", "permanent": false },
+    { "source": "/deals.html", "destination": "/", "permanent": false },
+    { "source": "/deals", "destination": "/", "permanent": false },
+    { "source": "/guides.html", "destination": "/", "permanent": false },
+    { "source": "/guides", "destination": "/", "permanent": false },
+    { "source": "/local-shops.html", "destination": "/", "permanent": false },
+    { "source": "/local-shops", "destination": "/", "permanent": false },
+    { "source": "/cookies.html", "destination": "/privacy.html", "permanent": false },
+    { "source": "/cookies", "destination": "/privacy.html", "permanent": false },
+    { "source": "/terms.html", "destination": "/privacy.html", "permanent": false },
+    { "source": "/terms", "destination": "/privacy.html", "permanent": false },
+    { "source": "/affiliate.html", "destination": "/privacy.html", "permanent": false },
+    { "source": "/affiliate", "destination": "/privacy.html", "permanent": false },
+    { "source": "/contact.html", "destination": "/privacy.html", "permanent": false },
+    { "source": "/contact", "destination": "/privacy.html", "permanent": false }
+  ]
+}

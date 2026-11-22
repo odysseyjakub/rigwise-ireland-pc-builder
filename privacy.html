@@ -1,25 +1,47 @@
 <!doctype html>
 <html lang="en-IE">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Prototype privacy and data summary for Rigwise Ireland PC Builder.">
-<title>Privacy &amp; data — Rigwise</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="legal.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f5f0">
+<meta name="description" content="How Rigwise handles local builds, shared links and performance requests.">
+<title>Privacy &amp; data — Rigwise</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="legal.css">
 </head>
 <body class="legal-page">
-<header class="legal-header"><a class="brand" href="index.html" aria-label="Rigwise home">rigwise<span class="brand-period">.</span></a><nav class="legal-nav" aria-label="Policy pages"><a href="privacy.html" aria-current="page">Privacy</a><a href="cookies.html">Cookies &amp; storage</a><a href="terms.html">Terms</a><a href="affiliate.html">Affiliate</a><a href="contact.html">Contact</a></nav></header>
+<header class="legal-header">
+  <a class="brand" href="index.html" aria-label="Rigwise home">rigwise<span class="brand-period">.</span></a>
+  <nav class="legal-nav" aria-label="Main navigation">
+    <a href="build-quiz.html">Build</a>
+    <a href="saved-builds.html">Saved</a>
+  </nav>
+</header>
 <main class="legal-main">
-<div class="legal-eyebrow">Prototype notice · Ireland</div><h1>Privacy &amp; data.</h1>
-<p class="legal-lead">This page describes the current demo. It is not a completed legal privacy notice: the site operator has not supplied the controller identity or contact details needed for public commercial use.</p><div class="legal-meta">Last reviewed 18 November 2026 · Version 1</div>
-<div class="legal-alert"><strong>Prototype limitation.</strong> Do not enter personal information. Before commercial launch, the operator must supply its legal identity and contact channel, confirm purposes and lawful bases, document hosting arrangements and retention, and complete a privacy review. The Irish Data Protection Commission explains the information a controller should provide in its <a href="https://www.dataprotection.ie/en/individuals/know-your-rights/right-be-informed-transparency-article-13-14-gdpr">Article 13 and 14 transparency guidance</a>.</div>
-<article class="legal-article">
-<section><h2>Who is responsible?</h2><p>The operator's legal name, postal address and privacy contact have not been provided for this prototype. That information is therefore not published here. A responsible controller and working contact route must be identified before the site is used as a public commercial service.</p></section>
-<section><h2>What the site stores in this browser</h2><p>Rigwise uses browser local storage for its anonymous ID, saved builds, selected county and theme preference. The ID is a label for this browser's saved builds; it is not a password or sign-in credential. These values are not synced to a server by the app.</p><ul><li><code>rigwise-local-account-id-v1</code>: the local ID.</li><li><code>rigwise-saved-builds-v1:&lt;ID&gt;</code>: saved builds associated with that ID.</li><li><code>rigwise-county</code> and <code>rigwise-theme</code>: the selected county and visual theme.</li></ul><p>The app may read the legacy <code>rigwise-demo-builds-v1</code> key once to migrate earlier saved builds. The “Clear local data” control removes Rigwise local-storage keys from this browser. A downloaded backup is a separate file on your device and is not removed by that control.</p></section>
-<section><h2>Shared builds and backups</h2><p>A share link encodes the selected component IDs, budget, workload and county in the URL fragment. Anyone who receives the full link can open that build configuration. The build fragment is not a secret or an account credential.</p><p>A downloaded backup contains the local ID and saved builds. Restoring it replaces the ID and saved builds in that browser after confirmation. The app does not upload the file.</p></section>
-<section><h2>Files you review</h2><p>The Awin feed review reads a selected CSV or TSV file in your browser to count exact matches, ambiguous rows and parse failures. It does not upload or persist the file, and it never adds imported prices to the optimiser.</p></section>
-<section><h2>Optional mapped-shop lookup</h2><p>If you choose “Find mapped shops”, the selected county is sent in a request to this site's Vercel function. The function queries the public <a href="https://ovp.dresel.systems/en/">Overpass service operated by ovp.dresel.systems</a> for named computer and electronics shops recorded in OpenStreetMap. The request does not send your local account ID, exact address or device location. Successful county results may be cached by Vercel for six hours and served stale for up to one day while a refresh is attempted; the lookup is not saved in browser storage. Vercel and the Overpass operator may process technical request information under their own notices. The Overpass service says it records anonymous aggregate usage counts and provides no availability guarantee. Review the <a href="https://ovp.dresel.systems/en/">Overpass service notice</a>, its <a href="https://www.openstreetmap.org/copyright">OpenStreetMap attribution and licence information</a>, and Vercel's <a href="https://vercel.com/legal/privacy-notice">Privacy Notice</a>.</p></section>
-<section><h2>Optional game performance estimates</h2><p>If you expand “Estimated FPS in 5 games”, the browser sends the selected processor and graphics-card model slugs to this site's Vercel function. The function requests those parts, each game and resolution from the public <a href="https://fpshq.com/en/api-docs/">FPSHQ API</a>; complete result sets may be cached at Vercel for one hour. The app does not send your local account ID, saved builds, budget, county or address. Vercel may process technical request information, and FPSHQ receives the function's request, under their own notices. Results link to FPSHQ and distinguish measured benchmarks from model predictions. Review <a href="https://fpshq.com/en/privacy/">FPSHQ's privacy notice</a>, its <a href="https://fpshq.com/en/api-docs/">API documentation</a>, and Vercel's <a href="https://vercel.com/legal/privacy-notice">Privacy Notice</a>.</p></section>
-<section><h2>Component images</h2><p>When a builder step includes a reference image, the browser requests that image directly from the image host recorded for the model. Current sample image hosts include AMD, Multitronic and TechPowerUp; they may receive technical request information such as your IP address and browser details. The request does not include your local account ID, budget, saved builds, county or address. These thumbnails identify example parts and do not confirm live offers or stock. The homepage photograph is stored locally and served by Vercel, so it does not make a separate request to Unsplash.</p></section><section><h2>Hosting and third parties</h2><p>The site is hosted on Vercel. The app does not include analytics or advertising scripts and no longer requests external font files. Vercel's platform may process technical request information; see the <a href="https://vercel.com/legal/privacy-notice">Vercel Privacy Notice</a>. The service-specific controller/processor arrangements and retention period have not been documented in this prototype.</p></section>
-<section><h2>Your choices and rights</h2><p>You can clear app data with the control in the account panel or through your browser's site-storage settings. A working contact route for requests about hosting-level data has not been supplied; this is a prelaunch gap. See the <a href="https://www.dataprotection.ie/en/individuals/know-your-rights/right-be-informed-transparency-article-13-14-gdpr">Irish Data Protection Commission guidance</a> for information about transparency and data-subject rights.</p></section>
-</article></main>
-<footer class="legal-footer"><span>Rigwise · working demo · not a complete commercial privacy notice</span><nav aria-label="Policy pages"><a href="cookies.html">Cookies</a><a href="terms.html">Terms</a><a href="affiliate.html">Affiliate</a><a href="contact.html">Contact</a><a href="index.html">PC builder</a></nav></footer>
-</body></html>
-
+  <h1>Privacy &amp; data</h1>
+  <p class="legal-lead">Rigwise stores your builds in this browser. There are no email accounts or cloud sync.</p>
+  <div class="legal-alert"><strong>Prototype notice.</strong> Part and accessory prices are examples, not retailer offers. The site operator’s legal identity and privacy contact have not been provided. Do not enter personal information.</div>
+  <article class="legal-article">
+    <section>
+      <h2>Saved on this device</h2>
+      <p>Your Rigwise ID, saved builds, theme and questionnaire preferences stay in this browser’s local storage. The ID is a private label for your saved builds, not a login or password.</p>
+      <p>You can download or restore a backup, copy the ID, or clear Rigwise data from <a href="saved-builds.html">Saved</a>.</p>
+    </section>
+    <section>
+      <h2>Build links</h2>
+      <p>A shared build link contains selected parts and build preferences. It never includes your local Rigwise ID or saved builds. Anyone with the link can see that build configuration.</p>
+    </section>
+    <section>
+      <h2>Performance and product images</h2>
+      <p>When you open FPS results, Rigwise sends the selected CPU, GPU, games and resolutions to its Vercel endpoint, which requests estimates from <a href="https://fpshq.com/en/api-docs/">FPSHQ</a>. The request does not include your local ID, saved builds or address. Product thumbnails may load from the manufacturer or image host named for that part.</p>
+    </section>
+    <section>
+      <h2>Choices and launch status</h2>
+      <p>Rigwise does not include analytics or advertising scripts. You can clear browser data in the Saved section or through your browser’s site-storage settings. A complete commercial privacy notice requires the operator’s identity, contact details and confirmed data-handling terms.</p>
+    </section>
+  </article>
+</main>
+<footer class="legal-footer"><span>Rigwise · Sample prices only</span><nav aria-label="Main navigation"><a href="build-quiz.html">Build</a><a href="saved-builds.html">Saved</a></nav></footer>
+</body>
+</html>
