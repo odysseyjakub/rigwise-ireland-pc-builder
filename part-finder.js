@@ -24,8 +24,8 @@ function selectedCategory() {
 
 function renderNeedsFields(category) {
   const fields = {
-    cpu: '<label>Primary use<select class="select-control" name="workload" required><option value="" selected disabled>Choose a use</option><option value="gaming">Gaming</option><option value="streaming">Gaming and streaming</option><option value="creative">Creative work</option><option value="3d">3D and development</option><option value="everyday">Everyday use</option></select></label>',
-    graphics: '<label>Target resolution<select class="select-control" name="resolution" required><option value="" selected disabled>Choose a resolution</option><option value="1080p">1080p</option><option value="1440p">1440p</option><option value="4k">4K</option></select></label>',
+    cpu: '<label>CPU platform / generation<select class="select-control" name="socket" required><option value="" selected disabled>Choose a platform</option><option value="AM4">AM4 · Ryzen 5000</option><option value="AM5">AM5 · Ryzen 7000</option></select></label><label>Primary use<select class="select-control" name="workload" required><option value="" selected disabled>Choose a use</option><option value="gaming">Gaming</option><option value="streaming">Gaming and streaming</option><option value="creative">Creative work</option><option value="3d">3D and development</option><option value="everyday">Everyday use</option></select></label>',
+    graphics: '<label>GPU generation<select class="select-control" name="series" required><option value="" selected disabled>Choose a generation</option><option value="Radeon RX 7000">AMD Radeon RX 7000</option><option value="GeForce RTX 40">NVIDIA GeForce RTX 40</option></select></label><label>Target resolution<select class="select-control" name="resolution" required><option value="" selected disabled>Choose a resolution</option><option value="1080p">1080p</option><option value="1440p">1440p</option><option value="4k">4K</option></select></label>',
     memory: '<label>Capacity needed<select class="select-control" name="capacity" required><option value="" selected disabled>Choose capacity</option><option value="16">16 GB</option><option value="32">32 GB</option><option value="64">64 GB</option></select></label><label>Memory generation<select class="select-control" name="memoryGen" required><option value="" selected disabled>Choose generation</option><option value="DDR4">DDR4</option><option value="DDR5">DDR5</option></select></label>',
     storage: '<label>Capacity needed in GB<input name="capacityGb" type="number" min="256" max="8000" step="1" inputmode="numeric" placeholder="e.g. 512" required></label>',
     motherboard: '<label>Processor platform<select class="select-control" name="socket" required><option value="" selected disabled>Choose platform</option><option value="AM4">AM4</option><option value="AM5">AM5</option></select></label><label>Board size<select class="select-control" name="size" required><option value="" selected disabled>Choose size</option><option value="any">Any</option><option value="compact">Compact</option></select></label>',
@@ -79,7 +79,7 @@ function syncNavigation() {
   backButton.hidden = stepIndex === 0;
   nextButton.disabled = !stepIsValid(current);
   submitButton.disabled = !steps.every(stepIsValid);
-  const hints = ["Pick the part you want.", "Set the maximum you want to spend on this part.", "Answer the requirement for this part."];
+  const hints = ["Pick the part you want.", "Set the maximum you want to spend on this part.", "Answer the questions for this part."];
   document.querySelector("#part-finder-hint").textContent = stepIsValid(current) ? "Ready for the next step." : hints[stepIndex];
 }
 
@@ -105,11 +105,11 @@ function capacityGb(product) {
 function meetsNeed(product, category, values) {
   if (category === "cpu") {
     const minimumTier = ["creative", "3d"].includes(values.get("workload")) ? 2 : 1;
-    return Number(product.specs?.tier) >= minimumTier;
+    return product.specs?.socket === values.get("socket") && Number(product.specs?.tier) >= minimumTier;
   }
   if (category === "graphics") {
     const minimumTier = { "1080p": 1, "1440p": 2, "4k": 3 }[values.get("resolution")];
-    return Number(product.specs?.tier) >= minimumTier;
+    return product.series === values.get("series") && Number(product.specs?.tier) >= minimumTier;
   }
   if (category === "memory") {
     return Number(product.specs?.capacity) >= Number(values.get("capacity")) && product.specs?.memoryGen === values.get("memoryGen");
