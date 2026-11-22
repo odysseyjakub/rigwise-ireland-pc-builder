@@ -2,8 +2,8 @@
 <html lang="en-IE">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#ffffff">
-<meta name="description" content="Find one PC part by category, individual budget and requirements.">
-<title>Find a PC part — Rigwise</title><link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="description" content="Find PC parts for shoppers in Ireland and the UK by budget and what matters to you.">
+<title>Find a PC part in the UK or Ireland — Rigwise</title><link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="resources.css"><link rel="stylesheet" href="minimal.css">
 </head>
 <body class="resource-page part-finder-page">
@@ -12,27 +12,35 @@
 <nav class="main-nav" aria-label="Main navigation"><a class="nav-link" href="build-quiz.html">Build</a><a class="nav-link active" href="part-finder.html" aria-current="page">Parts</a><a class="nav-link" href="saved-builds.html">Saved</a></nav>
 </header>
 <main class="resource-main part-finder-main">
-<section class="resource-hero"><div class="resource-kicker">ONE PART AT A TIME</div><h1>Find a part.</h1><p>Choose what you need, set a budget for that part, and compare the closest matches.</p></section>
+<section class="resource-hero"><div class="resource-kicker">UK &amp; IRELAND · ONE PART AT A TIME</div><h1>Find a part.</h1><p>Choose what you need, set a budget for that part, and compare the closest matches.</p></section>
 <form id="part-finder-form" class="quiz-card" novalidate>
-<div class="quiz-progress-row"><span id="part-finder-progress" aria-live="polite">Step 1 of 3</span></div>
+<div class="quiz-progress-row"><span id="part-finder-progress" aria-live="polite">Step 1 of 3</span><button type="button" class="button button-outline part-finder-help-trigger" data-part-help-open>Don't know? Get help</button></div>
 <div class="quiz-progress-track" role="progressbar" aria-label="Part finder progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="part-finder-progress-fill"></span></div>
 <p id="part-finder-error" class="quiz-error" role="alert" hidden></p>
 <fieldset data-part-step="category"><legend>Which part are you shopping for?</legend><div class="quiz-choice-grid part-finder-category-grid">
-<label class="quiz-choice"><input type="radio" name="category" value="cpu"><span><strong>Processor</strong><small>CPU</small></span></label>
-<label class="quiz-choice"><input type="radio" name="category" value="graphics"><span><strong>Graphics card</strong><small>GPU</small></span></label>
-<label class="quiz-choice"><input type="radio" name="category" value="memory"><span><strong>Memory</strong><small>RAM</small></span></label>
-<label class="quiz-choice"><input type="radio" name="category" value="storage"><span><strong>Storage</strong><small>SSD</small></span></label>
-<label class="quiz-choice"><input type="radio" name="category" value="motherboard"><span><strong>Motherboard</strong><small>Board</small></span></label>
-<label class="quiz-choice"><input type="radio" name="category" value="case"><span><strong>Case</strong><small>Compact or standard</small></span></label>
-<label class="quiz-choice"><input type="radio" name="category" value="power"><span><strong>Power supply</strong><small>PSU</small></span></label>
-<label class="quiz-choice"><input type="radio" name="category" value="cooler"><span><strong>CPU cooler</strong><small>Air cooling</small></span></label>
+<label class="quiz-choice"><input type="radio" name="category" value="cpu"><span><strong>Processor</strong><small>CPU · runs apps and games</small></span></label>
+<label class="quiz-choice"><input type="radio" name="category" value="graphics"><span><strong>Graphics card</strong><small>GPU · draws game graphics</small></span></label>
+<label class="quiz-choice"><input type="radio" name="category" value="memory"><span><strong>Memory</strong><small>RAM · active app workspace</small></span></label>
+<label class="quiz-choice"><input type="radio" name="category" value="storage"><span><strong>Storage</strong><small>SSD · games and files</small></span></label>
+<label class="quiz-choice"><input type="radio" name="category" value="motherboard"><span><strong>Motherboard</strong><small>Connects your components</small></span></label>
+<label class="quiz-choice"><input type="radio" name="category" value="case"><span><strong>Case</strong><small>Holds your components</small></span></label>
+<label class="quiz-choice"><input type="radio" name="category" value="power"><span><strong>Power supply</strong><small>PSU · powers the system</small></span></label>
+<label class="quiz-choice"><input type="radio" name="category" value="cooler"><span><strong>CPU cooler</strong><small>Keeps the processor cool</small></span></label>
 </div></fieldset>
 <fieldset data-part-step="budget" hidden><legend>What is your budget for this part?</legend><label for="part-budget-range" class="quiz-field-label">Maximum spend</label><div id="part-budget-display" class="part-finder-budget-display">Choose an amount</div><input id="part-budget-range" class="part-finder-budget-range" type="range" min="20" max="2000" step="1" value="20"><div class="part-finder-budget-labels"><span>€20</span><span>€2,000</span></div><label for="part-budget-number" class="quiz-field-label part-finder-number-label">Or enter an exact amount</label><input id="part-budget-number" class="select-control" type="number" min="20" max="2000" step="1" placeholder="e.g. 400" inputmode="numeric" required><p>Budget applies to this single part only.</p></fieldset>
 <fieldset data-part-step="needs" hidden><legend id="part-needs-title">What do you need from it?</legend><div id="part-needs-fields" class="part-finder-needs-grid"></div></fieldset>
 <div class="quiz-actions"><button id="part-finder-back" class="button button-outline" type="button" hidden>Back</button><span id="part-finder-hint">Pick the part you want.</span><button id="part-finder-next" class="button button-dark" type="button" disabled>Next</button><button id="part-finder-submit" class="button button-dark" type="submit" hidden disabled>Find a part</button></div>
 </form>
-<section id="part-finder-results" class="part-finder-results" aria-live="polite" hidden><div class="part-finder-results-heading"><div><div class="resource-kicker">YOUR MATCHES</div><h2 id="part-finder-results-title" tabindex="-1">Parts within your budget</h2></div></div><p id="part-finder-results-note" class="part-finder-results-note"></p><div id="part-finder-result-list" class="part-finder-result-list"></div><div class="part-finder-results-actions"><button id="part-finder-edit" class="button button-outline" type="button">Change answers</button><button id="part-finder-reset" class="button button-dark" type="button">Find another part</button></div></section>
-<p class="quiz-data-note">Example parts and prices only. Live stock and checkout are not connected.</p>
+<dialog id="part-finder-help" class="part-finder-help-dialog" aria-labelledby="part-finder-help-title">
+  <div class="part-finder-help-heading"><div><div class="resource-kicker">PARTS HELP</div><h2 id="part-finder-help-title">Not sure what to choose?</h2></div><button id="part-finder-help-close" class="button button-outline" type="button">Close</button></div>
+  <p id="part-finder-help-context" class="part-finder-help-context">Choose the part you need. If you are building a whole PC, use Build instead.</p>
+  <section class="part-finder-help-section"><h3>Not sure which part?</h3><ul><li>Games look slow? Start by comparing graphics cards.</li><li>Running out of room? Choose storage for games and files.</li><li>Multitasking feels slow? Compare memory or processors.</li><li>Building a complete PC? Start in <a href="build-quiz.html">Build</a>.</li></ul></section>
+  <section class="part-finder-help-section"><h3>Stuck or getting no matches?</h3><ul><li>Choose “Not sure” to see more options.</li><li>Check that CPU platform matches the motherboard, and DDR4 or DDR5 matches the board.</li><li>Raise the budget for this one part if every match is over your limit.</li></ul></section>
+  <section class="part-finder-help-section"><h3>Buying in the UK or Ireland</h3><p>Prices and stock should match the seller and delivery country. The current examples use euros and are not live or region-specific.</p></section>
+  <div class="part-finder-help-actions"><button id="part-finder-flexible" class="button button-dark" type="button">Show flexible matches</button></div>
+</dialog>
+<section id="part-finder-results" class="part-finder-results" aria-live="polite" hidden><div class="part-finder-results-heading"><div><div class="resource-kicker">YOUR MATCHES</div><h2 id="part-finder-results-title" tabindex="-1">Parts within your budget</h2></div></div><p id="part-finder-results-note" class="part-finder-results-note"></p><div id="part-finder-result-list" class="part-finder-result-list"></div><div class="part-finder-results-actions"><button type="button" class="button button-outline" data-part-help-open>Troubleshoot answers</button><button id="part-finder-edit" class="button button-outline" type="button">Change answers</button><button id="part-finder-reset" class="button button-dark" type="button">Find another part</button></div></section>
+<p class="quiz-data-note">Example data only: prices are euro examples, not verified offers for Ireland or the UK. Live stock and checkout are not connected.</p>
 </main>
 <footer class="site-footer site-footer-minimal"><div class="shell footer-bottom"><span>© <span id="year"></span> RIGWISE · Sample prices only</span><a href="privacy.html">Privacy &amp; legal</a></div></footer>
 <script type="module" src="resource-page.js"></script><script type="module" src="part-finder.js"></script>
