@@ -49,6 +49,8 @@ test("questionnaire groups essentials, accepts exact storage targets and keeps a
   assert.match(quiz, /name="apps" value="video"/);
   assert.match(quiz, /name="design" value="aesthetics"/);
   assert.match(quiz, /id="quiz-review"/);
+  assert.match(quiz, /id="quiz-fps-estimates"/);
+  assert.match(quiz, /Game FPS &amp; power estimates/);
   assert.match(quiz, /Adjust my answers/);
   assert.match(quiz, /Choose my parts/);
   assert.match(quiz, /name="storageGb" type="number" min="256" max="8000"/);
@@ -63,6 +65,8 @@ test("questionnaire groups essentials, accepts exact storage targets and keeps a
   assert.match(script, /selectedValues\("games"\)\.length > 0/);
   assert.match(script, /selectedValues\("apps"\)\.length > 0/);
   assert.match(script, /function showRecommendation\(/);
+  assert.match(script, /async function loadRecommendationFps\(/);
+  assert.match(script, /renderFpsTable\(resultHost, rows\)/);
   assert.match(script, /document\.querySelector\("\.quiz-hero"\)\.hidden = true/);
   assert.match(script, /document\.querySelector\("\.quiz-hero"\)\.hidden = false/);
   assert.match(script, /storageInput\.value = String\(storageGigabytes\(previousAnswers\.storagePreference\)/);
@@ -130,4 +134,3 @@ test("resource pages share the saved browser theme preference", async () => {
   assert.match(css, /@media \(max-width: 740px\)/);
   assert.match(css, /\.dark-theme\.resource-page/);
 });
-

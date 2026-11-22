@@ -9,6 +9,7 @@ import { createSavedBuildSnapshot, duplicateSavedBuild, MAX_SAVED_BUILDS, prepen
 import { createQuizBuilderQuery, isValidStoragePreference, normalizeCreativeApps, normalizeGameSlugs, readQuizPreferences, storageGigabytes } from "./build-quiz-state.js";
 import { estimateAccessories, normalizeAccessories } from "./accessories.js";
 import { fetchBuildFps, FPS_GAMES, FPS_RESOLUTIONS } from "./fps-estimates.js";
+import { renderFpsPowerReference, renderFpsTable } from "./fps-ui.js";
 
 const $ = selector => document.querySelector(selector);
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(value);
@@ -223,90 +224,13 @@ function renderSetupSummary(plan) {
     '<p>Accessories are separate from your PC budget. Allowances are illustrative, not product offers or live prices.</p>';
 }
 
-function renderFpsPowerReference(gpu) {
-  const host = $("#fps-power-reference");
-  if (!host) return;
-  if (!gpu) {
-    host.textContent = "Whole-PC average power is not available for this example build.";
-    return;
-  }
-  const reference = Number.isFinite(gpu.averageGamingPowerW)
-    ? gpu.averageGamingPowerW + " W average GPU gaming power"
-    : Number.isFinite(gpu.specs?.watts)
-      ? gpu.specs.watts + " W typical GPU board power"
-      : "GPU power reference unavailable";
-  host.textContent = reference + " · whole-PC average power is not published for these exact parts.";
-}
-
-function renderFpsTable(rows) {
-  const host = $("#fps-results");
-  if (!host) return;
-  const table = document.createElement("table");
-  table.className = "fps-table";
-  const head = document.createElement("thead");
-  const headerRow = document.createElement("tr");
-  const gameHeader = document.createElement("th");
-  gameHeader.scope = "col";
-  gameHeader.textContent = "Game";
-  headerRow.append(gameHeader);
-  FPS_RESOLUTIONS.forEach(resolution => {
-    const cell = document.createElement("th");
-    cell.scope = "col";
-    cell.textContent = resolution;
-    headerRow.append(cell);
-  });
-  head.append(headerRow);
-  const body = document.createElement("tbody");
-  rows.forEach(game => {
-    const row = document.createElement("tr");
-    const title = document.createElement("th");
-    title.scope = "row";
-    const sourceUrl = game.resolutions.find(result => result.sourceUrl)?.sourceUrl || "https://fpshq.com/games/" + encodeURIComponent(game.slug) + "/";
-    const sourceLink = document.createElement("a");
-    sourceLink.href = sourceUrl;
-    sourceLink.target = "_blank";
-    sourceLink.rel = "noreferrer";
-    sourceLink.textContent = game.name;
-    title.append(sourceLink);
-    row.append(title);
-    game.resolutions.forEach(result => {
-      const cell = document.createElement("td");
-      if (result.status !== "available") {
-        cell.className = "fps-unavailable";
-        cell.textContent = "Unavailable";
-      } else {
-        const score = document.createElement("strong");
-        score.textContent = Math.round(result.fps) + " FPS";
-        const label = document.createElement("small");
-        label.textContent = result.source === "benchmark"
-          ? "Measured benchmark"
-          : result.basis === "aggregate"
-            ? "Estimate · review data"
-            : result.basis === "model"
-              ? "Estimate · model"
-              : "Estimate";
-        cell.append(score, label);
-        if (result.minimum !== null && result.maximum !== null && result.minimum !== result.maximum) {
-          const range = document.createElement("small");
-          range.textContent = Math.round(result.minimum) + "–" + Math.round(result.maximum) + " range";
-          cell.append(range);
-        }
-      }
-      row.append(cell);
-    });
-    body.append(row);
-  });
-  table.append(head, body);
-  host.replaceChildren(table);
-}
-
 async function loadFpsEstimates({ retry = false } = {}) {
   const details = $("#fps-estimates");
   if (!details?.open) return;
   const requestId = ++fpsRequestSequence;
   const cpu = productById(build.cpu);
   const gpu = productById(build.graphics);
-  renderFpsPowerReference(gpu);
+  renderFpsPowerReference($("#fps-power-reference"), gpu);
   const status = $("#fps-status");
   const retryButton = $("#fps-retry");
   const resultHost = $("#fps-results");
@@ -337,7 +261,7 @@ async function loadFpsEstimates({ retry = false } = {}) {
     }
     const rows = await estimate;
     if (requestId !== fpsRequestSequence || activeFpsKey !== key) return;
-    renderFpsTable(rows);
+    renderFpsTable(resultHost, rows);
     const availableCount = rows.flatMap(game => game.resolutions).filter(result => result.status === "available").length;
     const unavailable = rows.flatMap(game => game.resolutions).filter(result => result.status !== "available");
     status.textContent = availableCount === rows.length * FPS_RESOLUTIONS.length

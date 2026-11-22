@@ -2,6 +2,8 @@ import { generateAutoBuild } from "./auto-build.js";
 import { estimateAccessories } from "./accessories.js";
 import { createQuizBuilderQuery, isValidStoragePreference, MAX_PC_BUDGET, readQuizPreferences, storageGigabytes } from "./build-quiz-state.js";
 import { BUNDLES, COMPONENTS, OFFERS, PRODUCTS, SHIPPING_RULES } from "./data.js";
+import { fetchBuildFps, FPS_GAMES } from "./fps-estimates.js";
+import { renderFpsPowerReference, renderFpsTable } from "./fps-ui.js";
 
 const form = document.querySelector("#build-quiz");
 const steps = [...form.querySelectorAll("[data-quiz-step]")];
@@ -20,6 +22,8 @@ let stepIndex = 0;
 let storageTouched = false;
 let budgetTouched = false;
 let reviewQuery = "";
+let quizFpsRequestSequence = 0;
+let quizFpsContext = null;
 
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(value);
 const selected = name => form.querySelector('[name="' + name + '"]:checked')?.value || "";
@@ -207,6 +211,52 @@ function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 }
 
+async function loadRecommendationFps() {
+  const details = document.querySelector("#quiz-fps-estimates");
+  const status = document.querySelector("#quiz-fps-status");
+  const resultHost = document.querySelector("#quiz-fps-results");
+  const retryButton = document.querySelector("#quiz-fps-retry");
+  const requestId = ++quizFpsRequestSequence;
+  const context = quizFpsContext;
+  if (!details || !status || !resultHost || !retryButton) return;
+  if (!context?.build || !gamingWorkloads.has(context.preferences.workload)) {
+    details.hidden = true;
+    return;
+  }
+
+  details.hidden = false;
+  const cpu = PRODUCTS.find(product => product.id === context.build.cpu);
+  const gpu = PRODUCTS.find(product => product.id === context.build.graphics);
+  renderFpsPowerReference(document.querySelector("#quiz-fps-power"), gpu);
+  resultHost.replaceChildren();
+  retryButton.hidden = true;
+  if (!cpu?.fpsCpuSlug || !gpu?.fpsGpuSlug) {
+    status.textContent = "FPSHQ does not have a match for these processor and graphics-card models yet.";
+    return;
+  }
+
+  const gameSlugs = context.preferences.gameSlugs.length
+    ? context.preferences.gameSlugs
+    : FPS_GAMES.map(game => game.slug);
+  status.textContent = "Loading FPS estimates for your selected games…";
+  try {
+    const rows = await fetchBuildFps({ cpu, gpu, gameSlugs });
+    if (requestId !== quizFpsRequestSequence) return;
+    renderFpsTable(resultHost, rows);
+    const availableCount = rows.flatMap(game => game.resolutions).filter(result => result.status === "available").length;
+    status.textContent = availableCount === rows.length * 3
+      ? "FPS reference for " + cpu.name + " + " + gpu.name + "."
+      : availableCount
+        ? "Some combinations are unavailable; the selected-game average uses available estimates only."
+        : "No FPS results are available for this hardware combination right now.";
+    retryButton.hidden = availableCount === rows.length * 3;
+  } catch {
+    if (requestId !== quizFpsRequestSequence) return;
+    status.textContent = "FPS data could not be loaded. Check your connection and try again.";
+    retryButton.hidden = false;
+  }
+}
+
 function showRecommendation() {
   const values = new FormData(form);
   const preferences = {
@@ -260,10 +310,12 @@ function showRecommendation() {
     : '<p class="quiz-review-no-fit">The sample catalogue has no compatible combination for these answers. You can still adjust your targets or continue to the parts builder.</p>') +
     '<p class="quiz-review-style">' + escapeHTML(designNote) + '</p>' +
     (preferences.accessories.length ? '<p class="quiz-review-accessories">Accessories: ' + money(estimateAccessories(preferences.accessories, preferences.targetResolution)) + ' example allowance · separate from PC</p>' : "");
+  quizFpsContext = { build: recommendedBuild, preferences };
   document.querySelector(".quiz-hero").hidden = true;
   form.hidden = true;
   review.hidden = false;
   review.querySelector("h2").focus();
+  void loadRecommendationFps();
 }
 
 budgetInput.addEventListener("input", () => {
@@ -343,6 +395,7 @@ form.addEventListener("submit", event => {
 });
 
 document.querySelector("#quiz-adjust").addEventListener("click", () => {
+  quizFpsRequestSequence += 1;
   review.hidden = true;
   form.hidden = false;
   document.querySelector(".quiz-hero").hidden = false;
@@ -352,6 +405,7 @@ document.querySelector("#quiz-adjust").addEventListener("click", () => {
 document.querySelector("#quiz-continue").addEventListener("click", () => {
   window.location.href = "builder.html?" + reviewQuery;
 });
+document.querySelector("#quiz-fps-retry").addEventListener("click", () => void loadRecommendationFps());
 
 const previousAnswers = readQuizPreferences(location.search);
 if (previousAnswers) {
@@ -383,4 +437,3 @@ updateBudget();
 if (!previousAnswers) budgetTouched = false;
 updateStorageOutput();
 renderStep();
-

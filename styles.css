@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 20019)
+Total output lines: 975
+
 :root {
   color-scheme: light;
   --page: #f4f5f0;
@@ -377,7 +380,7 @@ h1, h2, h3, p { margin-top: 0; }
 .trust-card p { max-width: 270px; margin: 0; color: #7b857d; font-size: 8px; line-height: 1.7; }
 .trust-arrow { position: absolute; right: 13px; top: 13px; color: #a5afa4; font-size: 10px; }
 .trust-callout { display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 11px; margin-top: 13px; padding: 14px 15px; border: 1px solid #e8e2d3; border-radius: 9px; background: #f9f7f1; }
-.callout-mark { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; color: #92794d; background: #f0e9d9; font: 700 10px "DM Mono", monospace; }
+.callout-mark { width: 20px; height: 20px; display: grid; place-items: c…19 tokens truncated…px "DM Mono", monospace; }
 .trust-callout p { margin: 0; color: #7d7869; font-size: 8px; line-height: 1.55; }
 .trust-callout strong { color: #665b46; }
 .trust-callout>a { display: inline-flex; gap: 7px; align-items: center; color: #587344; white-space: nowrap; font-size: 8px; font-weight: 700; }
@@ -890,6 +893,10 @@ body { font-size: 16px; }
 .fps-table td strong, .fps-table td small { display: block; }
 .fps-table td strong { color: var(--ink); font: 600 12px "DM Mono", monospace; white-space: nowrap; }
 .fps-table td small { margin-top: 3px; color: var(--muted); font-size: 10px; line-height: 1.35; }
+.fps-table tfoot th, .fps-table tfoot td { border-top: 1px solid var(--line); background: var(--paper-soft); }
+.fps-average-row th { color: var(--ink); font-size: 11px; font-weight: 700; }
+.fps-average-row td strong { color: var(--ink); font: 600 12px "DM Mono", monospace; white-space: nowrap; }
+.fps-average-row td small { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; line-height: 1.35; }
 .fps-table td.fps-unavailable { color: var(--muted); font-size: 10px; }
 .fps-disclosure { margin: 9px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
 .fps-disclosure a { color: var(--ink); text-underline-offset: 2px; }
@@ -969,4 +976,3 @@ body { font-size: 16px; }
   .local-shops-controls { align-items: stretch; flex-direction: column; }
   .local-shops-controls .button { justify-content: center; }
 }
-
