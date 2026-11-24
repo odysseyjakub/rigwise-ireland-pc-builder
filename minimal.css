@@ -312,68 +312,310 @@ body.resource-page [hidden],body.legal-page [hidden] { display: none !important;
   .part-finder-help-heading { align-items: center; }
 }
 
-/* Shared visual finish: white canvas, forest accents, clear type and calm surfaces. */
-.resource-page h1,.resource-page h2,.resource-page h3,.resource-page .brand,
-.resource-page .quiz-card legend,.resource-page .quiz-review h2,
-.resource-page .part-finder-budget-display,.resource-page .site-footer-minimal .footer-bottom {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+/* Rigwise visual system: confident type, deliberate spacing and a neutral palette. */
+:root {
+  color-scheme: light;
+  --page: #fff;
+  --paper: #fff;
+  --paper-soft: #f7f7f7;
+  --ink: #171717;
+  --muted: #666;
+  --line: #e7e7e7;
+  --line-dark: #d2d2d2;
+  --forest: #171717;
+  --forest-2: #303030;
+  --lime: #191919;
+  --lime-2: #383838;
+  --lime-ink: #fff;
+  --green: #333;
+  --shadow: 0 18px 48px rgba(0, 0, 0, .055);
+  --radius: 12px;
 }
-.resource-page h1,.resource-page h2,.resource-page h3 { color: #1b2c23; }
-.resource-page .quiz-card legend,.resource-page .quiz-review h2,
-.resource-page .builder-welcome h1,.resource-page .parts-card-heading h2,
-.resource-page .plan-card h2,.resource-page .saved-builds-panel-heading h2,
-.resource-page .saved-build-page-card h3,.resource-page .saved-builds-empty h3 {
-  color: #1b2c23;
-}
-.resource-page .quiz-choice strong,.resource-page .part-option strong,
-.resource-page .part-finder-result-copy strong,.resource-page .part-finder-result-price,
-.resource-page .part-offer-main strong,.resource-page .part-offer-cost strong { color: #1b2c23; }
-.resource-page .quiz-choice small,.resource-page .quiz-card fieldset > p,
-.resource-page .quiz-card fieldset > small,.resource-page .builder-budget-note,
-.resource-page .quiz-progress-row,.resource-page .quiz-step-hint { color: #68776d; }
-.resource-page .quiz-storage-entry input,.resource-page .quiz-storage-presets button,
-.resource-page .select-control,.resource-page .budget-field input,
-.resource-page .part-finder-needs-grid input,.resource-page .part-finder-needs-grid .select-control {
-  border-color: #d6e0d8;
-  border-radius: 8px;
-  background: #fff;
-  color: #1b2c23;
-}
-.resource-page .quiz-storage-entry input:focus,.resource-page .select-control:focus,
-.resource-page .part-finder-needs-grid input:focus,.resource-page .part-finder-needs-grid .select-control:focus {
-  border-color: #6f9a78;
-  outline: 3px solid rgba(77, 128, 87, .14);
-}
-.resource-page .quiz-data-note,.resource-page .part-finder-market-note {
-  border-color: #e2ebe3;
-  border-radius: 9px;
-  background: #f7faf7;
-  color: #53665a;
-}
-.resource-page .quiz-review-total { border-color: #e2ebe3; background: #f7faf7; }
-.resource-page .quiz-review-total > strong,.resource-page .quiz-review-parts li strong,
-.resource-page .quiz-budget-value,.resource-page .part-finder-budget-display { color: #285a3e; }
-.resource-page .part-market-options { border-color: #e0e8e1; border-radius: 8px; background: #f5f8f5; }
-.resource-page .part-market-options button[aria-pressed="true"] { background: #214b38; }
-.resource-page .part-finder-result-card,.resource-page .part-offer-row {
-  border-color: #e3ebe4;
-  border-radius: 9px;
-  background: #fff;
-}
-.resource-page .part-finder-help-dialog { border-color: #e3ebe4; border-radius: 14px; color: #1b2c23; }
-.resource-page .resource-kicker,.resource-page .quiz-review-kicker { color: #578064; }
-.resource-page .site-footer-minimal,.legal-page .legal-footer { border-color: #e7ece8; }
-.resource-page .site-footer-minimal .footer-bottom a,.legal-page .legal-footer a { color: #365f44; }
-.home-page .hero { min-height: clamp(570px, calc(100svh - 145px), 740px); }
-.home-page .hero-photo { justify-self: center; border-radius: 18px; }
 
+body.resource-page,body.legal-page {
+  min-height: 100vh;
+  background: #fff;
+  color: #171717;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+body.resource-page h1,body.resource-page h2,body.resource-page h3,
+body.resource-page .brand,body.legal-page h1,body.legal-page h2 {
+  color: #171717;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: -.045em;
+}
+body.resource-page :focus-visible,body.legal-page :focus-visible {
+  outline: 2px solid #171717;
+  outline-offset: 3px;
+}
+body.resource-page .site-header {
+  height: 72px;
+  padding-inline: max(28px, calc((100vw - 1200px) / 2));
+  border-color: #ebebeb;
+  background: rgba(255,255,255,.96);
+  box-shadow: none;
+  backdrop-filter: blur(14px);
+}
+body.resource-page .brand { gap: 9px; font-size: 20px; font-weight: 760; letter-spacing: -.065em; }
+body.resource-page .brand-mark { width: 29px; height: 29px; border-radius: 7px; background: #171717; }
+body.resource-page .brand-mark svg { fill: #fff; }
+body.resource-page .brand-period { color: #777; }
+body.resource-page .main-nav { gap: clamp(20px, 3vw, 34px); }
+body.resource-page .nav-link { color: #666; font-size: 13px; font-weight: 550; transition: color .16s ease; }
+body.resource-page .nav-link:hover,body.resource-page .nav-link.active { color: #111; }
+body.resource-page .nav-link.active { font-weight: 700; }
+body.resource-page .nav-link.active:after { height: 2px; background: #171717; }
+
+body.resource-page .button {
+  min-height: 44px;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -.01em;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+body.resource-page .button-dark,body.resource-page .button-lime {
+  color: #fff;
+  background: #171717;
+  box-shadow: 0 5px 14px rgba(0,0,0,.11);
+}
+body.resource-page .button-dark:hover,body.resource-page .button-lime:hover { background: #353535; }
+body.resource-page .button-outline { color: #222; border-color: #d6d6d6; background: #fff; }
+body.resource-page .button-outline:hover { border-color: #aaa; background: #f7f7f7; }
+
+/* Home: one focused message, one real photo, one obvious next step. */
+.home-page #top { display: flex; align-items: center; }
+.home-page .hero {
+  width: min(1200px, calc(100% - 64px));
+  min-height: clamp(590px, calc(100svh - 142px), 750px);
+  grid-template-columns: minmax(0, 1fr) minmax(0, .96fr);
+  grid-template-rows: 1fr;
+  align-items: center;
+  gap: clamp(48px, 7vw, 96px);
+  padding-top: 46px;
+  padding-bottom: 46px;
+}
+.home-page .hero-copy { max-width: 590px; padding: 0 0 0 8px; }
+.home-page .hero-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 28px;
+  color: #5f5f5f;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .13em;
+}
+.home-page .hero-eyebrow:before { width: 22px; height: 1px; background: #171717; content: ""; }
+.home-page .hero h1 {
+  max-width: 640px;
+  margin: 0 0 22px;
+  color: #141414;
+  font-size: clamp(54px, 6.2vw, 78px);
+  font-weight: 720;
+  line-height: .99;
+  letter-spacing: -.075em;
+}
+.home-page .hero h1 span { color: #666; font-weight: 520; }
+.home-page .hero-copy > p:not(.hero-eyebrow):not(.hero-meta) {
+  max-width: 435px;
+  margin: 0;
+  color: #666;
+  font-size: 18px;
+  line-height: 1.65;
+}
+.home-page .hero-actions { margin-top: 32px; }
+.home-page .hero-actions .button { min-height: 52px; padding-inline: 23px; border-radius: 7px; font-size: 15px; }
+.home-page .hero-meta { margin: 19px 0 0; color: #707070; font-size: 12px; line-height: 1.7; }
+.home-page .hero-meta span { padding-inline: 6px; color: #aaa; }
+.home-page .hero-photo {
+  justify-self: center;
+  width: min(100%, 520px);
+  aspect-ratio: 5 / 6;
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  background: #f4f4f4;
+  box-shadow: 0 24px 70px rgba(0,0,0,.105);
+}
+.home-page .hero-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+
+/* Questionnaire: clear progress, breathing room and consistent choice cards. */
+body.resource-page .quiz-main { width: min(880px, calc(100% - 48px)); padding-top: 48px; padding-bottom: 50px; }
+body.resource-page .quiz-hero { max-width: 880px; margin-bottom: 24px; }
+body.resource-page .quiz-hero h1 { margin: 0; font-size: clamp(42px, 5vw, 56px); line-height: 1.02; letter-spacing: -.065em; }
+body.resource-page .quiz-card,body.resource-page .quiz-review,
+body.resource-page .saved-builds-panel,body.resource-page .saved-account-strip {
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 16px 46px rgba(0,0,0,.055);
+}
+body.resource-page .quiz-card { padding: clamp(24px, 4vw, 40px); }
+body.resource-page .quiz-progress-row { color: #555; font: 650 12px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .025em; }
+body.resource-page .quiz-progress-track { height: 3px; margin: 14px 0 34px; border-radius: 99px; background: #ededed; }
+body.resource-page .quiz-progress-track > span { border-radius: inherit; background: #191919; }
+body.resource-page .quiz-card legend { color: #171717; font: 700 clamp(26px, 4vw, 34px)/1.12 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: -.055em; }
+body.resource-page .quiz-card fieldset > p { margin: 10px 0 24px; color: #6b6b6b; font-size: 14px; line-height: 1.6; }
+body.resource-page .quiz-budget-control { margin: 22px 0 28px; padding: 19px 20px; border-color: #e7e7e7; border-radius: 9px; background: #f8f8f8; }
+body.resource-page .quiz-budget-heading > label,body.resource-page .quiz-select-grid label { color: #454545; }
+body.resource-page .quiz-budget-value { color: #171717; font-size: clamp(32px, 4vw, 42px); font-weight: 700; letter-spacing: -.06em; }
+body.resource-page .quiz-range,body.resource-page .quiz-choice input { accent-color: #171717; }
+body.resource-page .quiz-choice-grid,body.resource-page .quiz-select-grid { gap: 12px; }
+body.resource-page .quiz-choice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body.resource-page .quiz-game-grid,body.resource-page .quiz-app-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body.resource-page .quiz-choice {
+  min-height: 94px;
+  padding: 18px 46px 18px 17px;
+  border-color: #e4e4e4;
+  border-radius: 9px;
+  background: #fff;
+  transition: border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+body.resource-page .quiz-choice:hover { transform: translateY(-1px); border-color: #aaa; background: #fafafa; }
+body.resource-page .quiz-choice:has(input:checked) { border-color: #222; background: #f3f3f3; box-shadow: inset 0 0 0 1px #222; }
+body.resource-page .quiz-choice:has(input:checked):after {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border-radius: 50%;
+  background: #171717;
+  color: #fff;
+  content: "✓";
+  font-size: 11px;
+  font-weight: 700;
+}
+body.resource-page .quiz-choice strong { color: #202020; font-size: 14px; line-height: 1.35; }
+body.resource-page .quiz-choice small,body.resource-page .quiz-card fieldset > small { color: #707070; font-size: 12px; line-height: 1.5; }
+body.resource-page .quiz-select-grid .select-control,body.resource-page .quiz-storage-entry input,
+body.resource-page .select-control,body.resource-page .saved-build-form input {
+  min-height: 46px;
+  border: 1px solid #d8d8d8;
+  border-radius: 7px;
+  background: #fff;
+  color: #171717;
+}
+body.resource-page .quiz-storage-presets button { border-color: #d7d7d7; color: #333; }
+body.resource-page .quiz-storage-presets button[aria-pressed="true"] { border-color: #222; background: #ededed; color: #171717; }
+body.resource-page .quiz-actions { margin-top: 30px; padding-top: 18px; border-color: #e9e9e9; }
+body.resource-page .quiz-actions > span,body.resource-page .quiz-step-hint { color: #6b6b6b; font-size: 12px; }
+body.resource-page .quiz-data-note { border-color: #e7e7e7; border-left: 2px solid #777; border-radius: 0 7px 7px 0; background: #f7f7f7; color: #5f5f5f; }
+
+/* Builder: spacious part list and a compact, readable sticky summary. */
+body.resource-page .builder-main { width: min(1260px, calc(100% - 56px)); padding-top: 50px; padding-bottom: 64px; }
+body.resource-page .builder-welcome { align-items: end; gap: 24px; margin-bottom: 24px; }
+body.resource-page .builder-welcome h1 { color: #161616; font-size: clamp(42px, 5vw, 58px); line-height: 1.02; letter-spacing: -.065em; }
+body.resource-page .builder-welcome h1 span { color: #707070; }
+body.resource-page .builder-budget-note { margin-top: 14px; color: #686868; }
+body.resource-page .builder-budget-note strong { color: #222; font: 700 13px ui-monospace, SFMono-Regular, Consolas, monospace; }
+body.resource-page .builder-controls-card,body.resource-page .parts-card,body.resource-page .plan-card {
+  border: 1px solid #e5e5e5;
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 12px 36px rgba(0,0,0,.045);
+}
+body.resource-page .builder-controls-card { padding: 20px 22px 0; }
+body.resource-page .builder-budget-heading > label { color: #222; font-size: 14px; }
+body.resource-page .budget-field { border-color: #d6d6d6; border-radius: 7px; }
+body.resource-page .budget-field input,body.resource-page .builder-preferences .select-control { color: #171717; }
+body.resource-page .range-input { accent-color: #171717; }
+body.resource-page .generate-button { border-radius: 6px; background: #222; color: #fff; }
+body.resource-page .builder-preferences { border-color: #e9e9e9; }
+body.resource-page .builder-preferences > summary { min-height: 52px; color: #292929; }
+body.resource-page .builder-preferences > summary span { color: #666; }
+body.resource-page .builder-workspace { grid-template-columns: minmax(0, 1fr) 350px; gap: 20px; }
+body.resource-page .parts-card,body.resource-page .plan-card { border-radius: 11px; }
+body.resource-page .parts-card-heading { min-height: 78px; padding: 16px 20px; border-color: #e8e8e8; }
+body.resource-page .parts-card-heading h2,body.resource-page .plan-card h2 { color: #191919; letter-spacing: -.045em; }
+body.resource-page .parts-step-track { height: 3px; background: #ededed; }
+body.resource-page .parts-step-track > span { background: #222; }
+body.resource-page .parts-list { gap: 10px; padding: 16px; }
+body.resource-page .part-option { min-height: 104px; border-color: #e5e5e5; border-radius: 8px; background: #fff; }
+body.resource-page .part-option:hover { border-color: #aaa; background: #fafafa; }
+body.resource-page .part-option:has(.part-option-radio:checked) { border-color: #222; background: #f4f4f4; box-shadow: inset 0 0 0 1px #222; }
+body.resource-page .part-option-compat { border-radius: 4px; background: #f0f0f0; color: #454545; }
+body.resource-page .part-option-compat-warning,body.resource-page .part-option-compat-incompatible { background: #f7f2ed; color: #754c2d; }
+body.resource-page .parts-card-heading,body.resource-page .parts-footer,body.resource-page .parts-step-actions { border-color: #e8e8e8; }
+body.resource-page .parts-step-actions { padding: 15px 18px; background: #fff; }
+body.resource-page .plan-card { top: 88px; padding: 20px; }
+body.resource-page .plan-symbol { color: #777; }
+body.resource-page .setup-summary { border-color: #e6e6e6; border-radius: 7px; background: #f7f7f7; }
+body.resource-page .setup-summary .setup-summary-total strong { color: #202020; }
+body.resource-page .build-indicator { background: #222; }
+body.resource-page .build-badge,body.resource-page .sample-calc { border-radius: 4px; background: #f0f0f0; color: #555; }
+body.resource-page .builder-compatibility-details { border-color: #e5e5e5; }
+body.resource-page .builder-compatibility-details > summary { color: #555; }
+
+/* Saved builds and part finder share the same quiet hierarchy. */
+body.resource-page .saved-builds-panel-heading h2,body.resource-page .saved-build-page-card h3,
+body.resource-page .saved-builds-empty h3 { color: #191919; }
+body.resource-page .saved-account-strip code,body.resource-page .builder-saved-link,
+body.resource-page .builder-budget-note strong,body.resource-page .quiz-manual-link a { color: #333; }
+body.resource-page .saved-build-page-card,body.resource-page .saved-builds-empty,
+body.resource-page .part-finder-result-card,body.resource-page .part-offer-row {
+  border-color: #e4e4e4;
+  border-radius: 9px;
+  background: #fff;
+}
+body.resource-page .saved-build-page-card:hover,body.resource-page .part-finder-result-card:hover { border-color: #b6b6b6; }
+body.resource-page .part-market-options { border-color: #dedede; border-radius: 7px; background: #f5f5f5; }
+body.resource-page .part-market-options button[aria-pressed="true"] { background: #222; color: #fff; }
+body.resource-page .part-market-options button:focus-visible { outline-color: #171717; }
+body.resource-page .part-match-badge { background: #f0f0f0; color: #444; }
+body.resource-page .part-match-badge.is-caution,body.resource-page .part-offer-warning { background: #fff3db; color: #78540e; }
+body.resource-page .part-finder-help-dialog { border-color: #e2e2e2; border-radius: 11px; color: #171717; }
+body.resource-page .part-finder-help-section { border-color: #e7e7e7; }
+body.resource-page .part-finder-help-section h3 { color: #202020; }
+body.resource-page .part-finder-help-context,body.resource-page .part-finder-help-section p,
+body.resource-page .part-finder-help-section li { color: #555; }
+body.resource-page .resource-kicker,body.resource-page .quiz-review-kicker { color: #666; }
+body.resource-page .quiz-review-total { border-color: #e5e5e5; background: #f7f7f7; }
+body.resource-page .quiz-review-total > strong,body.resource-page .quiz-review-parts li strong { color: #222; }
+body.resource-page .build-recommendation { border-color: #e1e1e1; background: #f7f7f7; color: #333; }
+body.resource-page .part-finder-result-copy strong,body.resource-page .part-finder-result-price,
+body.resource-page .part-offer-main strong,body.resource-page .part-offer-cost strong { color: #222; }
+body.resource-page .site-footer-minimal,body.legal-page .legal-footer { margin-top: 40px; border-color: #e9e9e9; background: #fff; color: #707070; }
+body.resource-page .site-footer-minimal .footer-bottom { color: #707070; font: 12px Inter, ui-sans-serif, system-ui, sans-serif; }
+body.resource-page .site-footer-minimal .footer-bottom a,body.legal-page .legal-footer a { color: #333; }
+
+@media (max-width: 980px) {
+  body.resource-page .builder-workspace { grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; }
+  body.resource-page .builder-main { width: min(100% - 40px, 1200px); }
+}
 @media (max-width: 740px) {
-  .home-page .hero { min-height: auto; grid-template-columns: 1fr; gap: 32px; padding-top: 46px; padding-bottom: 36px; }
+  body.resource-page .site-header { height: 64px; min-height: 64px; padding-inline: 16px; }
+  body.resource-page .main-nav { gap: clamp(12px, 4vw, 22px); }
+  body.resource-page .nav-link { font-size: 12px; }
+  .home-page #top { align-items: flex-start; }
+  .home-page .hero { width: calc(100% - 36px); min-height: auto; grid-template-columns: 1fr; gap: 30px; padding-top: 44px; padding-bottom: 28px; }
   .home-page .hero-copy { padding: 0; }
-  .home-page .hero-eyebrow { margin-bottom: 18px; font-size: 10px; }
-  .home-page .hero h1 { margin: 0 0 16px; font-size: clamp(46px, 12vw, 60px); }
+  .home-page .hero-eyebrow { margin-bottom: 19px; font-size: 10px; }
+  .home-page .hero h1 { margin-bottom: 16px; font-size: clamp(46px, 12vw, 60px); }
   .home-page .hero-copy > p:not(.hero-eyebrow):not(.hero-meta) { max-width: 440px; font-size: 16px; }
   .home-page .hero-actions { margin-top: 23px; }
-  .home-page .hero-meta { margin-top: 16px; font-size: 12px; }
-  .home-page .hero-photo { width: min(100%, 440px); max-width: 440px; aspect-ratio: 5 / 6; border-radius: 14px; }
+  .home-page .hero-meta { margin-top: 15px; font-size: 12px; }
+  .home-page .hero-photo { width: min(100%, 440px); aspect-ratio: 5 / 6; border-radius: 9px; }
+  body.resource-page .quiz-main { width: calc(100% - 32px); padding-top: 34px; }
+  body.resource-page .quiz-choice-grid,body.resource-page .quiz-game-grid,
+  body.resource-page .quiz-app-grid,body.resource-page .quiz-select-grid { grid-template-columns: 1fr; }
+  body.resource-page .quiz-card { padding: 22px 18px; }
+  body.resource-page .quiz-actions { gap: 8px; }
+  body.resource-page .quiz-step-hint { display: none; }
+  body.resource-page .builder-main { width: calc(100% - 32px); padding-top: 32px; }
+  body.resource-page .builder-workspace { grid-template-columns: minmax(0, 1fr); }
+  body.resource-page .builder-welcome { align-items: flex-start; }
+  body.resource-page .builder-welcome-actions { justify-items: start; }
+  body.resource-page .plan-card { position: static; }
+  body.resource-page .builder-controls-card { padding-inline: 16px; }
+  body.resource-page .builder-preferences { margin-inline: -16px; padding-inline: 16px; }
+  body.resource-page .builder-budget-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
+  body.resource-page .builder-budget-heading .budget-field { width: 100%; }
+  body.resource-page .site-footer-minimal .footer-bottom { width: calc(100% - 32px); }
 }
